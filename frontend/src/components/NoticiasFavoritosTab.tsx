@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Ativo, NoticiaAtivo, CategoriaNoticia } from '../types';
 import { NOTICIAS_MERCADO } from '../utils/marketData';
 import {
@@ -23,6 +23,7 @@ import {
 interface NoticiasFavoritosTabProps {
   ativos: Ativo[];
   favoritos: string[];
+  initialTickerFiltro?: string;
   onToggleFavorito: (ticker: string) => void;
   onSelectAtivo: (ativo: Ativo) => void;
 }
@@ -30,14 +31,40 @@ interface NoticiasFavoritosTabProps {
 export const NoticiasFavoritosTab: React.FC<NoticiasFavoritosTabProps> = ({
   ativos,
   favoritos,
+  initialTickerFiltro,
   onToggleFavorito,
   onSelectAtivo,
 }) => {
-  const [tickerFiltro, setTickerFiltro] = useState<string>('FAVORITOS');
+  const [tickerFiltro, setTickerFiltro] = useState<string>(initialTickerFiltro || 'FAVORITOS');
   const [categoriaFiltro, setCategoriaFiltro] = useState<string>('TODAS');
   const [termoBusca, setTermoBusca] = useState<string>('');
   const [modalNoticiaAberta, setModalNoticiaAberta] = useState<NoticiaAtivo | null>(null);
   const [seletorAberto, setSeletorAberto] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (initialTickerFiltro) {
+      setTickerFiltro(initialTickerFiltro);
+      setTimeout(() => {
+        const el = document.getElementById('secao-noticias');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 50);
+    }
+  }, [initialTickerFiltro]);
+
+  // Fecha o modal de notícia ao pressionar ESC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && modalNoticiaAberta) {
+        setModalNoticiaAberta(null);
+      }
+    };
+    if (modalNoticiaAberta) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [modalNoticiaAberta]);
 
   // Mapear ativos para busca rápida
   const ativosMap = useMemo(() => {
@@ -77,10 +104,7 @@ export const NoticiasFavoritosTab: React.FC<NoticiasFavoritosTabProps> = ({
         }
       } else if (tickerFiltro !== 'TODOS') {
         const matchesTicker = noticia.ticker.toUpperCase() === tickerFiltro.toUpperCase();
-        const matchesRelacionados = noticia.tickersRelacionados?.some(
-          (t) => t.toUpperCase() === tickerFiltro.toUpperCase()
-        );
-        if (!matchesTicker && !matchesRelacionados) return false;
+        if (!matchesTicker) return false;
       }
 
       // Filtro de Categoria
@@ -155,11 +179,10 @@ export const NoticiasFavoritosTab: React.FC<NoticiasFavoritosTabProps> = ({
                 <button
                   key={ativo.id}
                   onClick={() => onToggleFavorito(ativo.ticker)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition ${
-                    isFav
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm shadow-amber-500/10'
-                      : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 border border-slate-700'
-                  }`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition ${isFav
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm shadow-amber-500/10'
+                    : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 border border-slate-700'
+                    }`}
                 >
                   <Star className={`w-3.5 h-3.5 ${isFav ? 'fill-amber-400 text-amber-400' : 'text-slate-500'}`} />
                   <span>{ativo.ticker}</span>
@@ -250,11 +273,10 @@ export const NoticiasFavoritosTab: React.FC<NoticiasFavoritosTabProps> = ({
                           {ativo.ticker}
                         </button>
                         <span
-                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                            isFII
-                              ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
-                              : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                          }`}
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${isFII
+                            ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+                            : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                            }`}
                         >
                           {ativo.tipo}
                         </span>
@@ -282,9 +304,8 @@ export const NoticiasFavoritosTab: React.FC<NoticiasFavoritosTabProps> = ({
 
                     <div className="text-right">
                       <span
-                        className={`text-xs font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
-                          isAlta ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
-                        }`}
+                        className={`text-xs font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 ${isAlta ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+                          }`}
                       >
                         {isAlta ? '+' : ''}
                         {ativo.variacaoDia.toFixed(2)}%
@@ -298,7 +319,7 @@ export const NoticiasFavoritosTab: React.FC<NoticiasFavoritosTabProps> = ({
                     className="w-full mt-2.5 py-1 rounded-lg bg-slate-800/60 hover:bg-slate-800 text-[11px] font-semibold text-slate-300 hover:text-emerald-400 border border-slate-800 hover:border-slate-700 transition flex items-center justify-center gap-1"
                   >
                     <LineChart className="w-3.5 h-3.5" />
-                    <span>Ver Gráfico 5 Anos</span>
+                    <span>Ver Gráfico</span>
                   </button>
                 </div>
               );
@@ -308,7 +329,7 @@ export const NoticiasFavoritosTab: React.FC<NoticiasFavoritosTabProps> = ({
       </div>
 
       {/* SEÇÃO 2: FEED DE NOTÍCIAS COM FILTROS */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-5">
+      <div id="secao-noticias" className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
@@ -316,7 +337,11 @@ export const NoticiasFavoritosTab: React.FC<NoticiasFavoritosTabProps> = ({
               <span>Notícias & Fatos Relevantes Recentes</span>
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Filtradas para o acompanhamento diário dos seus ativos favoritos.
+              {tickerFiltro === 'FAVORITOS'
+                ? 'Filtradas para o acompanhamento diário dos seus ativos favoritos.'
+                : tickerFiltro === 'TODOS'
+                  ? 'Todas as notícias recentes e fatos relevantes do mercado financeiro.'
+                  : `Exibindo apenas notícias e fatos relevantes de ${tickerFiltro}.`}
             </p>
           </div>
 
@@ -341,11 +366,10 @@ export const NoticiasFavoritosTab: React.FC<NoticiasFavoritosTabProps> = ({
 
             <button
               onClick={() => setTickerFiltro('FAVORITOS')}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
-                tickerFiltro === 'FAVORITOS'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-black'
-                  : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
-              }`}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${tickerFiltro === 'FAVORITOS'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-black'
+                : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
+                }`}
             >
               <Star className="w-3 h-3 fill-amber-400" />
               <span>Meus Favoritos ({favoritos.length})</span>
@@ -353,11 +377,10 @@ export const NoticiasFavoritosTab: React.FC<NoticiasFavoritosTabProps> = ({
 
             <button
               onClick={() => setTickerFiltro('TODOS')}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
-                tickerFiltro === 'TODOS'
-                  ? 'bg-slate-800 text-emerald-400 border border-emerald-500/30'
-                  : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
-              }`}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition ${tickerFiltro === 'TODOS'
+                ? 'bg-slate-800 text-emerald-400 border border-emerald-500/30'
+                : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
+                }`}
             >
               Todas as Notícias (Bolsa Geral)
             </button>
@@ -367,15 +390,34 @@ export const NoticiasFavoritosTab: React.FC<NoticiasFavoritosTabProps> = ({
               <button
                 key={`chip-${fav}`}
                 onClick={() => setTickerFiltro(fav)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition ${
-                  tickerFiltro === fav
-                    ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30'
-                    : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
-                }`}
+                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition ${tickerFiltro === fav
+                  ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30'
+                  : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
+                  }`}
               >
                 {fav}
               </button>
             ))}
+
+            {/* Chip ativo avulso quando selecionado via botão de notícias */}
+            {tickerFiltro !== 'FAVORITOS' && tickerFiltro !== 'TODOS' && !favoritos.includes(tickerFiltro) && (
+              <button
+                onClick={() => setTickerFiltro(tickerFiltro)}
+                className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition bg-emerald-600 text-white shadow-sm shadow-emerald-600/30 flex items-center gap-1.5"
+              >
+                <span>{tickerFiltro}</span>
+                <span
+                  title="Remover filtro"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setTickerFiltro('TODOS');
+                  }}
+                  className="w-4 h-4 rounded-full bg-emerald-700 hover:bg-emerald-800 flex items-center justify-center text-[10px]"
+                >
+                  ×
+                </span>
+              </button>
+            )}
           </div>
 
           {/* Filtro por Categoria */}
@@ -384,17 +426,51 @@ export const NoticiasFavoritosTab: React.FC<NoticiasFavoritosTabProps> = ({
               <button
                 key={cat}
                 onClick={() => setCategoriaFiltro(cat)}
-                className={`px-2.5 py-1 rounded-md transition ${
-                  categoriaFiltro === cat
-                    ? 'bg-slate-800 text-emerald-400 font-bold'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
+                className={`px-2.5 py-1 rounded-md transition ${categoriaFiltro === cat
+                  ? 'bg-slate-800 text-emerald-400 font-bold'
+                  : 'text-slate-400 hover:text-slate-200'
+                  }`}
               >
                 {cat === 'TODAS' ? 'Todas' : cat}
               </button>
             ))}
           </div>
         </div>
+
+        {/* Banner Indicador de Filtro Exclusivo por Ativo */}
+        {tickerFiltro !== 'FAVORITOS' && tickerFiltro !== 'TODOS' && (
+          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-mono font-black text-sm border border-emerald-500/30">
+                {tickerFiltro.substring(0, 4)}
+              </div>
+              <div>
+                <span className="text-xs sm:text-sm font-bold text-slate-100 flex items-center gap-1.5">
+                  Notícias e Fatos Relevantes de <strong className="text-emerald-400 font-mono">{tickerFiltro}</strong>
+                </span>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Exibindo somente publicações exclusivas deste ativo ({noticiasFiltradas.length}{' '}
+                  {noticiasFiltradas.length === 1 ? 'notícia encontrada' : 'notícias encontradas'}).
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              <button
+                onClick={() => setTickerFiltro('FAVORITOS')}
+                className="text-xs px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition whitespace-nowrap"
+              >
+                Ver Meus Favoritos
+              </button>
+              <button
+                onClick={() => setTickerFiltro('TODOS')}
+                className="text-xs px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition whitespace-nowrap"
+              >
+                Ver Todas
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Lista de Notícias */}
         <div className="space-y-3 pt-2">
@@ -537,8 +613,14 @@ export const NoticiasFavoritosTab: React.FC<NoticiasFavoritosTabProps> = ({
 
       {/* Modal de Leitura Detalhada da Notícia */}
       {modalNoticiaAberta && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden p-6 space-y-4">
+        <div
+          onClick={() => setModalNoticiaAberta(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden p-6 space-y-4"
+          >
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
@@ -576,7 +658,7 @@ export const NoticiasFavoritosTab: React.FC<NoticiasFavoritosTabProps> = ({
                     }}
                     className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition"
                   >
-                    Ver Gráfico 5 Anos de {modalNoticiaAberta.ticker}
+                    Ver Gráfico de {modalNoticiaAberta.ticker}
                   </button>
                 )}
                 <button

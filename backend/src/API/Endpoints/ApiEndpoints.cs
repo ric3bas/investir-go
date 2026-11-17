@@ -1,5 +1,6 @@
 using InvestirGo.API.Application.DTOs;
 using InvestirGo.API.Application.Interfaces;
+using InvestirGo.API.Application.Security.Services;
 using InvestirGo.API.Domain.Entities;
 
 namespace InvestirGo.API.API.Endpoints;
@@ -15,28 +16,36 @@ public static class ApiEndpoints
         {
             var posicoes = await carteiraService.ObterPosicoesAsync();
             return Results.Ok(posicoes);
-        }).WithTags("Carteira");
+        }).WithTags("Carteira").RequireAuthorization();
 
         group.MapGet("/carteira/resumo", async (ICarteiraService carteiraService) =>
         {
             var resumo = await carteiraService.ObterResumoAsync();
             return Results.Ok(resumo);
-        }).WithTags("Carteira");
+        }).WithTags("Carteira").RequireAuthorization();
 
         // ----------------- OPERAÇÕES (COMPRAS & VENDAS) -----------------
         group.MapGet("/operacoes", async (string? ticker, string? tipo, IOperacaoRepository operacaoRepo) =>
         {
             var operacoes = await operacaoRepo.ObterTodasAsync(ticker, tipo);
             return Results.Ok(operacoes);
-        }).WithTags("Operacoes");
+        }).WithTags("Operacoes").RequireAuthorization();
 
-        group.MapGet("/operacoes/{id:int}", async (int id, IOperacaoRepository operacaoRepo) =>
+        group.MapGet("/operacoes/{id:int}", async (int id, IOperacaoRepository operacaoRepo, ICurrentUserService currentUser) =>
         {
             var op = await operacaoRepo.ObterPorIdAsync(id);
-            return op is not null ? Results.Ok(op) : Results.NotFound(new { message = "Operação não encontrada" });
-        }).WithTags("Operacoes");
+            if (op is null) return Results.NotFound(new { message = "Operação não encontrada" });
 
-        group.MapPost("/operacoes", async (CriarOperacaoDto dto, IOperacaoRepository operacaoRepo, IAtivoRepository ativoRepo) =>
+            // Autorização por recurso: impede visualização de dados de outros usuários (IDOR)
+            if (currentUser.IsAuthenticated && op.UserId.HasValue && op.UserId != currentUser.UserId && !currentUser.IsAdmin)
+            {
+                return Results.Problem(detail: "Acesso negado ao recurso solicitado.", statusCode: StatusCodes.Status403Forbidden);
+            }
+
+            return Results.Ok(op);
+        }).WithTags("Operacoes").RequireAuthorization();
+
+        group.MapPost("/operacoes", async (CriarOperacaoDto dto, IOperacaoRepository operacaoRepo, IAtivoRepository ativoRepo, ICurrentUserService currentUser) =>
         {
             if (dto.Quantidade <= 0 || dto.PrecoUnitario <= 0)
             {
@@ -71,6 +80,7 @@ public static class ApiEndpoints
             var operacao = new Operacao
             {
                 AtivoId = ativoId,
+                UserId = currentUser.UserId,
                 TipoOperacao = dto.TipoOperacao.Trim().ToUpper(),
                 DataOperacao = dto.DataOperacao == default ? DateTime.UtcNow.Date : dto.DataOperacao.Date,
                 Quantidade = dto.Quantidade,
@@ -84,20 +94,29 @@ public static class ApiEndpoints
             operacao.Id = id;
 
             return Results.Created($"/api/operacoes/{id}", operacao);
-        }).WithTags("Operacoes");
+        }).WithTags("Operacoes").RequireAuthorization();
 
-        group.MapDelete("/operacoes/{id:int}", async (int id, IOperacaoRepository operacaoRepo) =>
+        group.MapDelete("/operacoes/{id:int}", async (int id, IOperacaoRepository operacaoRepo, ICurrentUserService currentUser) =>
         {
+            var op = await operacaoRepo.ObterPorIdAsync(id);
+            if (op is null) return Results.NotFound(new { message = "Operação não encontrada" });
+
+            // Autorização por recurso: impede exclusão indevida de dados de outros usuários (IDOR)
+            if (currentUser.IsAuthenticated && op.UserId.HasValue && op.UserId != currentUser.UserId && !currentUser.IsAdmin)
+            {
+                return Results.Problem(detail: "Acesso negado ao recurso solicitado.", statusCode: StatusCodes.Status403Forbidden);
+            }
+
             var deletado = await operacaoRepo.ExcluirAsync(id);
             return deletado ? Results.NoContent() : Results.NotFound(new { message = "Operação não encontrada" });
-        }).WithTags("Operacoes");
+        }).WithTags("Operacoes").RequireAuthorization();
 
         // ----------------- PROVENTOS -----------------
         group.MapGet("/proventos", async (string? ticker, int? ano, IProventoRepository proventoRepo) =>
         {
             var proventos = await proventoRepo.ObterTodosAsync(ticker, ano);
             return Results.Ok(proventos);
-        }).WithTags("Proventos");
+        }).WithTags("Proventos").RequireAuthorization();
 
         group.MapPost("/proventos", async (CriarProventoDto dto, IProventoRepository proventoRepo, IAtivoRepository ativoRepo) =>
         {
@@ -133,13 +152,13 @@ public static class ApiEndpoints
             provento.Id = id;
 
             return Results.Created($"/api/proventos/{id}", provento);
-        }).WithTags("Proventos");
+        }).WithTags("Proventos").RequireAuthorization();
 
         group.MapDelete("/proventos/{id:int}", async (int id, IProventoRepository proventoRepo) =>
         {
             var deletado = await proventoRepo.ExcluirAsync(id);
             return deletado ? Results.NoContent() : Results.NotFound(new { message = "Provento não encontrado" });
-        }).WithTags("Proventos");
+        }).WithTags("Proventos").RequireAuthorization();
 
         // ----------------- ATIVOS (TOP 30 E CATÁLOGO) -----------------
         group.MapGet("/ativos", async (IAtivoRepository ativoRepo) =>

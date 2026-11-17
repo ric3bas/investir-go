@@ -39,6 +39,163 @@ export const TOP_30_ATIVOS: Ativo[] = [
   { id: 30, ticker: 'ALZR11', nome: 'Alianza Trust Renda Imobiliária FII', tipo: 'FII', setor: 'Híbrido / Renda Urbana', precoAtual: 103.50, variacaoDia: 0.20, dividendYield: 8.85, dataAtualizacao: new Date().toISOString() },
 ];
 
+// Catálogo Expandido da B3 (Ações e FIIs adicionais para busca e inclusão na base)
+export const ATIVOS_ADICIONAIS_B3: {
+  ticker: string;
+  nome: string;
+  tipo: 'Acao' | 'FII' | 'BDR' | 'ETF';
+  setor: string;
+  precoAtual: number;
+  dividendYield: number;
+}[] = [
+  // AÇÕES POPULARES DA B3
+  { ticker: 'BBSE3', nome: 'BB Seguridade Participações S.A.', tipo: 'Acao', setor: 'Previdência e Seguros', precoAtual: 35.40, dividendYield: 8.90 },
+  { ticker: 'CXSE3', nome: 'Caixa Seguridade Participações S.A.', tipo: 'Acao', setor: 'Previdência e Seguros', precoAtual: 14.80, dividendYield: 8.20 },
+  { ticker: 'EGIE3', nome: 'Engie Brasil Energia S.A.', tipo: 'Acao', setor: 'Energia Elétrica', precoAtual: 42.10, dividendYield: 7.40 },
+  { ticker: 'CPLE6', nome: 'Copel - Companhia Paranaense de Energia', tipo: 'Acao', setor: 'Energia Elétrica', precoAtual: 9.85, dividendYield: 8.10 },
+  { ticker: 'CMIG4', nome: 'Companhia Energética de Minas Gerais', tipo: 'Acao', setor: 'Energia Elétrica', precoAtual: 11.20, dividendYield: 9.50 },
+  { ticker: 'ELET3', nome: 'Centrais Elétricas Brasileiras S.A. (Eletrobras)', tipo: 'Acao', setor: 'Energia Elétrica', precoAtual: 39.50, dividendYield: 3.20 },
+  { ticker: 'SBSP3', nome: 'Companhia de Saneamento Básico de SP (Sabesp)', tipo: 'Acao', setor: 'Água e Saneamento', precoAtual: 89.40, dividendYield: 4.10 },
+  { ticker: 'EQTL3', nome: 'Equatorial Energia S.A.', tipo: 'Acao', setor: 'Energia Elétrica', precoAtual: 32.10, dividendYield: 4.80 },
+  { ticker: 'CSAN3', nome: 'Cosan S.A.', tipo: 'Acao', setor: 'Agronegócio e Logística', precoAtual: 12.30, dividendYield: 4.50 },
+  { ticker: 'GGBR4', nome: 'Gerdau S.A.', tipo: 'Acao', setor: 'Siderurgia e Metalurgia', precoAtual: 18.90, dividendYield: 6.80 },
+  { ticker: 'USIM5', nome: 'Usinas Siderúrgicas de Minas Gerais S.A.', tipo: 'Acao', setor: 'Siderurgia', precoAtual: 6.25, dividendYield: 3.80 },
+  { ticker: 'CSNA3', nome: 'Companhia Siderúrgica Nacional', tipo: 'Acao', setor: 'Siderurgia', precoAtual: 11.50, dividendYield: 7.20 },
+  { ticker: 'SUZB3', nome: 'Suzano S.A.', tipo: 'Acao', setor: 'Papel e Celulose', precoAtual: 56.40, dividendYield: 4.30 },
+  { ticker: 'KLBN11', nome: 'Klabin S.A. Unit', tipo: 'Acao', setor: 'Papel e Celulose', precoAtual: 21.80, dividendYield: 6.90 },
+  { ticker: 'RADL3', nome: 'Raia Drogasil S.A.', tipo: 'Acao', setor: 'Comércio e Farmácias', precoAtual: 25.40, dividendYield: 1.50 },
+  { ticker: 'LREN3', nome: 'Lojas Renner S.A.', tipo: 'Acao', setor: 'Comércio / Vestuário', precoAtual: 17.20, dividendYield: 3.80 },
+  { ticker: 'MGLU3', nome: 'Magazine Luiza S.A.', tipo: 'Acao', setor: 'Comércio Varejista', precoAtual: 9.15, dividendYield: 0.00 },
+  { ticker: 'B3SA3', nome: 'B3 S.A. - Brasil, Bolsa, Balcão', tipo: 'Acao', setor: 'Serviços Financeiros', precoAtual: 11.05, dividendYield: 5.40 },
+  { ticker: 'EMBR3', nome: 'Embraer S.A.', tipo: 'Acao', setor: 'Aeroespacial e Defesa', precoAtual: 51.30, dividendYield: 1.20 },
+  { ticker: 'VIVT3', nome: 'Telefônica Brasil S.A. (Vivo)', tipo: 'Acao', setor: 'Telecomunicações', precoAtual: 53.80, dividendYield: 7.60 },
+  { ticker: 'TIMS3', nome: 'TIM S.A.', tipo: 'Acao', setor: 'Telecomunicações', precoAtual: 17.40, dividendYield: 6.80 },
+  { ticker: 'TOTS3', nome: 'TOTVS S.A.', tipo: 'Acao', setor: 'Tecnologia / Software', precoAtual: 31.50, dividendYield: 2.10 },
+  { ticker: 'JBSS3', nome: 'JBS S.A.', tipo: 'Acao', setor: 'Alimentos Processados', precoAtual: 35.80, dividendYield: 6.50 },
+  { ticker: 'BRFS3', nome: 'BRF S.A.', tipo: 'Acao', setor: 'Alimentos', precoAtual: 24.10, dividendYield: 3.10 },
+  { ticker: 'SLCE3', nome: 'SLC Agrícola S.A.', tipo: 'Acao', setor: 'Agricultura', precoAtual: 18.70, dividendYield: 5.90 },
+
+  // FUNDOS IMOBILIÁRIOS (FIIs) E FIAGROS
+  { ticker: 'KNRI11', nome: 'Kinea Renda Imobiliária FII', tipo: 'FII', setor: 'Híbrido / Lajes e Galpões', precoAtual: 154.20, dividendYield: 8.50 },
+  { ticker: 'BTHF11', nome: 'BTG Pactual Hedge Fund FII', tipo: 'FII', setor: 'FOF / Hedge Fund', precoAtual: 9.80, dividendYield: 12.20 },
+  { ticker: 'RBRR11', nome: 'RBR Rendimento High Grade FII', tipo: 'FII', setor: 'Papel / CRI High Grade', precoAtual: 92.50, dividendYield: 11.40 },
+  { ticker: 'VRTA11', nome: 'Fator Veritá FII', tipo: 'FII', setor: 'Papel / CRI', precoAtual: 88.60, dividendYield: 12.00 },
+  { ticker: 'RECR11', nome: 'REC Recebíveis Imobiliários FII', tipo: 'FII', setor: 'Papel / CRI', precoAtual: 83.40, dividendYield: 12.70 },
+  { ticker: 'IRDM11', nome: 'Iridium Recebíveis Imobiliários FII', tipo: 'FII', setor: 'Papel / CRI', precoAtual: 72.80, dividendYield: 13.20 },
+  { ticker: 'VGIR11', nome: 'Valora RE III FII', tipo: 'FII', setor: 'Papel / CDI', precoAtual: 9.60, dividendYield: 13.10 },
+  { ticker: 'VINO11', nome: 'Vinci Offices FII', tipo: 'FII', setor: 'Lajes Corporativas', precoAtual: 6.85, dividendYield: 9.80 },
+  { ticker: 'BRCO11', nome: 'Bresco Logística FII', tipo: 'FII', setor: 'Logística / Galpões', precoAtual: 119.50, dividendYield: 9.10 },
+  { ticker: 'LVBI11', nome: 'VBI Logística FII', tipo: 'FII', setor: 'Logística / Galpões', precoAtual: 112.30, dividendYield: 8.80 },
+  { ticker: 'PVBI11', nome: 'VBI Prime Properties FII', tipo: 'FII', setor: 'Lajes Corporativas', precoAtual: 95.80, dividendYield: 8.40 },
+  { ticker: 'GARE11', nome: 'Guardian Real Estate FII', tipo: 'FII', setor: 'Renda Urbana / Logística', precoAtual: 9.15, dividendYield: 11.20 },
+  { ticker: 'RZTR11', nome: 'Riza Terrax FII', tipo: 'FII', setor: 'Terras Agrícolas', precoAtual: 93.40, dividendYield: 12.50 },
+  { ticker: 'VGIA11', nome: 'Valora CRA Fiagro', tipo: 'FII', setor: 'Fiagro / CRA', precoAtual: 8.70, dividendYield: 14.50 },
+  { ticker: 'KNCA11', nome: 'Kinea Crédito Agro Fiagro', tipo: 'FII', setor: 'Fiagro / CRA', precoAtual: 101.20, dividendYield: 13.80 },
+  { ticker: 'SNAG11', nome: 'Suno Agro Fiagro', tipo: 'FII', setor: 'Fiagro / CRA', precoAtual: 10.05, dividendYield: 12.90 },
+  { ticker: 'RURA11', nome: 'Itaú Asset Rural Fiagro', tipo: 'FII', setor: 'Fiagro / CRA', precoAtual: 9.90, dividendYield: 13.40 },
+  { ticker: 'HGBS11', nome: 'Hedge Brasil Shopping FII', tipo: 'FII', setor: 'Shopping Centers', precoAtual: 218.00, dividendYield: 8.70 },
+  { ticker: 'HSML11', nome: 'HSI Malls FII', tipo: 'FII', setor: 'Shopping Centers', precoAtual: 92.50, dividendYield: 9.50 },
+];
+
+export const CATALOGO_MERCADO_B3 = [
+  ...TOP_30_ATIVOS.map((a) => ({
+    ticker: a.ticker,
+    nome: a.nome,
+    tipo: a.tipo,
+    setor: a.setor || '',
+    precoAtual: a.precoAtual,
+    dividendYield: a.dividendYield,
+  })),
+  ...ATIVOS_ADICIONAIS_B3,
+];
+
+export interface AtivoPesquisaResultado {
+  ticker: string;
+  nome: string;
+  tipo: 'Acao' | 'FII' | 'BDR' | 'ETF';
+  setor?: string;
+  precoAtual: number;
+  dividendYield: number;
+  variacaoDia?: number;
+  jaCadastrado: boolean;
+  ativoCadastrado?: Ativo;
+}
+
+export const buscarAtivosMercado = (
+  termo: string,
+  tipoFiltro: string = 'TODOS',
+  ativosNaBase: Ativo[] = []
+): AtivoPesquisaResultado[] => {
+  const t = termo.trim().toUpperCase();
+  if (!t) return [];
+
+  const baseMap = new Map<string, Ativo>();
+  ativosNaBase.forEach((a) => baseMap.set(a.ticker.toUpperCase(), a));
+
+  const todos = [...CATALOGO_MERCADO_B3];
+
+  // Adiciona também ativos da base que possam ser customizados
+  ativosNaBase.forEach((a) => {
+    if (!todos.some((c) => c.ticker.toUpperCase() === a.ticker.toUpperCase())) {
+      todos.push({
+        ticker: a.ticker,
+        nome: a.nome,
+        tipo: a.tipo as any,
+        setor: a.setor || '',
+        precoAtual: a.precoAtual,
+        dividendYield: a.dividendYield || 0,
+      });
+    }
+  });
+
+  const normalizar = (str: string) =>
+    str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const termoNorm = normalizar(t);
+
+  return todos
+    .filter((item) => {
+      if (tipoFiltro === 'Acao' && item.tipo !== 'Acao') return false;
+      if (tipoFiltro === 'FII' && item.tipo !== 'FII') return false;
+
+      const tickerNorm = normalizar(item.ticker);
+      const nomeNorm = normalizar(item.nome);
+      const setorNorm = normalizar(item.setor || '');
+
+      return (
+        tickerNorm.includes(termoNorm) ||
+        nomeNorm.includes(termoNorm) ||
+        setorNorm.includes(termoNorm)
+      );
+    })
+    .map((item) => {
+      const ativoCad = baseMap.get(item.ticker.toUpperCase());
+      return {
+        ticker: item.ticker,
+        nome: ativoCad?.nome || item.nome,
+        tipo: (ativoCad?.tipo || item.tipo) as any,
+        setor: ativoCad?.setor || item.setor,
+        precoAtual: ativoCad ? ativoCad.precoAtual : item.precoAtual,
+        dividendYield: ativoCad ? (ativoCad.dividendYield || 0) : item.dividendYield,
+        variacaoDia: ativoCad?.variacaoDia,
+        jaCadastrado: !!ativoCad,
+        ativoCadastrado: ativoCad,
+      };
+    })
+    .sort((a, b) => {
+      const aExact = a.ticker.toUpperCase() === t;
+      const bExact = b.ticker.toUpperCase() === t;
+      if (aExact && !bExact) return -1;
+      if (!aExact && bExact) return 1;
+
+      const aStarts = a.ticker.toUpperCase().startsWith(t);
+      const bStarts = b.ticker.toUpperCase().startsWith(t);
+      if (aStarts && !bStarts) return -1;
+      if (!aStarts && bStarts) return 1;
+
+      return a.ticker.localeCompare(b.ticker);
+    });
+};
+
 // Variações consolidadas para 1D, 7D e 15D
 interface VariacoesMultiPeriodo {
   var1D: number;
@@ -525,7 +682,7 @@ export function getFavoritos(): string[] {
     console.error('Erro ao ler favoritos do localStorage', e);
   }
   // Favoritos padrão na primeira inicialização
-  const defaults = ['PETR4', 'VALE3', 'BBAS3', 'MXRF11', 'WEGE3'];
+  const defaults = ['BBAS3', 'TAEE4', 'ITSA4', 'BBDC4', 'SANB4', 'POMO4', 'BBDC3'];
   salvarFavoritos(defaults);
   return defaults;
 }
@@ -560,33 +717,30 @@ export function isFavorito(ticker: string, listaFavoritos?: string[]): boolean {
 // 6. DADOS MOCKADOS COMPLETOS DE CARTEIRA (FALLBACK)
 // ==========================================
 export const MOCK_OPERACOES: Operacao[] = [
-  { id: 1, ativoId: 4, ticker: 'BBAS3', nomeAtivo: 'Banco do Brasil S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-26', quantidade: 1500, precoUnitario: 17.94, valorTotal: 26910.00, taxas: 0, observacoes: 'Lançamento inicial', precoAtual: 14.95, valorAtualTotal: 22425.00, createdAt: '2026-10-26' },
-  { id: 2, ativoId: 6, ticker: 'TAEE4', nomeAtivo: 'Transmissora Aliança S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-26', quantidade: 1000, precoUnitario: 14.08, valorTotal: 14080.00, taxas: 0, observacoes: 'Lançamento inicial', precoAtual: 14.07, valorAtualTotal: 14070.00, createdAt: '2026-10-26' },
-  { id: 3, ativoId: 8, ticker: 'ITSA4', nomeAtivo: 'Itaúsa S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-26', quantidade: 1000, precoUnitario: 13.19, valorTotal: 13190.00, taxas: 0, observacoes: 'Lançamento inicial', precoAtual: 13.39, valorAtualTotal: 13390.00, createdAt: '2026-10-26' },
-  { id: 4, ativoId: 5, ticker: 'BBDC4', nomeAtivo: 'Banco Bradesco S.A. PN', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-26', quantidade: 1000, precoUnitario: 14.78, valorTotal: 14780.00, taxas: 0, observacoes: 'Lançamento inicial', precoAtual: 14.23, valorAtualTotal: 14230.00, createdAt: '2026-10-26' },
-  { id: 5, ativoId: 9, ticker: 'SANB4', nomeAtivo: 'Banco Santander Brasil S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-26', quantidade: 1000, precoUnitario: 14.73, valorTotal: 14730.00, taxas: 0, observacoes: 'Lançamento inicial', precoAtual: 14.09, valorAtualTotal: 14090.00, createdAt: '2026-10-26' },
-  { id: 6, ativoId: 10, ticker: 'POMO4', nomeAtivo: 'Marcopolo S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-26', quantidade: 3000, precoUnitario: 3.42, valorTotal: 10260.00, taxas: 0, observacoes: 'Lançamento inicial', precoAtual: 3.81, valorAtualTotal: 11430.00, createdAt: '2026-10-26' },
-  { id: 7, ativoId: 11, ticker: 'BBDC3', nomeAtivo: 'Banco Bradesco S.A. ON', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-26', quantidade: 1000, precoUnitario: 13.56, valorTotal: 13560.00, taxas: 0, observacoes: 'Lançamento inicial', precoAtual: 13.00, valorAtualTotal: 13000.00, createdAt: '2026-10-26' },
-  { id: 8, ativoId: 1, ticker: 'PETR4', nomeAtivo: 'Petrobras', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-27', quantidade: 500, precoUnitario: 36.20, valorTotal: 18100.00, taxas: 0, observacoes: 'Lançamento inicial', precoAtual: 37.85, valorAtualTotal: 18925.00, createdAt: '2026-10-27' },
-  { id: 9, ativoId: 2, ticker: 'VALE3', nomeAtivo: 'Vale S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-27', quantidade: 300, precoUnitario: 61.50, valorTotal: 18450.00, taxas: 0, observacoes: 'Lançamento inicial', precoAtual: 58.20, valorAtualTotal: 17460.00, createdAt: '2026-10-27' },
-  { id: 10, ativoId: 3, ticker: 'ITUB4', nomeAtivo: 'Itaú Unibanco', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-27', quantidade: 400, precoUnitario: 33.10, valorTotal: 13240.00, taxas: 0, observacoes: 'Lançamento inicial', precoAtual: 34.60, valorAtualTotal: 13840.00, createdAt: '2026-10-27' },
-  { id: 11, ativoId: 16, ticker: 'MXRF11', nomeAtivo: 'Maxi Renda FII', tipoAtivo: 'FII', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-28', quantidade: 1500, precoUnitario: 10.35, valorTotal: 15525.00, taxas: 0, observacoes: 'Lançamento inicial', precoAtual: 10.15, valorAtualTotal: 15225.00, createdAt: '2026-10-28' },
-  { id: 12, ativoId: 17, ticker: 'HGLG11', nomeAtivo: 'CSHG Logística FII', tipoAtivo: 'FII', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-28', quantidade: 80, precoUnitario: 163.20, valorTotal: 13056.00, taxas: 0, observacoes: 'Lançamento inicial', precoAtual: 161.50, valorAtualTotal: 12920.00, createdAt: '2026-10-28' },
-  { id: 13, ativoId: 18, ticker: 'XPML11', nomeAtivo: 'XP Malls FII', tipoAtivo: 'FII', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-28', quantidade: 120, precoUnitario: 108.50, valorTotal: 13020.00, taxas: 0, observacoes: 'Lançamento inicial', precoAtual: 107.20, valorAtualTotal: 12864.00, createdAt: '2026-10-28' },
-  { id: 14, ativoId: 19, ticker: 'KNIP11', nomeAtivo: 'Kinea IPCA FII', tipoAtivo: 'FII', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-28', quantidade: 150, precoUnitario: 93.40, valorTotal: 14010.00, taxas: 0, observacoes: 'Lançamento inicial', precoAtual: 91.80, valorAtualTotal: 13770.00, createdAt: '2026-10-28' },
-  { id: 15, ativoId: 20, ticker: 'KNCR11', nomeAtivo: 'Kinea CDI FII', tipoAtivo: 'FII', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-28', quantidade: 100, precoUnitario: 102.80, valorTotal: 10280.00, taxas: 0, observacoes: 'Lançamento inicial', precoAtual: 104.30, valorAtualTotal: 10430.00, createdAt: '2026-10-28' },
-  { id: 16, ativoId: 21, ticker: 'BTLG11', nomeAtivo: 'BTG Logística FII', tipoAtivo: 'FII', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-28', quantidade: 110, precoUnitario: 98.70, valorTotal: 10857.00, taxas: 0, observacoes: 'Lançamento inicial', precoAtual: 99.40, valorAtualTotal: 10934.00, createdAt: '2026-10-28' },
-  { id: 17, ativoId: 22, ticker: 'VISC11', nomeAtivo: 'Vinci Shoppings FII', tipoAtivo: 'FII', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-28', quantidade: 90, precoUnitario: 116.20, valorTotal: 10458.00, taxas: 0, observacoes: 'Lançamento inicial', precoAtual: 114.80, valorAtualTotal: 10332.00, createdAt: '2026-10-28' },
-  { id: 18, ativoId: 23, ticker: 'HGRU11', nomeAtivo: 'CSHG Renda Urbana FII', tipoAtivo: 'FII', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-28', quantidade: 70, precoUnitario: 126.00, valorTotal: 8820.00, taxas: 0, observacoes: 'Lançamento inicial', precoAtual: 124.60, valorAtualTotal: 8722.00, createdAt: '2026-10-28' },
+  { id: 1, ativoId: 4, ticker: 'BBAS3', nomeAtivo: 'Banco do Brasil S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-26', quantidade: 1500, precoUnitario: 17.94, valorTotal: 26910.00, taxas: 0, observacoes: 'Lançamento planilha', precoAtual: 14.95, valorAtualTotal: 22425.00, createdAt: '2026-10-26' },
+  { id: 2, ativoId: 6, ticker: 'TAEE4', nomeAtivo: 'Transmissora Aliança de Energia Elétrica S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-26', quantidade: 1000, precoUnitario: 14.08, valorTotal: 14080.00, taxas: 0, observacoes: 'Lançamento planilha', precoAtual: 14.07, valorAtualTotal: 14070.00, createdAt: '2026-10-26' },
+  { id: 3, ativoId: 8, ticker: 'ITSA4', nomeAtivo: 'Itaúsa S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-26', quantidade: 1000, precoUnitario: 13.19, valorTotal: 13190.00, taxas: 0, observacoes: 'Lançamento planilha', precoAtual: 13.39, valorAtualTotal: 13390.00, createdAt: '2026-10-26' },
+  { id: 4, ativoId: 5, ticker: 'BBDC4', nomeAtivo: 'Banco Bradesco S.A. PN', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-26', quantidade: 700, precoUnitario: 15.55, valorTotal: 10885.00, taxas: 0, observacoes: 'Lançamento planilha', precoAtual: 14.23, valorAtualTotal: 9961.00, createdAt: '2026-10-26' },
+  { id: 5, ativoId: 4, ticker: 'BBAS3', nomeAtivo: 'Banco do Brasil S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-28', quantidade: 400, precoUnitario: 16.96, valorTotal: 6784.00, taxas: 0, observacoes: 'Lançamento planilha', precoAtual: 14.95, valorAtualTotal: 5980.00, createdAt: '2026-10-28' },
+  { id: 6, ativoId: 6, ticker: 'TAEE4', nomeAtivo: 'Transmissora Aliança de Energia Elétrica S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-28', quantidade: 400, precoUnitario: 13.30, valorTotal: 5320.00, taxas: 0, observacoes: 'Lançamento planilha', precoAtual: 14.07, valorAtualTotal: 5628.00, createdAt: '2026-10-28' },
+  { id: 7, ativoId: 8, ticker: 'ITSA4', nomeAtivo: 'Itaúsa S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-28', quantidade: 400, precoUnitario: 12.91, valorTotal: 5164.00, taxas: 0, observacoes: 'Lançamento planilha', precoAtual: 13.39, valorAtualTotal: 5356.00, createdAt: '2026-10-28' },
+  { id: 8, ativoId: 9, ticker: 'SANB4', nomeAtivo: 'Banco Santander Brasil S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-28', quantidade: 400, precoUnitario: 12.52, valorTotal: 5008.00, taxas: 0, observacoes: 'Lançamento planilha', precoAtual: 14.09, valorAtualTotal: 5636.00, createdAt: '2026-10-28' },
+  { id: 9, ativoId: 10, ticker: 'POMO4', nomeAtivo: 'Marcopolo S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-28', quantidade: 1300, precoUnitario: 3.82, valorTotal: 4966.00, taxas: 0, observacoes: 'Lançamento planilha', precoAtual: 3.81, valorAtualTotal: 4953.00, createdAt: '2026-10-28' },
+  { id: 10, ativoId: 11, ticker: 'BBDC3', nomeAtivo: 'Banco Bradesco S.A. ON', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-28', quantidade: 400, precoUnitario: 13.62, valorTotal: 5448.00, taxas: 0, observacoes: 'Lançamento planilha', precoAtual: 13.00, valorAtualTotal: 5200.00, createdAt: '2026-10-28' },
+  { id: 11, ativoId: 5, ticker: 'BBDC4', nomeAtivo: 'Banco Bradesco S.A. PN', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-30', quantidade: 100, precoUnitario: 14.04, valorTotal: 1404.00, taxas: 0, observacoes: 'Lançamento planilha', precoAtual: 14.23, valorAtualTotal: 1423.00, createdAt: '2026-10-30' },
+  { id: 12, ativoId: 9, ticker: 'SANB4', nomeAtivo: 'Banco Santander Brasil S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-30', quantidade: 200, precoUnitario: 12.07, valorTotal: 2414.00, taxas: 0, observacoes: 'Lançamento planilha', precoAtual: 14.09, valorAtualTotal: 2818.00, createdAt: '2026-10-30' },
+  { id: 13, ativoId: 8, ticker: 'ITSA4', nomeAtivo: 'Itaúsa S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-10-30', quantidade: 200, precoUnitario: 12.50, valorTotal: 2500.00, taxas: 0, observacoes: 'Lançamento planilha', precoAtual: 13.39, valorAtualTotal: 2678.00, createdAt: '2026-10-30' },
+  { id: 14, ativoId: 5, ticker: 'BBDC4', nomeAtivo: 'Banco Bradesco S.A. PN', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-11-03', quantidade: 300, precoUnitario: 13.54, valorTotal: 4062.00, taxas: 0, observacoes: 'Lançamento planilha', precoAtual: 14.23, valorAtualTotal: 4269.00, createdAt: '2026-11-03' },
+  { id: 15, ativoId: 4, ticker: 'BBAS3', nomeAtivo: 'Banco do Brasil S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-11-03', quantidade: 300, precoUnitario: 16.12, valorTotal: 4836.00, taxas: 0, observacoes: 'Lançamento planilha', precoAtual: 14.95, valorAtualTotal: 4485.00, createdAt: '2026-11-03' },
+  { id: 16, ativoId: 4, ticker: 'BBAS3', nomeAtivo: 'Banco do Brasil S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-11-12', quantidade: 1000, precoUnitario: 15.54, valorTotal: 15540.00, taxas: 0, observacoes: 'Lançamento planilha', precoAtual: 14.95, valorAtualTotal: 14950.00, createdAt: '2026-11-12' },
+  { id: 17, ativoId: 4, ticker: 'BBAS3', nomeAtivo: 'Banco do Brasil S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-11-13', quantidade: 800, precoUnitario: 15.14, valorTotal: 12112.00, taxas: 0, observacoes: 'Lançamento planilha', precoAtual: 14.95, valorAtualTotal: 11960.00, createdAt: '2026-11-13' },
+  { id: 18, ativoId: 4, ticker: 'BBAS3', nomeAtivo: 'Banco do Brasil S.A.', tipoAtivo: 'Acao', tipoOperacao: 'COMPRA', dataOperacao: '2026-11-17', quantidade: 700, precoUnitario: 14.82, valorTotal: 10374.00, taxas: 0, observacoes: 'Lançamento planilha', precoAtual: 14.95, valorAtualTotal: 10465.00, createdAt: '2026-11-17' },
 ];
 
 export const MOCK_PROVENTOS: Provento[] = [
-  { id: 1, ativoId: 16, ticker: 'MXRF11', nomeAtivo: 'Maxi Renda FII', tipoProvento: 'Rendimento', dataCom: '2026-10-31', dataPagamento: '2026-11-14', valorPorCota: 0.10, quantidadeCotas: 1500, valorTotal: 150.00, observacoes: 'Rendimento Novembro/2026' },
-  { id: 2, ativoId: 4, ticker: 'BBAS3', nomeAtivo: 'Banco do Brasil S.A.', tipoProvento: 'JCP', dataCom: '2026-10-25', dataPagamento: '2026-11-15', valorPorCota: 0.38, quantidadeCotas: 1500, valorTotal: 570.00, observacoes: 'JCP 3T26' },
-  { id: 3, ativoId: 6, ticker: 'TAEE4', nomeAtivo: 'Transmissora Aliança S.A.', tipoProvento: 'Dividendo', dataCom: '2026-10-28', dataPagamento: '2026-11-16', valorPorCota: 0.32, quantidadeCotas: 1000, valorTotal: 320.00, observacoes: 'Dividendos Intercalares' },
-  { id: 4, ativoId: 17, ticker: 'HGLG11', nomeAtivo: 'CSHG Logística FII', tipoProvento: 'Rendimento', dataCom: '2026-10-31', dataPagamento: '2026-11-14', valorPorCota: 1.10, quantidadeCotas: 80, valorTotal: 88.00, observacoes: 'Rendimento Novembro/2026' },
-  { id: 5, ativoId: 1, ticker: 'PETR4', nomeAtivo: 'Petrobras', tipoProvento: 'Dividendo', dataCom: '2026-10-20', dataPagamento: '2026-11-10', valorPorCota: 1.15, quantidadeCotas: 500, valorTotal: 575.00, observacoes: 'Dividendos Extraordinários' },
-  { id: 6, ativoId: 18, ticker: 'XPML11', nomeAtivo: 'XP Malls FII', tipoProvento: 'Rendimento', dataCom: '2026-10-31', dataPagamento: '2026-11-14', valorPorCota: 0.92, quantidadeCotas: 120, valorTotal: 110.40, observacoes: 'Rendimento Novembro/2026' },
+  { id: 1, ativoId: 4, ticker: 'BBAS3', nomeAtivo: 'Banco do Brasil S.A.', tipoProvento: 'Dividendo', dataCom: '2026-10-31', dataPagamento: '2026-11-10', valorPorCota: 0.425000, quantidadeCotas: 2200, valorTotal: 935.00, observacoes: 'Dividendo 3T26' },
+  { id: 2, ativoId: 6, ticker: 'TAEE4', nomeAtivo: 'Transmissora Aliança de Energia Elétrica S.A.', tipoProvento: 'JCP', dataCom: '2026-11-01', dataPagamento: '2026-11-14', valorPorCota: 0.284000, quantidadeCotas: 1400, valorTotal: 397.60, observacoes: 'JCP Intermediário' },
+  { id: 3, ativoId: 8, ticker: 'ITSA4', nomeAtivo: 'Itaúsa S.A.', tipoProvento: 'Dividendo', dataCom: '2026-11-02', dataPagamento: '2026-11-15', valorPorCota: 0.152000, quantidadeCotas: 1600, valorTotal: 243.20, observacoes: 'Dividendo Mensal' },
 ];
 
 export function calcularResumoEPosicoesMock(

@@ -304,12 +304,12 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
           </div>
 
           <div className="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
-            <span>Deseja diversificar em FIIs?</span>
+            <span>Deseja ver as melhores oportunidades?</span>
             <button
-              onClick={() => onNavigateTab('mercado')}
+              onClick={() => onNavigateTab('performance')}
               className="text-emerald-400 hover:text-emerald-300 font-medium"
             >
-              Ver Top 15 FIIs →
+              Ver Altas & Baixas (Top 7) →
             </button>
           </div>
         </div>

@@ -11,12 +11,9 @@ public class ProventoRepository : IProventoRepository
 
     private static readonly List<Provento> _proventosFallback = new()
     {
-        new Provento { Id = 1, AtivoId = 16, Ticker = "MXRF11", NomeAtivo = "Maxi Renda FII", TipoProvento = "Rendimento", DataCom = new DateTime(2026, 10, 31), DataPagamento = new DateTime(2026, 11, 14), ValorPorCota = 0.10m, QuantidadeCotas = 1500, ValorTotal = 150.00m, Observacoes = "Rendimento Novembro/2026" },
-        new Provento { Id = 2, AtivoId = 4, Ticker = "BBAS3", NomeAtivo = "Banco do Brasil S.A.", TipoProvento = "JCP", DataCom = new DateTime(2026, 10, 25), DataPagamento = new DateTime(2026, 11, 15), ValorPorCota = 0.38m, QuantidadeCotas = 1500, ValorTotal = 570.00m, Observacoes = "JCP 3T26" },
-        new Provento { Id = 3, AtivoId = 6, Ticker = "TAEE4", NomeAtivo = "Transmissora Aliança S.A.", TipoProvento = "Dividendo", DataCom = new DateTime(2026, 10, 28), DataPagamento = new DateTime(2026, 11, 16), ValorPorCota = 0.32m, QuantidadeCotas = 1000, ValorTotal = 320.00m, Observacoes = "Dividendos Intercalares" },
-        new Provento { Id = 4, AtivoId = 17, Ticker = "HGLG11", NomeAtivo = "CSHG Logística FII", TipoProvento = "Rendimento", DataCom = new DateTime(2026, 10, 31), DataPagamento = new DateTime(2026, 11, 14), ValorPorCota = 1.10m, QuantidadeCotas = 80, ValorTotal = 88.00m, Observacoes = "Rendimento Novembro/2026" },
-        new Provento { Id = 5, AtivoId = 1, Ticker = "PETR4", NomeAtivo = "Petrobras", TipoProvento = "Dividendo", DataCom = new DateTime(2026, 10, 20), DataPagamento = new DateTime(2026, 11, 10), ValorPorCota = 1.15m, QuantidadeCotas = 500, ValorTotal = 575.00m, Observacoes = "Dividendos Extraordinários" },
-        new Provento { Id = 6, AtivoId = 18, Ticker = "XPML11", NomeAtivo = "XP Malls FII", TipoProvento = "Rendimento", DataCom = new DateTime(2026, 10, 31), DataPagamento = new DateTime(2026, 11, 14), ValorPorCota = 0.92m, QuantidadeCotas = 120, ValorTotal = 110.40m, Observacoes = "Rendimento Novembro/2026" },
+        new Provento { Id = 1, AtivoId = 4, Ticker = "BBAS3", NomeAtivo = "Banco do Brasil S.A.", TipoProvento = "Dividendo", DataCom = new DateTime(2026, 10, 31), DataPagamento = new DateTime(2026, 11, 10), ValorPorCota = 0.425000m, QuantidadeCotas = 2200, ValorTotal = 935.00m, Observacoes = "Dividendo 3T26" },
+        new Provento { Id = 2, AtivoId = 6, Ticker = "TAEE4", NomeAtivo = "Transmissora Aliança de Energia Elétrica S.A.", TipoProvento = "JCP", DataCom = new DateTime(2026, 11, 01), DataPagamento = new DateTime(2026, 11, 14), ValorPorCota = 0.284000m, QuantidadeCotas = 1400, ValorTotal = 397.60m, Observacoes = "JCP Intermediário" },
+        new Provento { Id = 3, AtivoId = 8, Ticker = "ITSA4", NomeAtivo = "Itaúsa S.A.", TipoProvento = "Dividendo", DataCom = new DateTime(2026, 11, 02), DataPagamento = new DateTime(2026, 11, 15), ValorPorCota = 0.152000m, QuantidadeCotas = 1600, ValorTotal = 243.20m, Observacoes = "Dividendo Mensal" },
     };
 
     public ProventoRepository(DbConnectionFactory dbFactory)

@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Building2 } from 'lucide-react';
 
 interface NovoAtivoModalProps {
   isOpen: boolean;
   onClose: () => void;
+  defaultTicker?: string;
+  defaultNome?: string;
+  defaultTipo?: 'Acao' | 'FII' | 'BDR' | 'ETF';
+  defaultSetor?: string;
+  defaultPreco?: number;
+  defaultDividendYield?: number;
   onSubmit: (data: {
     ticker: string;
     nome: string;
@@ -14,14 +20,47 @@ interface NovoAtivoModalProps {
   }) => Promise<void>;
 }
 
-export const NovoAtivoModal: React.FC<NovoAtivoModalProps> = ({ isOpen, onClose, onSubmit }) => {
-  const [ticker, setTicker] = useState('');
-  const [nome, setNome] = useState('');
+export const NovoAtivoModal: React.FC<NovoAtivoModalProps> = ({
+  isOpen,
+  onClose,
+  defaultTicker = '',
+  defaultNome = '',
+  defaultTipo,
+  defaultSetor = '',
+  defaultPreco,
+  defaultDividendYield,
+  onSubmit,
+}) => {
+  const [ticker, setTicker] = useState(defaultTicker);
+  const [nome, setNome] = useState(defaultNome);
   const [tipo, setTipo] = useState<'Acao' | 'FII' | 'BDR' | 'ETF'>('Acao');
-  const [setor, setSetor] = useState('');
-  const [precoAtual, setPrecoAtual] = useState('');
-  const [dividendYield, setDividendYield] = useState('');
+  const [setor, setSetor] = useState(defaultSetor);
+  const [precoAtual, setPrecoAtual] = useState(defaultPreco !== undefined ? defaultPreco.toString() : '');
+  const [dividendYield, setDividendYield] = useState(defaultDividendYield !== undefined ? defaultDividendYield.toString() : '');
   const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTicker(defaultTicker || '');
+      setNome(defaultNome || '');
+      const tipoPadrao = defaultTipo || (defaultTicker && defaultTicker.endsWith('11') ? 'FII' : 'Acao');
+      setTipo(tipoPadrao);
+      setSetor(defaultSetor || '');
+      setPrecoAtual(defaultPreco !== undefined ? defaultPreco.toString() : '');
+      setDividendYield(defaultDividendYield !== undefined ? defaultDividendYield.toString() : '');
+    }
+  }, [isOpen, defaultTicker, defaultNome, defaultTipo, defaultSetor, defaultPreco, defaultDividendYield]);
+
+  // Fecha o modal ao pressionar ESC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -52,8 +91,14 @@ export const NovoAtivoModal: React.FC<NovoAtivoModalProps> = ({ isOpen, onClose,
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative"
+      >
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800 transition"

@@ -98,9 +98,26 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
     }
   };
 
+  // Fecha o modal ao pressionar ESC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-2xl relative">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-2xl relative"
+      >
         {/* Fechar */}
         <button
           onClick={onClose}
@@ -112,11 +129,10 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
         {/* Cabeçalho */}
         <div className="flex items-center gap-3 mb-5">
           <div
-            className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
-              tipoOperacao === 'COMPRA'
+            className={`w-10 h-10 rounded-2xl flex items-center justify-center ${tipoOperacao === 'COMPRA'
                 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                 : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-            }`}
+              }`}
           >
             {tipoOperacao === 'COMPRA' ? (
               <ArrowDownRight className="w-5 h-5 stroke-[2.5]" />
@@ -140,11 +156,10 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
             <button
               type="button"
               onClick={() => setTipoOperacao('COMPRA')}
-              className={`py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all ${
-                tipoOperacao === 'COMPRA'
+              className={`py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all ${tipoOperacao === 'COMPRA'
                   ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
                   : 'text-slate-400 hover:text-slate-200'
-              }`}
+                }`}
             >
               <ArrowDownRight className="w-4 h-4" />
               COMPRA
@@ -152,11 +167,10 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
             <button
               type="button"
               onClick={() => setTipoOperacao('VENDA')}
-              className={`py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all ${
-                tipoOperacao === 'VENDA'
+              className={`py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all ${tipoOperacao === 'VENDA'
                   ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30'
                   : 'text-slate-400 hover:text-slate-200'
-              }`}
+                }`}
             >
               <ArrowUpRight className="w-4 h-4" />
               VENDA
@@ -270,9 +284,8 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
             </div>
             <div className="text-right">
               <span
-                className={`text-xl font-bold font-mono ${
-                  tipoOperacao === 'COMPRA' ? 'text-emerald-400' : 'text-rose-400'
-                }`}
+                className={`text-xl font-bold font-mono ${tipoOperacao === 'COMPRA' ? 'text-emerald-400' : 'text-rose-400'
+                  }`}
               >
                 {totalCalculado.toLocaleString('pt-BR', {
                   style: 'currency',
@@ -294,11 +307,10 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
             <button
               type="submit"
               disabled={salvando}
-              className={`px-6 py-2.5 text-xs font-bold rounded-xl text-white shadow-xl transition ${
-                tipoOperacao === 'COMPRA'
+              className={`px-6 py-2.5 text-xs font-bold rounded-xl text-white shadow-xl transition ${tipoOperacao === 'COMPRA'
                   ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/30'
                   : 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/30'
-              }`}
+                }`}
             >
               {salvando ? 'Salvando...' : `Confirmar ${tipoOperacao}`}
             </button>

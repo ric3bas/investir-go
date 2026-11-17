@@ -13,5 +13,6 @@ public class Provento
     public decimal QuantidadeCotas { get; set; }
     public decimal ValorTotal { get; set; }
     public string? Observacoes { get; set; }
+    public Guid? UserId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

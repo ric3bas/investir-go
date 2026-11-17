@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
 import { PosicaoCarteira } from '../types';
-import { Plus, Minus, Coins, Search, LineChart } from 'lucide-react';
+import { Plus, Minus, Coins, Search, LineChart, ArrowDownUp } from 'lucide-react';
 
 interface CarteiraTabProps {
   posicoes: PosicaoCarteira[];
+  totalLancamentos?: number;
   onOpenNovaOperacao: (defaultTicker?: string, defaultTipo?: 'COMPRA' | 'VENDA') => void;
   onOpenNovoProvento: (defaultTicker?: string) => void;
+  onOpenLancamentos: () => void;
   onSelectTicker?: (ticker: string) => void;
 }
 
 export const CarteiraTab: React.FC<CarteiraTabProps> = ({
   posicoes,
+  totalLancamentos,
   onOpenNovaOperacao,
   onOpenNovoProvento,
+  onOpenLancamentos,
   onSelectTicker,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -69,11 +73,10 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
               <button
                 key={tipo}
                 onClick={() => setFiltroTipo(tipo)}
-                className={`px-3 py-1.5 rounded-lg transition font-bold ${
-                  filtroTipo === tipo
+                className={`px-3 py-1.5 rounded-lg transition font-bold ${filtroTipo === tipo
                     ? 'bg-slate-800 text-emerald-400'
                     : 'text-slate-400 hover:text-slate-200'
-                }`}
+                  }`}
               >
                 {tipo === 'TODOS' ? 'Todos' : tipo === 'Acao' ? 'Ações' : 'FIIs'}
               </button>
@@ -90,6 +93,21 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
             <option value="rentabilidade">Maior Rentabilidade</option>
             <option value="ticker">Ordem Alfabética</option>
           </select>
+
+          {/* Botão Lançamentos (Abre Modal de Lançamentos) */}
+          <button
+            onClick={onOpenLancamentos}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-emerald-300 border border-slate-700 hover:border-emerald-500/50 transition shadow-sm"
+            title="Ver histórico de lançamentos (compras e vendas)"
+          >
+            <ArrowDownUp className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Lançamentos</span>
+            {totalLancamentos !== undefined && (
+              <span className="px-1.5 py-0.5 rounded-full bg-slate-900 text-slate-300 text-[10px] font-mono border border-slate-800">
+                {totalLancamentos}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
@@ -143,8 +161,17 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
             <tbody className="divide-y divide-slate-800/60 text-slate-300">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-10 text-center text-slate-500">
-                    Nenhum ativo encontrado na carteira.
+                  <td colSpan={10} className="py-12 text-center text-slate-500">
+                    <p className="text-sm">Nenhum ativo encontrado na carteira.</p>
+                    <div className="mt-3 flex items-center justify-center gap-2">
+                      <button
+                        onClick={onOpenLancamentos}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:text-emerald-400 border border-slate-700 transition"
+                      >
+                        <ArrowDownUp className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Ver Lançamentos</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -155,9 +182,8 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
                       {/* Ativo */}
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2">
-                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                            pos.tipo === 'FII' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                          }`}>
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${pos.tipo === 'FII' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                            }`}>
                             {pos.tipo}
                           </span>
                           <div>

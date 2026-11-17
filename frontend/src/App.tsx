@@ -2,21 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { DashboardTab } from './components/DashboardTab';
 import { CarteiraTab } from './components/CarteiraTab';
-import { OperacoesTab } from './components/OperacoesTab';
 import { ProventosTab } from './components/ProventosTab';
-import { MercadoTab } from './components/MercadoTab';
 import { PerformanceTab } from './components/PerformanceTab';
 import { NoticiasFavoritosTab } from './components/NoticiasFavoritosTab';
 import { AtivoDetalhesModal } from './components/AtivoDetalhesModal';
+import { LancamentosModal } from './components/LancamentosModal';
 import { NovaOperacaoModal } from './components/NovaOperacaoModal';
 import { NovoProventoModal } from './components/NovoProventoModal';
 import { NovoAtivoModal } from './components/NovoAtivoModal';
+import { LoginModal } from './components/auth/LoginModal';
+import { LoginScreen } from './components/auth/LoginScreen';
+import { RegisterModal } from './components/auth/RegisterModal';
+import { ForgotPasswordModal } from './components/auth/ForgotPasswordModal';
+import { UserProfileModal } from './components/auth/UserProfileModal';
+import { SecuritySettingsModal } from './components/auth/SecuritySettingsModal';
+import { AdminPanelTab } from './components/auth/AdminPanelTab';
+import { useAuth } from './context/AuthContext';
 import { InvestirApi } from './services/api';
 import { Ativo, Operacao, Provento, PosicaoCarteira, ResumoCarteira } from './types';
 import { getFavoritos, toggleFavorito, isFavorito } from './utils/marketData';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw, TrendingUp } from 'lucide-react';
 
 export const App: React.FC = () => {
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [resumo, setResumo] = useState<ResumoCarteira | null>(null);
   const [posicoes, setPosicoes] = useState<PosicaoCarteira[]>([]);
@@ -31,12 +39,24 @@ export const App: React.FC = () => {
   const [modalOperacaoOpen, setModalOperacaoOpen] = useState(false);
   const [modalProventoOpen, setModalProventoOpen] = useState(false);
   const [modalAtivoOpen, setModalAtivoOpen] = useState(false);
+  const [modalAtivoDados, setModalAtivoDados] = useState<{
+    ticker?: string;
+    nome?: string;
+    tipo?: 'Acao' | 'FII' | 'BDR' | 'ETF';
+    setor?: string;
+    precoAtual?: number;
+    dividendYield?: number;
+  } | undefined>();
   const [modalTicker, setModalTicker] = useState<string | undefined>();
   const [modalTipoOperacao, setModalTipoOperacao] = useState<'COMPRA' | 'VENDA'>('COMPRA');
+
+  // Modal de Histórico de Lançamentos (Compras & Vendas)
+  const [modalLancamentosOpen, setModalLancamentosOpen] = useState(false);
 
   // Modal de Detalhes do Ativo (Até 5 Anos com Gráfico)
   const [modalDetalhesOpen, setModalDetalhesOpen] = useState(false);
   const [selectedAtivo, setSelectedAtivo] = useState<Ativo | null>(null);
+  const [noticiasTickerFiltro, setNoticiasTickerFiltro] = useState<string | undefined>();
 
   // Inicializar Favoritos do localStorage
   useEffect(() => {
@@ -70,8 +90,16 @@ export const App: React.FC = () => {
   };
 
   useEffect(() => {
-    carregarDados();
-  }, []);
+    if (isAuthenticated) {
+      carregarDados();
+    } else {
+      setResumo(null);
+      setPosicoes([]);
+      setOperacoes([]);
+      setProventos([]);
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
 
   // Handlers de Favorito
   const handleToggleFavorito = (ticker: string) => {
@@ -126,20 +154,64 @@ export const App: React.FC = () => {
     await carregarDados();
   };
 
+  const handleOpenCadastrarAtivo = (dados?: {
+    ticker?: string;
+    nome?: string;
+    tipo?: 'Acao' | 'FII' | 'BDR' | 'ETF';
+    setor?: string;
+    precoAtual?: number;
+    dividendYield?: number;
+  }) => {
+    setModalAtivoDados(dados);
+    setModalAtivoOpen(true);
+  };
+
   const handleNavigateToNoticias = (ticker?: string) => {
+    setNoticiasTickerFiltro(ticker);
     setActiveTab('noticias');
   };
+
+  const handleTabChange = (tab: string) => {
+    if (tab === 'noticias') {
+      setNoticiasTickerFiltro(undefined);
+    }
+    setActiveTab(tab);
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 space-y-4">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 animate-pulse">
+          <TrendingUp className="w-7 h-7 text-slate-950 stroke-[2.5]" />
+        </div>
+        <RefreshCw className="w-6 h-6 animate-spin text-emerald-400" />
+        <p className="text-sm font-medium">Verificando sessão segura...</p>
+      </div>
+    );
+  }
+
+  // Se o usuário não estiver autenticado, exibe a tela de login dedicada e oculta todo o patrimônio e dados
+  if (!isAuthenticated) {
+    return (
+      <>
+        <LoginScreen />
+        <RegisterModal />
+        <ForgotPasswordModal />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
       {/* Navbar Superior */}
       <Navbar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         resumo={resumo}
         favoritosCount={favoritos.length}
         onOpenNovaOperacao={handleOpenNovaOperacao}
         onOpenNovoProvento={handleOpenNovoProvento}
+        onOpenLancamentos={() => setModalLancamentosOpen(true)}
       />
 
       {/* Conteúdo Principal */}
@@ -178,11 +250,13 @@ export const App: React.FC = () => {
             )}
 
             {/* 2. Minha Carteira & Preço Médio */}
-            {activeTab === 'carteira' && (
+            {(activeTab === 'carteira' || activeTab === 'operacoes') && (
               <CarteiraTab
                 posicoes={posicoes}
+                totalLancamentos={operacoes.length}
                 onOpenNovaOperacao={handleOpenNovaOperacao}
                 onOpenNovoProvento={handleOpenNovoProvento}
+                onOpenLancamentos={() => setModalLancamentosOpen(true)}
                 onSelectTicker={(ticker) => {
                   const at = ativos.find((a) => a.ticker.toUpperCase() === ticker.toUpperCase());
                   if (at) handleSelectAtivo(at);
@@ -190,34 +264,26 @@ export const App: React.FC = () => {
               />
             )}
 
-            {/* 3. Top 7 Altas & Baixas (1D, 7D, 15D) - NOVO! */}
+            {/* 3. Top 7 Altas & Baixas (1D, 7D, 15D) com Busca & Inclusão de Ativos */}
             {activeTab === 'performance' && (
               <PerformanceTab
                 ativos={ativos}
                 favoritos={favoritos}
                 onToggleFavorito={handleToggleFavorito}
                 onSelectAtivo={handleSelectAtivo}
+                onCadastrarAtivo={handleOpenCadastrarAtivo}
+                onSalvarAtivoRapido={handleCadastrarAtivo}
               />
             )}
 
-            {/* 4. Top 30 Ativos B3 & FIIs (com modal até 5 anos) */}
-            {activeTab === 'mercado' && (
-              <MercadoTab
-                ativos={ativos}
-                favoritos={favoritos}
-                onToggleFavorito={handleToggleFavorito}
-                onSelectAtivo={handleSelectAtivo}
-                onOpenNovaOperacao={handleOpenNovaOperacao}
-                onAtualizarCotacao={handleAtualizarCotacao}
-                onCadastrarAtivo={() => setModalAtivoOpen(true)}
-              />
-            )}
 
-            {/* 5. Notícias Recentes & Acompanhamento dos Favoritos - NOVO! */}
+            {/* 5. Notícias Recentes & Acompanhamento dos Favoritos */}
             {activeTab === 'noticias' && (
               <NoticiasFavoritosTab
+                key={noticiasTickerFiltro || 'noticias-geral'}
                 ativos={ativos}
                 favoritos={favoritos}
+                initialTickerFiltro={noticiasTickerFiltro}
                 onToggleFavorito={handleToggleFavorito}
                 onSelectAtivo={handleSelectAtivo}
               />
@@ -232,13 +298,9 @@ export const App: React.FC = () => {
               />
             )}
 
-            {/* 7. Lançamentos (Compras & Vendas) */}
-            {activeTab === 'operacoes' && (
-              <OperacoesTab
-                operacoes={operacoes}
-                onOpenNovaOperacao={handleOpenNovaOperacao}
-                onExcluirOperacao={handleExcluirOperacao}
-              />
+            {/* 7. Painel Administrativo de Segurança & Governança */}
+            {activeTab === 'admin' && (
+              <AdminPanelTab />
             )}
           </>
         )}
@@ -282,9 +344,25 @@ export const App: React.FC = () => {
       {/* Modal de Cadastro de Novo Ativo */}
       <NovoAtivoModal
         isOpen={modalAtivoOpen}
-        onClose={() => setModalAtivoOpen(false)}
+        onClose={() => {
+          setModalAtivoOpen(false);
+          setModalAtivoDados(undefined);
+        }}
+        defaultTicker={modalAtivoDados?.ticker}
+        defaultNome={modalAtivoDados?.nome}
+        defaultTipo={modalAtivoDados?.tipo}
+        defaultSetor={modalAtivoDados?.setor}
+        defaultPreco={modalAtivoDados?.precoAtual}
+        defaultDividendYield={modalAtivoDados?.dividendYield}
         onSubmit={handleCadastrarAtivo}
       />
+
+      {/* Modais de Autenticação, Perfis, MFA e Recuperação de Senha */}
+      <LoginModal />
+      <RegisterModal />
+      <ForgotPasswordModal />
+      <UserProfileModal />
+      <SecuritySettingsModal />
     </div>
   );
 };

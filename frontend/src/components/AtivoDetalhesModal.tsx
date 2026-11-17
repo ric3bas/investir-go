@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Ativo, PeriodoHistorico } from '../types';
 import { getHistoricoAtivo } from '../utils/marketData';
 import {
@@ -45,7 +45,25 @@ export const AtivoDetalhesModal: React.FC<AtivoDetalhesModalProps> = ({
   onOpenNovaOperacao,
   onNavigateToNoticias,
 }) => {
-  const [periodo, setPeriodo] = useState<PeriodoHistorico>('5A');
+  const [periodo, setPeriodo] = useState<PeriodoHistorico>('1D');
+
+  // Garante que o modal abra sempre no período de 1 dia (1D)
+  useEffect(() => {
+    if (isOpen) {
+      setPeriodo('1D');
+    }
+  }, [isOpen, ativo?.ticker]);
+
+  // Fecha o modal ao pressionar ESC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   const periodosDisponiveis: { id: PeriodoHistorico; label: string; sub: string }[] = [
     { id: '1D', label: '1D', sub: 'Hoje' },
@@ -80,8 +98,14 @@ export const AtivoDetalhesModal: React.FC<AtivoDetalhesModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92vh]">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92vh]"
+      >
         {/* Header Superior do Modal */}
         <div className="px-6 py-5 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">

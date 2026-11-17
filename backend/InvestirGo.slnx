@@ -2,4 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/InvestirGo.API.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/InvestirGo.Tests/InvestirGo.Tests.csproj" />
+  </Folder>
 </Solution>

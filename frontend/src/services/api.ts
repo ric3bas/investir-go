@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { authClient, AuthService } from './authService';
 import {
   Ativo,
   Operacao,
@@ -20,24 +20,22 @@ import {
   NOTICIAS_MERCADO
 } from '../utils/marketData';
 
-const api = axios.create({
-  baseURL: '/api',
-  timeout: 3000,
-});
-
-// Armazenamento em memória/localStorage local como fallback caso PostgreSQL esteja offline
+// Armazenamento em memória local como contingência caso o backend esteja temporariamente inalcançável para usuário autenticado
 let ativosLocais: Ativo[] = [...TOP_30_ATIVOS];
 let operacoesLocais: Operacao[] = [...MOCK_OPERACOES];
 let proventosLocais: Provento[] = [...MOCK_PROVENTOS];
 
 export const InvestirApi = {
-  // ----------------- CARTEIRA -----------------
+  // ----------------- CARTEIRA (PROTEGIDA) -----------------
   getResumo: async (): Promise<ResumoCarteira> => {
     try {
-      const { data } = await api.get('/carteira/resumo');
+      const { data } = await authClient.get('/carteira/resumo');
       return data;
-    } catch {
-      // Fallback seguro em caso de indisponibilidade do banco
+    } catch (err: any) {
+      if (err?.response?.status === 401 || err?.response?.status === 403 || !AuthService.getAccessToken()) {
+        throw new Error('Sessão não autenticada. Faça login para acessar o resumo da carteira.');
+      }
+      // Contingência para usuário logado caso PostgreSQL esteja offline
       const { resumo } = calcularResumoEPosicoesMock(operacoesLocais, proventosLocais, ativosLocais);
       return resumo;
     }
@@ -45,20 +43,26 @@ export const InvestirApi = {
 
   getPosicoes: async (): Promise<PosicaoCarteira[]> => {
     try {
-      const { data } = await api.get('/carteira/posicoes');
+      const { data } = await authClient.get('/carteira/posicoes');
       return data;
-    } catch {
+    } catch (err: any) {
+      if (err?.response?.status === 401 || err?.response?.status === 403 || !AuthService.getAccessToken()) {
+        throw new Error('Sessão não autenticada. Faça login para acessar as posições da carteira.');
+      }
       const { posicoes } = calcularResumoEPosicoesMock(operacoesLocais, proventosLocais, ativosLocais);
       return posicoes;
     }
   },
 
-  // ----------------- OPERAÇÕES (COMPRAS & VENDAS) -----------------
+  // ----------------- OPERAÇÕES (PROTEGIDA) -----------------
   getOperacoes: async (ticker?: string, tipo?: string): Promise<Operacao[]> => {
     try {
-      const { data } = await api.get('/operacoes', { params: { ticker, tipo } });
+      const { data } = await authClient.get('/operacoes', { params: { ticker, tipo } });
       return data;
-    } catch {
+    } catch (err: any) {
+      if (err?.response?.status === 401 || err?.response?.status === 403 || !AuthService.getAccessToken()) {
+        throw new Error('Sessão não autenticada. Faça login para visualizar as operações.');
+      }
       let filtradas = [...operacoesLocais];
       if (ticker) {
         filtradas = filtradas.filter((o) => o.ticker.toUpperCase() === ticker.toUpperCase());
@@ -81,7 +85,7 @@ export const InvestirApi = {
     observacoes?: string;
   }): Promise<Operacao> => {
     try {
-      const { data } = await api.post('/operacoes', operacao);
+      const { data } = await authClient.post('/operacoes', operacao);
       return data;
     } catch {
       const ticker = operacao.ticker?.toUpperCase() || 'ATIVO';
@@ -110,18 +114,21 @@ export const InvestirApi = {
 
   excluirOperacao: async (id: number): Promise<void> => {
     try {
-      await api.delete(`/operacoes/${id}`);
+      await authClient.delete(`/operacoes/${id}`);
     } catch {
       operacoesLocais = operacoesLocais.filter((o) => o.id !== id);
     }
   },
 
-  // ----------------- PROVENTOS -----------------
+  // ----------------- PROVENTOS (PROTEGIDA) -----------------
   getProventos: async (ticker?: string, ano?: number): Promise<Provento[]> => {
     try {
-      const { data } = await api.get('/proventos', { params: { ticker, ano } });
+      const { data } = await authClient.get('/proventos', { params: { ticker, ano } });
       return data;
-    } catch {
+    } catch (err: any) {
+      if (err?.response?.status === 401 || err?.response?.status === 403 || !AuthService.getAccessToken()) {
+        throw new Error('Sessão não autenticada. Faça login para visualizar proventos.');
+      }
       let filtrados = [...proventosLocais];
       if (ticker) {
         filtrados = filtrados.filter((p) => p.ticker.toUpperCase() === ticker.toUpperCase());
@@ -145,7 +152,7 @@ export const InvestirApi = {
     observacoes?: string;
   }): Promise<Provento> => {
     try {
-      const { data } = await api.post('/proventos', provento);
+      const { data } = await authClient.post('/proventos', provento);
       return data;
     } catch {
       const ticker = provento.ticker?.toUpperCase() || 'ATIVO';
@@ -170,7 +177,7 @@ export const InvestirApi = {
 
   excluirProvento: async (id: number): Promise<void> => {
     try {
-      await api.delete(`/proventos/${id}`);
+      await authClient.delete(`/proventos/${id}`);
     } catch {
       proventosLocais = proventosLocais.filter((p) => p.id !== id);
     }
@@ -179,7 +186,7 @@ export const InvestirApi = {
   // ----------------- ATIVOS (TOP 30 E CATÁLOGO) -----------------
   getAtivos: async (): Promise<Ativo[]> => {
     try {
-      const { data } = await api.get('/ativos');
+      const { data } = await authClient.get('/ativos');
       if (Array.isArray(data) && data.length > 0) {
         ativosLocais = data;
         return data;
@@ -192,7 +199,7 @@ export const InvestirApi = {
 
   atualizarCotacao: async (id: number, precoAtual: number, variacaoDia?: number, dividendYield?: number): Promise<void> => {
     try {
-      await api.put(`/ativos/${id}/cotacao`, { precoAtual, variacaoDia, dividendYield });
+      await authClient.put(`/ativos/${id}/cotacao`, { precoAtual, variacaoDia, dividendYield });
     } catch {
       ativosLocais = ativosLocais.map((a) =>
         a.id === id
@@ -218,7 +225,7 @@ export const InvestirApi = {
     dividendYield?: number;
   }): Promise<Ativo> => {
     try {
-      const { data } = await api.post('/ativos', ativo);
+      const { data } = await authClient.post('/ativos', ativo);
       return data;
     } catch {
       const novo: Ativo = {
@@ -240,7 +247,7 @@ export const InvestirApi = {
   // ----------------- HISTÓRICO & PERFORMANCE (ATÉ 5 ANOS) -----------------
   getHistoricoAtivo: async (ticker: string, periodo: PeriodoHistorico, precoAtual?: number): Promise<HistoricoAtivo> => {
     try {
-      const { data } = await api.get(`/ativos/${ticker}/historico`, { params: { periodo } });
+      const { data } = await authClient.get(`/ativos/${ticker}/historico`, { params: { periodo } });
       return data;
     } catch {
       return getHistoricoAtivo(ticker, periodo, precoAtual);
@@ -249,7 +256,7 @@ export const InvestirApi = {
 
   getPerformanceRanking: async (periodo: PeriodoPerformance, filtroTipo: 'TODOS' | 'Acao' | 'FII' = 'TODOS') => {
     try {
-      const { data } = await api.get('/ativos/performance', { params: { periodo, filtroTipo } });
+      const { data } = await authClient.get('/ativos/performance', { params: { periodo, filtroTipo } });
       return data;
     } catch {
       return getPerformanceRanking(periodo, filtroTipo, ativosLocais);
@@ -259,7 +266,7 @@ export const InvestirApi = {
   // ----------------- NOTÍCIAS & MERCADO -----------------
   getNoticias: async (): Promise<NoticiaAtivo[]> => {
     try {
-      const { data } = await api.get('/noticias');
+      const { data } = await authClient.get('/noticias');
       return data;
     } catch {
       return NOTICIAS_MERCADO;

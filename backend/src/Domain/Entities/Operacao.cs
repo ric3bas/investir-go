@@ -16,5 +16,6 @@ public class Operacao
     public string? Observacoes { get; set; }
     public decimal PrecoAtual { get; set; }
     public decimal ValorAtualTotal => Quantidade * PrecoAtual;
+    public Guid? UserId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -86,3 +86,4 @@ ehthumbs.db
 *.log
 *.tmp
 *.bak
+.tools/
