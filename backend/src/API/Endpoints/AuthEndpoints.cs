@@ -216,37 +216,7 @@ public static class AuthEndpoints
             // Sucesso na verificação de senha -> reseta limites de falha para a conta
             rateLimiter.ResetRateLimit($"login:acc:{emailNormalized}");
 
-            // Verificação de MFA: obrigatório se o usuário tiver TOTP ativado OU for Administrador
-            bool mustChallengeMfa = user.TotpEnabled || string.Equals(user.Role, "Admin", StringComparison.OrdinalIgnoreCase);
-
-            if (mustChallengeMfa)
-            {
-                // Se for Admin e não tiver configurado TOTP, deve ser desafiado a configurar ou autenticar
-                string mfaRawToken = tokenService.GenerateOpaqueToken();
-                string mfaTokenHash = tokenService.ComputeSha256Hash(mfaRawToken);
-
-                var challengeToken = new UserToken
-                {
-                    UserId = user.Id,
-                    TokenType = "MFA_CHALLENGE",
-                    TokenHash = mfaTokenHash,
-                    ExpiresAt = DateTime.UtcNow.AddMinutes(5), // 5 minutos de validade estrita
-                    CreatedAt = DateTime.UtcNow
-                };
-                await authRepo.CreateTokenAsync(challengeToken);
-
-                await auditService.LogAsync("MFA_CHALLENGE_ISSUED", "SUCCESS", user.Id);
-
-                return Results.Ok(new LoginResponseDto(
-                    RequiresMfa: true,
-                    MfaToken: mfaRawToken,
-                    AccessToken: null,
-                    ExpiresIn: null,
-                    User: null
-                ));
-            }
-
-            // Emissão de Sessão e Tokens
+            // Emissão direta de Sessão e Tokens (autenticação simples com usuário e senha)
             return await IssueSessionAndTokensAsync(context, user, authRepo, tokenService, auditService, secOptions.Value, currentUser);
         });
 

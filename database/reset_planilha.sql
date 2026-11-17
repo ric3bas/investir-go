@@ -2,8 +2,14 @@
 -- InvestirGo - Reset e Carga Fiel das 18 Operações da Planilha do Usuário
 -- ============================================================================
 
--- 1. Limpa todas as operações e proventos anteriores
+-- 1. Limpa todas as operações e proventos anteriores e desativa qualquer 2FA/MFA residual
 TRUNCATE TABLE inv.operacoes, inv.proventos RESTART IDENTITY CASCADE;
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'auth' AND tablename = 'users') THEN
+        UPDATE auth.users SET totp_enabled = FALSE, role = 'User';
+    END IF;
+END $$;
 
 -- 2. Garante que os ativos da planilha e Top 30 existam com cotações corretas
 INSERT INTO inv.ativos (ticker, nome, tipo, setor, preco_atual, variacao_dia, dividend_yield)

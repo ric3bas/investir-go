@@ -214,54 +214,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </div>
 
                       <div className="mt-3 flex items-center gap-1.5 flex-wrap">
-                        <span
-                          className={`px-2 py-0.5 text-[10px] font-bold rounded-md ${
-                            isAdmin
-                              ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                              : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                          }`}
-                        >
-                          {isAdmin ? '🛡️ Administrador' : '👤 Investidor'}
+                        <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          👤 Investidor
                         </span>
-                        {user.totpEnabled ? (
-                          <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                            MFA Ativo
-                          </span>
-                        ) : (
-                          <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-slate-800 text-slate-400">
-                            MFA Desativado
-                          </span>
-                        )}
                       </div>
                     </div>
 
                     {/* Ações e Navegação Interna do Menu */}
                     <div className="py-1.5 text-xs space-y-0.5">
-                      {/* Painel Administrativo (Exclusivo para Admin) */}
-                      {isAdmin && (
-                        <button
-                          onClick={() => {
-                            setMenuAberto(false);
-                            setActiveTab('admin');
-                          }}
-                          className={`w-full flex items-center justify-between px-4 py-2.5 transition text-left ${
-                            activeTab === 'admin'
-                              ? 'bg-purple-950/40 text-purple-300 font-bold border-l-2 border-purple-400'
-                              : 'text-slate-200 hover:text-white hover:bg-slate-800/80'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <ShieldAlert className="w-4 h-4 text-purple-400 shrink-0" />
-                            <div>
-                              <span className="font-semibold block">Painel Administrativo</span>
-                              <span className="text-[10px] text-slate-400">Gestão de usuários e segurança</span>
-                            </div>
-                          </div>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono font-bold">
-                            Admin
-                          </span>
-                        </button>
-                      )}
 
                       {/* Meu Perfil e Sessões */}
                       <button
