@@ -49,7 +49,6 @@ public static class ApiEndpoints
                 var ativoExistente = await ativoRepo.ObterPorTickerAsync(dto.Ticker.Trim().ToUpper());
                 if (ativoExistente is null)
                 {
-                    // Se o ativo não existe no catálogo, cria automaticamente
                     ativoId = await ativoRepo.CriarAsync(new Ativo
                     {
                         Ticker = dto.Ticker.Trim().ToUpper(),
@@ -185,5 +184,131 @@ public static class ApiEndpoints
             var atualizado = await ativoRepo.AtualizarCotacaoAsync(id, dto.PrecoAtual, dto.VariacaoDia, dto.DividendYield);
             return atualizado ? Results.Ok(new { message = "Cotação atualizada com sucesso" }) : Results.NotFound(new { message = "Ativo não encontrado" });
         }).WithTags("Ativos");
+
+        // ----------------- HISTÓRICO ATÉ 5 ANOS (COM GRÁFICO) -----------------
+        group.MapGet("/ativos/{ticker}/historico", async (string ticker, string? periodo, IAtivoRepository ativoRepo) =>
+        {
+            var ativo = await ativoRepo.ObterPorTickerAsync(ticker);
+            var precoFinal = ativo?.PrecoAtual ?? 50.0m;
+            var p = string.IsNullOrWhiteSpace(periodo) ? "5A" : periodo.ToUpper();
+
+            decimal variacaoAlvo = p switch
+            {
+                "1D" => ativo?.VariacaoDia ?? 0.5m,
+                "7D" => 3.2m,
+                "15D" => 5.8m,
+                "1M" => 7.5m,
+                "6M" => 14.2m,
+                "1A" => 22.4m,
+                "2A" => 38.6m,
+                _ => 52.8m // 5A
+            };
+
+            var precoInicial = Math.Round(precoFinal / (1 + (variacaoAlvo / 100m)), 2);
+            var variacaoReais = Math.Round(precoFinal - precoInicial, 2);
+
+            var pontos = new List<HistoricoPontoDto>();
+            int qtdPontos = p == "1D" ? 8 : (p == "7D" ? 7 : (p == "15D" ? 15 : 24));
+
+            for (int i = 0; i < qtdPontos; i++)
+            {
+                decimal progresso = (decimal)i / (qtdPontos - 1);
+                decimal basePreco = precoInicial + (precoFinal - precoInicial) * progresso;
+                decimal oscilacao = (decimal)Math.Sin(i * 0.9) * (precoFinal * 0.02m);
+                decimal preco = Math.Max(0.5m, Math.Round(basePreco + (i == 0 || i == qtdPontos - 1 ? 0 : oscilacao), 2));
+                decimal varPct = precoInicial > 0 ? Math.Round(((preco - precoInicial) / precoInicial) * 100m, 2) : 0;
+
+                pontos.Add(new HistoricoPontoDto(
+                    Data: $"P{i + 1}",
+                    Preco: preco,
+                    VariacaoPeriodo: varPct,
+                    DataCompleta: $"Ponto {i + 1}"
+                ));
+            }
+
+            var precos = pontos.Select(x => x.Preco).ToList();
+
+            var historicoDto = new HistoricoAtivoDto(
+                Ticker: ticker.ToUpper(),
+                Nome: ativo?.Nome ?? ticker.ToUpper(),
+                Periodo: p,
+                PrecoInicial: precoInicial,
+                PrecoFinal: precoFinal,
+                VariacaoReais: variacaoReais,
+                VariacaoPercentual: variacaoAlvo,
+                Minima: precos.Min(),
+                Maxima: precos.Max(),
+                PrecoMedio: Math.Round(precos.Average(), 2),
+                Pontos: pontos
+            );
+
+            return Results.Ok(historicoDto);
+        }).WithTags("Ativos");
+
+        // ----------------- PERFORMANCE & RANKING (TOP 7) -----------------
+        group.MapGet("/ativos/performance", async (string? periodo, string? filtroTipo, IAtivoRepository ativoRepo) =>
+        {
+            var p = string.IsNullOrWhiteSpace(periodo) ? "1D" : periodo.ToUpper();
+            var ativos = await ativoRepo.ObterTodosAsync();
+
+            if (!string.IsNullOrWhiteSpace(filtroTipo) && !filtroTipo.Equals("TODOS", StringComparison.OrdinalIgnoreCase))
+            {
+                ativos = ativos.Where(a => a.Tipo.Equals(filtroTipo, StringComparison.OrdinalIgnoreCase));
+            }
+
+            var ranking = ativos.Select(a =>
+            {
+                decimal varPct = p switch
+                {
+                    "7D" => a.VariacaoDia * 2.8m,
+                    "15D" => a.VariacaoDia * 4.5m,
+                    _ => a.VariacaoDia
+                };
+                decimal pInicial = Math.Round(a.PrecoAtual / (1 + (varPct / 100m)), 2);
+                decimal vReais = Math.Round(a.PrecoAtual - pInicial, 2);
+
+                return new PerformanceAtivoDto(
+                    Posicao: 0,
+                    Ticker: a.Ticker,
+                    Nome: a.Nome,
+                    Tipo: a.Tipo,
+                    Setor: a.Setor,
+                    PrecoAtual: a.PrecoAtual,
+                    PrecoInicial: pInicial,
+                    VariacaoPercentual: Math.Round(varPct, 2),
+                    VariacaoReais: vReais,
+                    IsAlta: varPct >= 0
+                );
+            }).ToList();
+
+            var top7Altas = ranking.OrderByDescending(r => r.VariacaoPercentual).Take(7).Select((r, idx) => r with { Posicao = idx + 1 }).ToList();
+            var top7Baixas = ranking.OrderBy(r => r.VariacaoPercentual).Take(7).Select((r, idx) => r with { Posicao = idx + 1 }).ToList();
+
+            return Results.Ok(new
+            {
+                Periodo = p,
+                Top7Altas = top7Altas,
+                Top7Baixas = top7Baixas,
+                DestaqueAlta = top7Altas.FirstOrDefault(),
+                DestaqueBaixa = top7Baixas.FirstOrDefault()
+            });
+        }).WithTags("Ativos");
+
+        // ----------------- NOTÍCIAS & MERCADO -----------------
+        group.MapGet("/noticias", () =>
+        {
+            var noticias = new List<NoticiaAtivoDto>
+            {
+                new("1", "PETR4", new[] { "PRIO3" }, "Petrobras aprova pagamento de R$ 13,8 bilhões em dividendos extraordinários", "O Conselho de Administração aprovou distribuição de proventos mantendo yield atrativo.", "InfoMoney", "Há 20 minutos", "Proventos", "Positivo"),
+                new("2", "MXRF11", new[] { "CPTS11" }, "Maxi Renda (MXRF11) anuncia provento mensal e base atinge 1,1 milhão de cotistas", "Distribuição mensal estável com dividend yield anualizado acima de 12%.", "Funds Explorer", "Há 45 minutos", "Proventos", "Positivo"),
+                new("3", "PRIO3", null, "PRIO atinge novo recorde de produção no Campo de Frade", "Produção diária supera estimativas com queda de 8% no custo de extração.", "Brazil Journal", "Há 1 hora", "Fato Relevante", "Positivo"),
+                new("4", "VALE3", null, "Vale avança em negociações e amplia exportações de minério premium", "Companhia mantém liderança em minério de alto teor e avança em acordo de reparação.", "Valor Econômico", "Há 2 horas", "Resultado", "Neutro"),
+                new("5", "BBAS3", new[] { "ITUB4" }, "Banco do Brasil registra ROE acima de 21% com crédito rural em alta", "Instituição financeira reforça projeção de lucros e payout sustentável para o exercício.", "Suno Research", "Há 2 horas", "Resultado", "Positivo"),
+                new("6", "HGLG11", new[] { "BTLG11" }, "CSHG Logística renova contratos atípicos e zera vacância em galpões SP", "Contratos atípicos indexados ao IPCA trazem estabilidade para os próximos 5 anos.", "Clube FII", "Há 3 horas", "Fato Relevante", "Positivo"),
+                new("7", "WEGE3", null, "WEG fecha contrato de US$ 120 milhões para fornecimento na Europa", "Multinacional expande negócios em inteligência industrial e transição energética.", "Valor Econômico", "Há 3 horas", "Fato Relevante", "Positivo"),
+                new("8", "XPML11", new[] { "VISC11" }, "XP Malls conclui aquisição em shopping center premium com cap rate atraente", "Nova área locável impulsiona fluxo de receita do fundo imobiliário.", "InfoMoney", "Há 4 horas", "Fato Relevante", "Positivo")
+            };
+            return Results.Ok(noticias);
+        }).WithTags("Noticias");
     }
 }

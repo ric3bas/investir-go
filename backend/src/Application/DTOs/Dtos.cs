@@ -38,3 +38,52 @@ public record AtualizarCotacaoDto(
     decimal? VariacaoDia,
     decimal? DividendYield
 );
+
+// DTOs para Histórico (até 5 anos com gráfico)
+public record HistoricoPontoDto(
+    string Data,
+    decimal Preco,
+    decimal VariacaoPeriodo,
+    string DataCompleta
+);
+
+public record HistoricoAtivoDto(
+    string Ticker,
+    string Nome,
+    string Periodo,
+    decimal PrecoInicial,
+    decimal PrecoFinal,
+    decimal VariacaoReais,
+    decimal VariacaoPercentual,
+    decimal Minima,
+    decimal Maxima,
+    decimal PrecoMedio,
+    IEnumerable<HistoricoPontoDto> Pontos
+);
+
+// DTOs para Performance (Top 7 Altas e Baixas)
+public record PerformanceAtivoDto(
+    int Posicao,
+    string Ticker,
+    string Nome,
+    string Tipo,
+    string? Setor,
+    decimal PrecoAtual,
+    decimal PrecoInicial,
+    decimal VariacaoPercentual,
+    decimal VariacaoReais,
+    bool IsAlta
+);
+
+// DTOs para Notícias e Favoritos
+public record NoticiaAtivoDto(
+    string Id,
+    string Ticker,
+    IEnumerable<string>? TickersRelacionados,
+    string Titulo,
+    string Resumo,
+    string Fonte,
+    string DataPublicacao,
+    string Categoria,
+    string Sentimento
+);

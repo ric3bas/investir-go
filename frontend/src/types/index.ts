@@ -75,3 +75,61 @@ export interface ResumoCarteira {
   percentualAcoes: number;
   percentualFIIs: number;
 }
+
+// ------------------- HISTÓRICO E GRÁFICOS (ATÉ 5 ANOS) -------------------
+export type PeriodoHistorico = '1D' | '7D' | '15D' | '1M' | '6M' | '1A' | '2A' | '5A';
+
+export interface HistoricoPonto {
+  data: string;           // Rótulo curto do eixo X (ex: "10:00", "12/Nov", "Jan/24")
+  preco: number;          // Cotação no momento
+  variacaoPeriodo: number;// % variação em relação ao início do período
+  dataCompleta: string;   // Data/hora legível para o tooltip
+}
+
+export interface HistoricoAtivo {
+  ticker: string;
+  nome: string;
+  periodo: PeriodoHistorico;
+  precoInicial: number;
+  precoFinal: number;
+  variacaoReais: number;
+  variacaoPercentual: number;
+  minima: number;
+  maxima: number;
+  precoMedio: number;
+  pontos: HistoricoPonto[];
+}
+
+// ------------------- PERFORMANCE & RANKING (TOP 7) -------------------
+export type PeriodoPerformance = '1D' | '7D' | '15D';
+
+export interface PerformanceAtivo {
+  posicao: number;
+  ativo: Ativo;
+  ticker: string;
+  nome: string;
+  tipo: 'Acao' | 'FII' | 'BDR' | 'ETF';
+  setor?: string;
+  precoAtual: number;
+  precoInicial: number;
+  variacaoPercentual: number;
+  variacaoReais: number;
+  isAlta: boolean;
+}
+
+// ------------------- NOTÍCIAS & FAVORITOS -------------------
+export type CategoriaNoticia = 'Proventos' | 'Fato Relevante' | 'Resultado' | 'Mercado' | 'Analise';
+export type SentimentoNoticia = 'Positivo' | 'Neutro' | 'Atencao';
+
+export interface NoticiaAtivo {
+  id: string;
+  ticker: string;
+  tickersRelacionados?: string[];
+  titulo: string;
+  resumo: string;
+  fonte: string;
+  dataPublicacao: string;
+  categoria: CategoriaNoticia;
+  sentimento: SentimentoNoticia;
+  link?: string;
+}

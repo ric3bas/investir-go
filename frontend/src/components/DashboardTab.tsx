@@ -27,11 +27,67 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
   }
 
   // Dados para o gráfico de pizza por ativo
-  const dataAtivos = posicoes.map((p) => ({
+  const dataAtivos = posicoes.map((p, idx) => ({
     name: p.ticker,
     value: p.saldoAtual,
     tipo: p.tipo,
+    percentual: p.percentualCarteira,
+    nome: p.nome,
+    color: COLORS[idx % COLORS.length],
   }));
+
+  const renderCustomizedLabel = (props: any) => {
+    const { cx, x, y, name, index, percent } = props;
+    if (posicoes.length > 8 && (percent ?? 0) < 0.03) {
+      return null;
+    }
+
+    return (
+      <text
+        x={x}
+        y={y}
+        textAnchor={props.textAnchor || (x > cx ? 'start' : 'end')}
+        dominantBaseline="central"
+        className="text-xs font-semibold select-none"
+      >
+        <tspan fill={COLORS[index % COLORS.length]} fontWeight="bold">
+          {name}
+        </tspan>
+        <tspan fill="#e2e8f0" fontSize="11">
+          {` ${((percent ?? 0) * 100).toFixed(0)}%`}
+        </tspan>
+      </text>
+    );
+  };
+
+  const CustomPieTooltip = ({ active, payload }: any) => {
+    if (!active || !payload || !payload.length) return null;
+    const item = payload[0];
+    const ticker = item.name;
+    const rawVal = item.value;
+    const valor = typeof rawVal === 'number'
+      ? rawVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+      : rawVal;
+    const percentual = item.payload?.percentual ?? 0;
+    const nome = item.payload?.nome;
+    const cor = item.payload?.color || COLORS[item.payload?.index % COLORS.length] || '#10b981';
+
+    return (
+      <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700 px-3.5 py-2.5 rounded-xl shadow-2xl text-xs space-y-1.5 z-50">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: cor }} />
+          <span className="font-bold text-slate-100 text-sm">{ticker}</span>
+          {nome && <span className="text-slate-400 text-xs truncate max-w-[140px]">{nome}</span>}
+        </div>
+        <div className="flex items-center justify-between gap-4 pt-1 border-t border-slate-800 text-slate-200">
+          <span className="font-bold text-emerald-400 text-sm">{valor}</span>
+          <span className="text-slate-300 font-semibold bg-slate-800 px-1.5 py-0.5 rounded text-[11px]">
+            {percentual}%
+          </span>
+        </div>
+      </div>
+    );
+  };
 
   // Dados para o gráfico Ações vs FIIs
   const dataCategorias = [
@@ -166,22 +222,17 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={95}
+                    innerRadius={48}
+                    outerRadius={74}
                     paddingAngle={3}
+                    label={renderCustomizedLabel}
+                    labelLine={{ strokeWidth: 1.5 }}
                   >
                     {dataAtivos.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    formatter={(val: any) =>
-                      typeof val === 'number'
-                        ? val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                        : val
-                    }
-                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px' }}
-                  />
+                  <Tooltip content={<CustomPieTooltip />} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -189,7 +240,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             {/* Lista dos maiores pesos */}
             <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
               {posicoes.map((pos, idx) => (
-                <div key={pos.ativoId} className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-950/40 border border-slate-800/60">
+                <div key={pos.ativoId} className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-950/40 border border-slate-800/60 hover:border-slate-700/80 hover:bg-slate-950/70 transition">
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
                     <span className="font-bold text-slate-200">{pos.ticker}</span>

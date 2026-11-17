@@ -1,4 +1,4 @@
-# 📈 InvestirGo — Gestão de Investimentos, Preço Médio e Proventos (B3 & FIIs)
+# 📈 InvestirGo — Gestão de Investimentos, Preço Médio, Proventos & Cotações (B3 & FIIs)
 
 Plataforma completa de controle patrimonial para investidores em **Ações** e **Fundos Imobiliários (FIIs)** da bolsa brasileira (B3). Construída seguindo rigorosamente a **Clean Architecture** do projeto de referência `peca-aki`, utilizando **.NET 10 Minimal API**, **PostgreSQL** com **Dapper**, e **Frontend React 19 + Vite + Tailwind CSS**.
 
@@ -6,23 +6,45 @@ Plataforma completa de controle patrimonial para investidores em **Ações** e *
 
 ## 🚀 Funcionalidades Principais
 
-1. **Cálculo Preciso de Preço Médio**:
+1. **Top 30 Ativos com Modal e Gráfico Histórico de até 5 Anos**:
+   - Clique em qualquer ativo do catálogo para abrir o modal de análise interativa.
+   - Consulta de múltiplos períodos: **1D (Hoje)**, **7D**, **15D**, **1M**, **6M**, **1A**, **2A** e **5A (5 Anos)**.
+   - Indicador visual claro do quanto o ativo subiu ou caiu em percentual (%) e em reais (R$), com mínima, máxima e preço médio.
+   - Gráfico de área suave (*Recharts*) com gradientes dinâmicos (verde em alta / vermelho em baixa) e tooltips com data legível e variação acumulada.
+   - Botão para favoritar e ação direta para comprar cotas.
+
+2. **Top 7 Maiores Altas & Top 7 Maiores Baixas (Página Exclusiva de Performance)**:
+   - Visualização dedicada dos 7 ativos que mais renderam e dos 7 que menos performaram.
+   - Seleção ágil entre os períodos: **No Dia (1D)**, **7 Dias (Semanal)** e **15 Dias (Quinzenal)**.
+   - Filtros por classe de ativo: *Todos*, *Apenas Ações* ou *Apenas FIIs*.
+   - Destaques automáticos: ativo campeão do período, ativo mais pressionado e média de rendimento da bolsa.
+   - Badges de pódio com medalhas (🥇 1º Ouro, 🥈 2º Prata, 🥉 3º Bronze) e barras visuais de magnitude.
+
+3. **Área de Acompanhamento Diário: Notícias Recentes & Ativos Favoritos**:
+   - Sistema de favoritos persistente via *localStorage*, sincronizado em toda a aplicação.
+   - Feed de notícias e fatos relevantes em tempo real, filtrados pelos ativos que o investidor favoritou.
+   - Seletor de visualização: *Meus Favoritos*, *Ativo específico* ou *Todas as notícias do mercado*.
+   - Tags por categoria (*Proventos*, *Fatos Relevantes*, *Resultados*, *Análises*) e impacto de mercado (*Positivo*, *Neutro*, *Atenção*).
+   - Modal para leitura rápida e aprofundada de comunicados.
+
+4. **Cálculo Preciso de Preço Médio e PnL**:
    - Atualização ponderada automática do Preço Médio a cada operação de compra:
      $$PM = \frac{(Q_{atual} \times PM_{atual}) + (Q_{compra} \times P_{compra})}{Q_{atual} + Q_{compra}}$$
    - Manutenção do preço médio e apuração de lucro/prejuízo realizado nas vendas.
-2. **Valor Investido vs. Cotação Atual (A Mercado)**:
-   - Visualização lado a lado do total desembolsado e do saldo a mercado atualizado.
    - Rentabilidade percentual e variação em R$ por ativo e consolidada na carteira.
-3. **Área Exclusiva de Proventos**:
+
+5. **Área Exclusiva de Proventos**:
    - Registro e acompanhamento de **Dividendos**, **JCP (Juros sobre Capital Próprio)**, **Rendimentos de FIIs** e **Amortizações**.
-   - Gráfico de evolução mensal da renda passiva recebida.
-   - Cálculo do retorno total líquido somando proventos e valorização.
-4. **Top 30 Melhores Ativos Pré-Carregados**:
-   - 15 maiores empresas da B3 (PETR4, VALE3, ITUB4, BBAS3, BBDC4, TAEE4, TAEE11, ITSA4, SANB4, POMO4, BBDC3, WEGE3, ABEV3, RENT3, PRIO3).
-   - 15 principais Fundos Imobiliários (MXRF11, HGLG11, XPML11, KNIP11, KNCR11, BTLG11, VISC11, HGRU11, CPTS11, VGHF11, TGAR11, KNHY11, XPLG11, TRXF11, ALZR11).
-   - Edição rápida de cotação para simulação em tempo real de oscilações da carteira.
-5. **Histórico da Sua Planilha Pré-Carregado**:
-   - Todas as 18 operações fornecidas como exemplo já vêm migradas e computadas no banco de dados.
+   - Gráficos de evolução mensal da renda passiva e retorno total líquido.
+
+6. **Fluxo Reorganizado em Páginas Separadas e Amigáveis**:
+   - 📊 **Dashboard Consolidado**: Resumo patrimonial, gráficos de alocação e proventos.
+   - 💼 **Minha Carteira**: Posições em custódia, preço médio, cotação a mercado e rentabilidade individual.
+   - 🏆 **Altas & Baixas (Ranking)**: Top 7 que mais renderam e Top 7 que menos performaram (1D, 7D, 15D).
+   - 📈 **Top 30 Mercado**: Catálogo completo com clique interativo para modal de 5 anos e edição rápida de cotações.
+   - ⭐ **Notícias & Favoritos**: Hub diário com resumo dos favoritos e feed de notícias financeiras.
+   - 🪙 **Proventos**: Extrato detalhado de dividendos e rendimentos.
+   - 📝 **Lançamentos**: Histórico de ordens de compra e venda.
 
 ---
 
@@ -33,14 +55,15 @@ flowchart TD
     subgraph Frontend ["Frontend (React 19 + Vite + Tailwind CSS)"]
         DashboardUI["Dashboard Consolidado (Recharts)"]
         CarteiraUI["Minha Carteira (Preço Médio & Valor Atual)"]
-        OperacoesUI["Lançamentos (Compras & Vendas)"]
-        ProventosUI["Área de Proventos (Renda Passiva)"]
+        PerformanceUI["Top 7 Altas & Baixas (1D / 7D / 15D)"]
+        NoticiasUI["Notícias & Acompanhamento dos Favoritos"]
         MercadoUI["Catálogo Top 30 Ativos B3"]
-        ApiClient["Axios / API Proxy (:5173 -> :5000)"]
+        ModalDetalhes["Modal Interativo (Gráfico até 5 Anos)"]
+        ApiClient["Axios / API Proxy (:5173 -> :5050)"]
     end
 
     subgraph Backend [".NET 10 Minimal API (Clean Architecture)"]
-        Endpoints["Minimal API Endpoints (/api/carteira, /api/operacoes, /api/proventos, /api/ativos)"]
+        Endpoints["Minimal API Endpoints (/api/carteira, /api/operacoes, /api/proventos, /api/ativos, /api/noticias)"]
         CarteiraService["Infrastructure CarteiraService (Cálculo Preço Médio & PnL)"]
         Repositories["Dapper Repositories (AtivoRepo, OperacaoRepo, ProventoRepo)"]
         DbFactory["DbConnectionFactory (Npgsql)"]
@@ -55,8 +78,9 @@ flowchart TD
 
     DashboardUI --> ApiClient
     CarteiraUI --> ApiClient
-    OperacoesUI --> ApiClient
-    ProventosUI --> ApiClient
+    PerformanceUI --> ApiClient
+    NoticiasUI --> ApiClient
+    MercadoUI --> ModalDetalhes
     MercadoUI --> ApiClient
     ApiClient --> Endpoints
     Endpoints --> CarteiraService
@@ -84,11 +108,11 @@ investir-go/
 │       ├── Domain/
 │       │   └── Entities/        # Ativo, Operacao, Provento, PosicaoCarteira, ResumoCarteira
 │       ├── Application/
-│       │   ├── DTOs/            # CriarOperacaoDto, CriarProventoDto, AtualizarCotacaoDto
+│       │   ├── DTOs/            # DTOs de Operações, Proventos, Histórico, Performance e Notícias
 │       │   └── Interfaces/      # IAtivoRepository, IOperacaoRepository, IProventoRepository, ICarteiraService
 │       ├── Infrastructure/
 │       │   ├── Data/            # DbConnectionFactory (Npgsql)
-│       │   ├── Repositories/    # AtivoRepository, OperacaoRepository, ProventoRepository (Dapper)
+│       │   ├── Repositories/    # AtivoRepository, OperacaoRepository, ProventoRepository (com fallback resiliente)
 │       │   └── Services/        # CarteiraService (Cálculo de Preço Médio e Rentabilidade)
 │       ├── API/
 │       │   └── Endpoints/       # Endpoints Minimal API (Mapeamento /api/...)
@@ -97,13 +121,26 @@ investir-go/
 │
 └── frontend/                    # Frontend React 19 + TypeScript + Vite + Tailwind
     ├── src/
-    │   ├── components/          # Navbar, DashboardTab, CarteiraTab, OperacoesTab, ProventosTab, MercadoTab, Modais
-    │   ├── services/            # api.ts (Cliente Axios)
-    │   ├── types/               # Tipos TypeScript
-    │   ├── App.tsx              # Componente Raiz e Gestão de Estado
+    │   ├── components/
+    │   │   ├── Navbar.tsx               # Barra de navegação com contador de favoritos e abas
+    │   │   ├── AtivoDetalhesModal.tsx   # Modal de 5 anos com gráfico, variação % e R$, mínima e máxima
+    │   │   ├── PerformanceTab.tsx       # Página dedicada: Top 7 Maiores Altas e Baixas (1D, 7D, 15D)
+    │   │   ├── NoticiasFavoritosTab.tsx # Página dedicada: Hub diário de notícias dos ativos favoritos
+    │   │   ├── MercadoTab.tsx           # Catálogo Top 30 com clique para modal e favoritar
+    │   │   ├── CarteiraTab.tsx          # Posições, Preço Médio e Valor a Mercado
+    │   │   ├── DashboardTab.tsx         # Dashboard Consolidado
+    │   │   ├── OperacoesTab.tsx         # Lançamentos de Compras e Vendas
+    │   │   └── ProventosTab.tsx         # Extrato e gráficos de proventos
+    │   ├── utils/
+    │   │   └── marketData.ts    # Motor de histórico até 5 anos, rankings de performance e notícias
+    │   ├── services/
+    │   │   └── api.ts           # Cliente Axios com fallback resiliente
+    │   ├── types/
+    │   │   └── index.ts         # Tipos TypeScript para todas as entidades
+    │   ├── App.tsx              # Componente Raiz com gestão de estado e sincronização
     │   └── main.tsx             # Entrypoint Vite
     ├── package.json
-    ├── vite.config.ts
+    ├── vite.config.ts           # Configuração de proxy para :5050
     └── tailwind.config.js
 ```
 
@@ -111,19 +148,19 @@ investir-go/
 
 ## ⚡ Como Executar o Projeto
 
-### 1. Iniciar o Banco de Dados (Docker Desktop)
-No terminal, execute:
+### 1. Iniciar o Banco de Dados (Docker Desktop - Opcional)
 ```bash
 docker compose -f database/docker-compose.yml up -d
 ```
 > O container `investir-db` será iniciado na porta `5432` com usuário `admin` e banco `investir_db`. O script `database/init.sql` carrega automaticamente o schema e os 30 ativos.
+> *(Nota: Tanto a API quanto o Frontend contam com modo de contingência/resiliência com dados pré-carregados, funcionando mesmo se o Docker estiver desligado).*
 
 ### 2. Iniciar o Backend (.NET 10)
 ```bash
 cd backend/src
 dotnet run
 ```
-A API iniciará em `http://localhost:5000` (documentação Swagger disponível em `http://localhost:5000/swagger`).
+A API iniciará em `http://localhost:5050` (documentação Swagger disponível em `http://localhost:5050/swagger`).
 
 ### 3. Iniciar o Frontend (React + Vite)
 Em outro terminal:

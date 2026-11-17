@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { PosicaoCarteira } from '../types';
-import { Plus, Minus, Coins, ArrowUpDown, Search, Filter } from 'lucide-react';
+import { Plus, Minus, Coins, Search, LineChart } from 'lucide-react';
 
 interface CarteiraTabProps {
   posicoes: PosicaoCarteira[];
   onOpenNovaOperacao: (defaultTicker?: string, defaultTipo?: 'COMPRA' | 'VENDA') => void;
   onOpenNovoProvento: (defaultTicker?: string) => void;
+  onSelectTicker?: (ticker: string) => void;
 }
 
 export const CarteiraTab: React.FC<CarteiraTabProps> = ({
   posicoes,
   onOpenNovaOperacao,
   onOpenNovoProvento,
+  onSelectTicker,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroTipo, setFiltroTipo] = useState<'TODOS' | 'Acao' | 'FII'>('TODOS');
@@ -38,12 +40,12 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
   const totalProventos = filtered.reduce((acc, p) => acc + p.totalProventosRecebidos, 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-200">
       {/* Header & Filtros */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-100">Posições em Custódia</h2>
-          <p className="text-xs text-slate-400">
+          <h2 className="text-xl sm:text-2xl font-black text-slate-100 tracking-tight">Posições em Custódia</h2>
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Acompanhe Preço Médio ponderado, valor investido, cotação atual a mercado e proventos.
           </p>
         </div>
@@ -57,19 +59,19 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
               placeholder="Buscar ticker ou nome..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-3 py-1.5 text-xs rounded-lg bg-slate-900 border border-slate-800 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+              className="pl-9 pr-3 py-1.5 text-xs rounded-xl bg-slate-900 border border-slate-800 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
             />
           </div>
 
           {/* Filtro Tipo */}
-          <div className="flex rounded-lg bg-slate-900 border border-slate-800 p-0.5 text-xs">
+          <div className="flex rounded-xl bg-slate-900 border border-slate-800 p-0.5 text-xs">
             {(['TODOS', 'Acao', 'FII'] as const).map((tipo) => (
               <button
                 key={tipo}
                 onClick={() => setFiltroTipo(tipo)}
-                className={`px-3 py-1 rounded-md transition ${
+                className={`px-3 py-1.5 rounded-lg transition font-bold ${
                   filtroTipo === tipo
-                    ? 'bg-slate-800 text-emerald-400 font-semibold'
+                    ? 'bg-slate-800 text-emerald-400'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -82,7 +84,7 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
           <select
             value={ordenacao}
             onChange={(e) => setOrdenacao(e.target.value as any)}
-            className="px-3 py-1.5 text-xs rounded-lg bg-slate-900 border border-slate-800 text-slate-300 focus:outline-none focus:border-emerald-500"
+            className="px-3 py-1.5 text-xs rounded-xl bg-slate-900 border border-slate-800 text-slate-300 focus:outline-none focus:border-emerald-500"
           >
             <option value="saldo">Maior Saldo Atual</option>
             <option value="rentabilidade">Maior Rentabilidade</option>
@@ -92,56 +94,56 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
       </div>
 
       {/* Resumo da Tabela filtrada */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-900/60 border border-slate-800 p-4 rounded-xl text-xs">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-900/60 border border-slate-800 p-4 rounded-2xl text-xs">
         <div>
-          <span className="text-slate-400 block">Investido na Seleção</span>
-          <span className="font-bold text-slate-200 text-sm">
+          <span className="text-slate-400 block font-medium">Investido na Seleção</span>
+          <span className="font-bold text-slate-100 text-sm font-mono mt-0.5 block">
             {totalInvestido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </span>
         </div>
         <div>
-          <span className="text-slate-400 block">Saldo a Mercado</span>
-          <span className="font-bold text-slate-200 text-sm">
+          <span className="text-slate-400 block font-medium">Saldo a Mercado</span>
+          <span className="font-bold text-slate-100 text-sm font-mono mt-0.5 block">
             {totalSaldoAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </span>
         </div>
         <div>
-          <span className="text-slate-400 block">Variação Não Realizada</span>
-          <span className={`font-bold text-sm ${totalVariacao >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+          <span className="text-slate-400 block font-medium">Variação Não Realizada</span>
+          <span className={`font-bold text-sm font-mono mt-0.5 block ${totalVariacao >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
             {totalVariacao >= 0 ? '+' : ''}
             {totalVariacao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} ({totalRentabilidade.toFixed(2)}%)
           </span>
         </div>
         <div>
-          <span className="text-slate-400 block">Proventos Recebidos</span>
-          <span className="font-bold text-amber-400 text-sm">
+          <span className="text-slate-400 block font-medium">Proventos Recebidos</span>
+          <span className="font-bold text-amber-400 text-sm font-mono mt-0.5 block">
             {totalProventos.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </span>
         </div>
       </div>
 
       {/* Tabela de Carteira */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-950/70 border-b border-slate-800 text-slate-400 uppercase tracking-wider font-semibold">
+            <thead className="bg-slate-950/80 border-b border-slate-800 text-slate-400 uppercase tracking-wider font-semibold">
               <tr>
-                <th className="py-3 px-4">Ativo</th>
-                <th className="py-3 px-3 text-right">Qtd</th>
-                <th className="py-3 px-3 text-right font-bold text-emerald-400">Preço Médio</th>
-                <th className="py-3 px-3 text-right font-bold text-cyan-400">Preço Atual</th>
-                <th className="py-3 px-3 text-right">Valor Investido</th>
-                <th className="py-3 px-3 text-right font-bold text-slate-200">Valor Agora</th>
-                <th className="py-3 px-3 text-right">Lucro / Prejuízo</th>
-                <th className="py-3 px-3 text-right text-amber-400">Proventos</th>
-                <th className="py-3 px-3 text-right">Peso</th>
-                <th className="py-3 px-4 text-center">Ações</th>
+                <th className="py-3.5 px-4">Ativo</th>
+                <th className="py-3.5 px-3 text-right">Qtd</th>
+                <th className="py-3.5 px-3 text-right font-bold text-emerald-400">Preço Médio</th>
+                <th className="py-3.5 px-3 text-right font-bold text-cyan-400">Preço Atual</th>
+                <th className="py-3.5 px-3 text-right">Valor Investido</th>
+                <th className="py-3.5 px-3 text-right font-bold text-slate-200">Valor Agora</th>
+                <th className="py-3.5 px-3 text-right">Lucro / Prejuízo</th>
+                <th className="py-3.5 px-3 text-right text-amber-400">Proventos</th>
+                <th className="py-3.5 px-3 text-right">Peso</th>
+                <th className="py-3.5 px-4 text-center">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-slate-300">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-8 text-center text-slate-500">
+                  <td colSpan={10} className="py-10 text-center text-slate-500">
                     Nenhum ativo encontrado na carteira.
                   </td>
                 </tr>
@@ -149,9 +151,9 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
                 filtered.map((pos) => {
                   const isPosLucro = pos.variacaoReais >= 0;
                   return (
-                    <tr key={pos.ativoId} className="hover:bg-slate-800/40 transition">
+                    <tr key={pos.ativoId} className="hover:bg-slate-800/40 transition group">
                       {/* Ativo */}
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2">
                           <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
                             pos.tipo === 'FII' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
@@ -159,39 +161,50 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
                             {pos.tipo}
                           </span>
                           <div>
-                            <span className="font-bold text-slate-100 text-sm block">{pos.ticker}</span>
+                            {onSelectTicker ? (
+                              <button
+                                onClick={() => onSelectTicker(pos.ticker)}
+                                className="font-extrabold text-slate-100 text-sm hover:text-emerald-400 font-mono flex items-center gap-1 transition text-left"
+                                title="Ver gráfico histórico de até 5 anos"
+                              >
+                                <span>{pos.ticker}</span>
+                                <LineChart className="w-3 h-3 text-slate-500 group-hover:text-emerald-400 opacity-0 group-hover:opacity-100" />
+                              </button>
+                            ) : (
+                              <span className="font-bold text-slate-100 text-sm block font-mono">{pos.ticker}</span>
+                            )}
                             <span className="text-[11px] text-slate-400 block truncate max-w-[140px]">{pos.nome}</span>
                           </div>
                         </div>
                       </td>
 
                       {/* Quantidade */}
-                      <td className="py-3 px-3 text-right font-mono font-medium text-slate-200">
+                      <td className="py-3.5 px-3 text-right font-mono font-medium text-slate-200">
                         {pos.quantidadeCustodia.toLocaleString('pt-BR')}
                       </td>
 
                       {/* Preço Médio */}
-                      <td className="py-3 px-3 text-right font-mono font-bold text-emerald-400">
+                      <td className="py-3.5 px-3 text-right font-mono font-bold text-emerald-400">
                         {pos.precoMedio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                       </td>
 
                       {/* Preço Atual */}
-                      <td className="py-3 px-3 text-right font-mono font-bold text-cyan-400">
+                      <td className="py-3.5 px-3 text-right font-mono font-bold text-cyan-400">
                         {pos.precoAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 })}
                       </td>
 
                       {/* Total Investido */}
-                      <td className="py-3 px-3 text-right font-mono text-slate-300">
+                      <td className="py-3.5 px-3 text-right font-mono text-slate-300">
                         {pos.totalInvestido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                       </td>
 
                       {/* Saldo Atual */}
-                      <td className="py-3 px-3 text-right font-mono font-bold text-slate-100">
+                      <td className="py-3.5 px-3 text-right font-mono font-bold text-slate-100">
                         {pos.saldoAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                       </td>
 
                       {/* Lucro / Prejuízo */}
-                      <td className="py-3 px-3 text-right font-mono">
+                      <td className="py-3.5 px-3 text-right font-mono">
                         <span className={`font-semibold block ${isPosLucro ? 'text-emerald-400' : 'text-rose-400'}`}>
                           {isPosLucro ? '+' : ''}
                           {pos.variacaoReais.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
@@ -202,7 +215,7 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
                       </td>
 
                       {/* Proventos */}
-                      <td className="py-3 px-3 text-right font-mono font-semibold text-amber-400">
+                      <td className="py-3.5 px-3 text-right font-mono font-semibold text-amber-400">
                         {pos.totalProventosRecebidos > 0 ? (
                           pos.totalProventosRecebidos.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
                         ) : (
@@ -211,31 +224,31 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
                       </td>
 
                       {/* Peso na carteira */}
-                      <td className="py-3 px-3 text-right font-mono text-slate-400">
+                      <td className="py-3.5 px-3 text-right font-mono text-slate-400">
                         {pos.percentualCarteira.toFixed(1)}%
                       </td>
 
                       {/* Ações */}
-                      <td className="py-3 px-4 text-center">
-                        <div className="flex items-center justify-center gap-1">
+                      <td className="py-3.5 px-4 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
                           <button
                             title="Comprar mais cotas"
                             onClick={() => onOpenNovaOperacao(pos.ticker, 'COMPRA')}
-                            className="p-1 rounded bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 transition"
+                            className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 transition"
                           >
                             <Plus className="w-3.5 h-3.5" />
                           </button>
                           <button
                             title="Vender cotas"
                             onClick={() => onOpenNovaOperacao(pos.ticker, 'VENDA')}
-                            className="p-1 rounded bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30 transition"
+                            className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30 transition"
                           >
                             <Minus className="w-3.5 h-3.5" />
                           </button>
                           <button
                             title="Registrar Provento"
                             onClick={() => onOpenNovoProvento(pos.ticker)}
-                            className="p-1 rounded bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/30 transition"
+                            className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/30 transition"
                           >
                             <Coins className="w-3.5 h-3.5" />
                           </button>

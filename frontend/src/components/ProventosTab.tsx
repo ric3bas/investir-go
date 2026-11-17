@@ -130,6 +130,8 @@ export const ProventosTab: React.FC<ProventosTabProps> = ({
                       : val
                   }
                   contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px' }}
+                  itemStyle={{ color: '#f1f5f9' }}
+                  labelStyle={{ color: '#f8fafc', fontWeight: 600 }}
                 />
                 <Bar dataKey="total" fill="#f59e0b" radius={[6, 6, 0, 0]} name="Valor Recebido" />
               </BarChart>
