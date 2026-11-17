@@ -1,0 +1,88 @@
+# ===================================================
+# .NET / C#
+# ===================================================
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+out/
+publish/
+
+# Visual Studio / JetBrains Rider / OmniSharp
+.vs/
+.idea/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.sln.docstates
+*.DotSettings.user
+*.pidb
+*.booproj
+
+# Build & Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.visualstudio.cache
+coverage/
+*.coverage
+*.lcov
+
+# Sensitive / Environment Configuration files
+appsettings.Production.json
+appsettings.*.local.json
+appsettings.local.json
+secrets.json
+*.pfx
+*.publishsettings
+
+# ===================================================
+# Node / Frontend (React, Vite, TypeScript)
+# ===================================================
+node_modules/
+dist/
+dist-ssr/
+*.tsbuildinfo
+.vite/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Editor directories and files
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-project
+*.sublime-workspace
+
+# ===================================================
+# Database & Docker Local Mounts
+# ===================================================
+pgdata/
+postgres_data/
+
+# ===================================================
+# OS / System files
+# ===================================================
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+# Miscellaneous
+*.log
+*.tmp
+*.bak
