@@ -31,7 +31,7 @@ export const getCsrfTokenFromCookie = (): string | null => {
 
 // Cliente Axios dedicado para requisições de autenticação e API protegida
 export const authClient = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   timeout: 10000,
   withCredentials: true, // Essencial para envio e recebimento de cookies HttpOnly SameSite
 });
