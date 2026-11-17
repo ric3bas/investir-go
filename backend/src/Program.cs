@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using Dapper;
 using InvestirGo.API.API.Endpoints;
 using InvestirGo.API.API.Middlewares;
 using InvestirGo.API.Application.Interfaces;
@@ -217,7 +218,7 @@ using (var scope = app.Services.CreateScope())
 
     async Task SeedDefaultUsersAsync(IAuthRepository repo)
     {
-        // 1. Usuário Investidor Comum (login simples com email e senha)
+        // Usuário único padrão: usuario@investirgo.com (sem MFA, login direto)
         var regularUser = await repo.GetUserByEmailNormalizedAsync("usuario@investirgo.com");
         if (regularUser == null)
         {
@@ -242,33 +243,6 @@ using (var scope = app.Services.CreateScope())
             regularUser.TotpEnabled = false;
             await repo.UpdateUserAsync(regularUser);
         }
-
-        // 2. Garante que admin@investirgo.com (se for acessado) também funcione como usuário direto sem MFA
-        var adminExisting = await repo.GetUserByEmailNormalizedAsync("admin@investirgo.com");
-        if (adminExisting == null)
-        {
-            var adminUser = new User
-            {
-                Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                Nome = "Investidor Admin",
-                Email = "admin@investirgo.com",
-                EmailNormalized = "admin@investirgo.com",
-                PasswordHash = hasher.HashPassword("Admin@InvestirGo2026!"),
-                Role = "User",
-                IsActive = true,
-                EmailVerified = true,
-                TotpEnabled = false,
-                TokenVersion = 1,
-                CreatedAt = DateTime.UtcNow
-            };
-            await repo.CreateUserAsync(adminUser);
-        }
-        else if (adminExisting.TotpEnabled || adminExisting.Role == "Admin")
-        {
-            adminExisting.TotpEnabled = false;
-            adminExisting.Role = "User";
-            await repo.UpdateUserAsync(adminExisting);
-        }
     }
 
     try
@@ -278,10 +252,84 @@ using (var scope = app.Services.CreateScope())
         {
             await SeedDefaultUsersAsync(authRepo);
         }
+
+        // Sincronização automática do PostgreSQL com as 18 operações da planilha
+        var dbFactory = scope.ServiceProvider.GetService<DbConnectionFactory>();
+        if (dbFactory != null)
+        {
+            using var conn = dbFactory.CreateConnection();
+            // 1. Remove qualquer outro usuário de teste (mantendo apenas usuario@investirgo.com)
+            await conn.ExecuteAsync(@"
+                DELETE FROM auth.users WHERE email_normalized <> 'usuario@investirgo.com';
+                UPDATE auth.users SET totp_enabled = FALSE, role = 'User' WHERE email_normalized = 'usuario@investirgo.com';
+            ");
+
+            // 2. Verifica se a tabela inv.operacoes contém apenas as operações da planilha do usuário
+            var countBbas3 = await conn.ExecuteScalarAsync<int>("SELECT COUNT(1) FROM inv.operacoes o JOIN inv.ativos a ON a.id = o.ativo_id WHERE a.ticker = 'BBAS3';");
+            var hasPetr4 = await conn.ExecuteScalarAsync<int>("SELECT COUNT(1) FROM inv.operacoes o JOIN inv.ativos a ON a.id = o.ativo_id WHERE a.ticker = 'PETR4';");
+
+            if (countBbas3 < 6 || hasPetr4 > 0)
+            {
+                Log.Information("Atualizando banco de dados com os ativos da planilha do usuário (BBAS3, TAEE4, ITSA4, etc)...");
+                await conn.ExecuteAsync(@"
+                    TRUNCATE TABLE inv.operacoes, inv.proventos RESTART IDENTITY CASCADE;
+
+                    INSERT INTO inv.ativos (ticker, nome, tipo, setor, preco_atual, variacao_dia, dividend_yield)
+                    VALUES
+                        ('BBAS3', 'Banco do Brasil S.A.', 'Acao', 'Financeiro / Bancos', 14.62, 0.45, 9.85),
+                        ('TAEE4', 'Transmissora Aliança de Energia Elétrica S.A.', 'Acao', 'Energia Elétrica', 13.70, -0.15, 8.90),
+                        ('ITSA4', 'Itaúsa S.A.', 'Acao', 'Financeiro / Holdings', 13.30, 0.60, 8.20),
+                        ('BBDC4', 'Banco Bradesco S.A. PN', 'Acao', 'Financeiro / Bancos', 14.41, 0.28, 7.50),
+                        ('SANB4', 'Banco Santander Brasil S.A.', 'Acao', 'Financeiro / Bancos', 14.14, 0.50, 7.80),
+                        ('POMO4', 'Marcopolo S.A.', 'Acao', 'Material de Transporte', 3.85, -0.26, 6.40),
+                        ('BBDC3', 'Banco Bradesco S.A. ON', 'Acao', 'Financeiro / Bancos', 13.19, 0.15, 7.10)
+                    ON CONFLICT (ticker) DO UPDATE 
+                    SET nome = EXCLUDED.nome,
+                        tipo = EXCLUDED.tipo,
+                        setor = EXCLUDED.setor,
+                        preco_atual = EXCLUDED.preco_atual,
+                        dividend_yield = EXCLUDED.dividend_yield;
+
+                    INSERT INTO inv.operacoes (ativo_id, tipo_operacao, data_operacao, quantidade, preco_unitario, valor_total, observacoes)
+                    SELECT a.id, op.tipo_operacao, op.data_operacao::DATE, op.quantidade, op.preco_unitario, (op.quantidade * op.preco_unitario), 'Lançamento planilha'
+                    FROM (VALUES
+                        ('BBAS3', 'COMPRA', '2026-10-26', 1500, 17.94),
+                        ('TAEE4', 'COMPRA', '2026-10-26', 1000, 14.08),
+                        ('ITSA4', 'COMPRA', '2026-10-26', 1000, 13.19),
+                        ('BBDC4', 'COMPRA', '2026-10-26', 700, 15.55),
+                        ('BBAS3', 'COMPRA', '2026-10-28', 400, 16.96),
+                        ('TAEE4', 'COMPRA', '2026-10-28', 400, 13.30),
+                        ('ITSA4', 'COMPRA', '2026-10-28', 400, 12.91),
+                        ('SANB4', 'COMPRA', '2026-10-28', 400, 12.52),
+                        ('POMO4', 'COMPRA', '2026-10-28', 1300, 3.82),
+                        ('BBDC3', 'COMPRA', '2026-10-28', 400, 13.62),
+                        ('BBDC4', 'COMPRA', '2026-10-30', 100, 14.04),
+                        ('SANB4', 'COMPRA', '2026-10-30', 200, 12.07),
+                        ('ITSA4', 'COMPRA', '2026-10-30', 200, 12.50),
+                        ('BBDC4', 'COMPRA', '2026-11-03', 300, 13.54),
+                        ('BBAS3', 'COMPRA', '2026-11-03', 300, 16.12),
+                        ('BBAS3', 'COMPRA', '2026-11-12', 1000, 15.54),
+                        ('BBAS3', 'COMPRA', '2026-11-13', 800, 15.14),
+                        ('BBAS3', 'COMPRA', '2026-11-17', 700, 14.82)
+                    ) AS op(ticker, tipo_operacao, data_operacao, quantidade, preco_unitario)
+                    JOIN inv.ativos a ON a.ticker = op.ticker;
+
+                    INSERT INTO inv.proventos (ativo_id, tipo_provento, data_com, data_pagamento, valor_por_cota, quantidade_cotas, valor_total, observacoes)
+                    SELECT a.id, prov.tipo_provento, prov.data_com::DATE, prov.data_pagamento::DATE, prov.valor_por_cota, prov.quantidade_cotas, prov.valor_total, prov.observacoes
+                    FROM (VALUES
+                        ('BBAS3', 'Dividendo', '2026-10-31', '2026-11-10', 0.425000, 2200, 935.00, 'Dividendo 3T26'),
+                        ('TAEE4', 'JCP', '2026-11-01', '2026-11-14', 0.284000, 1400, 397.60, 'JCP Intermediário'),
+                        ('ITSA4', 'Dividendo', '2026-11-02', '2026-11-15', 0.152000, 1600, 243.20, 'Dividendo Mensal')
+                    ) AS prov(ticker, tipo_provento, data_com, data_pagamento, valor_por_cota, quantidade_cotas, valor_total, observacoes)
+                    JOIN inv.ativos a ON a.ticker = prov.ticker;
+                ");
+                Log.Information("Banco de dados sincronizado com sucesso com as 18 operações da planilha.");
+            }
+        }
     }
     catch (Exception ex)
     {
-        Log.Warning(ex, "Aviso ao realizar seed de usuários de desenvolvimento.");
+        Log.Warning(ex, "Aviso ao realizar sincronização do banco de dados.");
     }
 }
 

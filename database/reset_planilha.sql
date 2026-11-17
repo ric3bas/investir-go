@@ -2,25 +2,26 @@
 -- InvestirGo - Reset e Carga Fiel das 18 Operações da Planilha do Usuário
 -- ============================================================================
 
--- 1. Limpa todas as operações e proventos anteriores e desativa qualquer 2FA/MFA residual
+-- 1. Limpa todas as operações e proventos anteriores e garante apenas o usuário comum
 TRUNCATE TABLE inv.operacoes, inv.proventos RESTART IDENTITY CASCADE;
 DO $$
 BEGIN
     IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'auth' AND tablename = 'users') THEN
-        UPDATE auth.users SET totp_enabled = FALSE, role = 'User';
+        DELETE FROM auth.users WHERE email_normalized <> 'usuario@investirgo.com';
+        UPDATE auth.users SET totp_enabled = FALSE, role = 'User' WHERE email_normalized = 'usuario@investirgo.com';
     END IF;
 END $$;
 
--- 2. Garante que os ativos da planilha e Top 30 existam com cotações corretas
+-- 2. Garante que os ativos da planilha existam com cotações corretas
 INSERT INTO inv.ativos (ticker, nome, tipo, setor, preco_atual, variacao_dia, dividend_yield)
 VALUES
-    ('BBAS3', 'Banco do Brasil S.A.', 'Acao', 'Financeiro / Bancos', 14.95, 0.45, 9.85),
-    ('TAEE4', 'Transmissora Aliança de Energia Elétrica S.A.', 'Acao', 'Energia Elétrica', 14.07, -0.15, 8.90),
-    ('ITSA4', 'Itaúsa S.A.', 'Acao', 'Financeiro / Holdings', 13.39, 0.60, 8.20),
-    ('BBDC4', 'Banco Bradesco S.A. PN', 'Acao', 'Financeiro / Bancos', 14.23, 0.28, 7.50),
-    ('SANB4', 'Banco Santander Brasil S.A.', 'Acao', 'Financeiro / Bancos', 14.09, 0.50, 7.80),
-    ('POMO4', 'Marcopolo S.A.', 'Acao', 'Material de Transporte', 3.81, -0.26, 6.40),
-    ('BBDC3', 'Banco Bradesco S.A. ON', 'Acao', 'Financeiro / Bancos', 13.00, 0.15, 7.10),
+    ('BBAS3', 'Banco do Brasil S.A.', 'Acao', 'Financeiro / Bancos', 14.62, 0.45, 9.85),
+    ('TAEE4', 'Transmissora Aliança de Energia Elétrica S.A.', 'Acao', 'Energia Elétrica', 13.70, -0.15, 8.90),
+    ('ITSA4', 'Itaúsa S.A.', 'Acao', 'Financeiro / Holdings', 13.30, 0.60, 8.20),
+    ('BBDC4', 'Banco Bradesco S.A. PN', 'Acao', 'Financeiro / Bancos', 14.41, 0.28, 7.50),
+    ('SANB4', 'Banco Santander Brasil S.A.', 'Acao', 'Financeiro / Bancos', 14.14, 0.50, 7.80),
+    ('POMO4', 'Marcopolo S.A.', 'Acao', 'Material de Transporte', 3.85, -0.26, 6.40),
+    ('BBDC3', 'Banco Bradesco S.A. ON', 'Acao', 'Financeiro / Bancos', 13.19, 0.15, 7.10),
     ('PETR4', 'Petróleo Brasileiro S.A. Petrobras', 'Acao', 'Petróleo, Gás e Biocombustíveis', 37.85, 1.20, 14.20),
     ('VALE3', 'Vale S.A.', 'Acao', 'Mineração', 58.20, -0.80, 8.40),
     ('ITUB4', 'Itaú Unibanco Holding S.A.', 'Acao', 'Financeiro / Bancos', 34.60, 0.75, 7.90),

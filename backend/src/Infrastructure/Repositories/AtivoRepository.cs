@@ -13,13 +13,13 @@ public class AtivoRepository : IAtivoRepository
     private static readonly List<Ativo> _ativosFallback = new()
     {
         // 15 Ações
-        new Ativo { Id = 1, Ticker = "BBAS3", Nome = "Banco do Brasil S.A.", Tipo = "Acao", Setor = "Financeiro / Bancos", PrecoAtual = 14.95m, VariacaoDia = 0.45m, DividendYield = 9.85m },
-        new Ativo { Id = 2, Ticker = "TAEE4", Nome = "Transmissora Aliança de Energia Elétrica S.A.", Tipo = "Acao", Setor = "Energia Elétrica", PrecoAtual = 14.07m, VariacaoDia = -0.15m, DividendYield = 8.90m },
-        new Ativo { Id = 3, Ticker = "ITSA4", Nome = "Itaúsa S.A.", Tipo = "Acao", Setor = "Financeiro / Holdings", PrecoAtual = 13.39m, VariacaoDia = 0.60m, DividendYield = 8.20m },
-        new Ativo { Id = 4, Ticker = "BBDC4", Nome = "Banco Bradesco S.A. PN", Tipo = "Acao", Setor = "Financeiro / Bancos", PrecoAtual = 14.23m, VariacaoDia = 0.28m, DividendYield = 7.50m },
-        new Ativo { Id = 5, Ticker = "SANB4", Nome = "Banco Santander Brasil S.A.", Tipo = "Acao", Setor = "Financeiro / Bancos", PrecoAtual = 14.09m, VariacaoDia = 0.50m, DividendYield = 7.80m },
-        new Ativo { Id = 6, Ticker = "POMO4", Nome = "Marcopolo S.A.", Tipo = "Acao", Setor = "Material de Transporte", PrecoAtual = 3.81m, VariacaoDia = -0.26m, DividendYield = 6.40m },
-        new Ativo { Id = 7, Ticker = "BBDC3", Nome = "Banco Bradesco S.A. ON", Tipo = "Acao", Setor = "Financeiro / Bancos", PrecoAtual = 13.00m, VariacaoDia = 0.15m, DividendYield = 7.10m },
+        new Ativo { Id = 1, Ticker = "BBAS3", Nome = "Banco do Brasil S.A.", Tipo = "Acao", Setor = "Financeiro / Bancos", PrecoAtual = 14.62m, VariacaoDia = 0.45m, DividendYield = 9.85m },
+        new Ativo { Id = 2, Ticker = "TAEE4", Nome = "Transmissora Aliança de Energia Elétrica S.A.", Tipo = "Acao", Setor = "Energia Elétrica", PrecoAtual = 13.70m, VariacaoDia = -0.15m, DividendYield = 8.90m },
+        new Ativo { Id = 3, Ticker = "ITSA4", Nome = "Itaúsa S.A.", Tipo = "Acao", Setor = "Financeiro / Holdings", PrecoAtual = 13.30m, VariacaoDia = 0.60m, DividendYield = 8.20m },
+        new Ativo { Id = 4, Ticker = "BBDC4", Nome = "Banco Bradesco S.A. PN", Tipo = "Acao", Setor = "Financeiro / Bancos", PrecoAtual = 14.41m, VariacaoDia = 0.28m, DividendYield = 7.50m },
+        new Ativo { Id = 5, Ticker = "SANB4", Nome = "Banco Santander Brasil S.A.", Tipo = "Acao", Setor = "Financeiro / Bancos", PrecoAtual = 14.14m, VariacaoDia = 0.50m, DividendYield = 7.80m },
+        new Ativo { Id = 6, Ticker = "POMO4", Nome = "Marcopolo S.A.", Tipo = "Acao", Setor = "Material de Transporte", PrecoAtual = 3.85m, VariacaoDia = -0.26m, DividendYield = 6.40m },
+        new Ativo { Id = 7, Ticker = "BBDC3", Nome = "Banco Bradesco S.A. ON", Tipo = "Acao", Setor = "Financeiro / Bancos", PrecoAtual = 13.19m, VariacaoDia = 0.15m, DividendYield = 7.10m },
         new Ativo { Id = 8, Ticker = "PETR4", Nome = "Petróleo Brasileiro S.A. Petrobras", Tipo = "Acao", Setor = "Petróleo, Gás e Biocombustíveis", PrecoAtual = 37.85m, VariacaoDia = 1.20m, DividendYield = 14.20m },
         new Ativo { Id = 9, Ticker = "VALE3", Nome = "Vale S.A.", Tipo = "Acao", Setor = "Mineração", PrecoAtual = 58.20m, VariacaoDia = -0.80m, DividendYield = 8.40m },
         new Ativo { Id = 10, Ticker = "ITUB4", Nome = "Itaú Unibanco Holding S.A.", Tipo = "Acao", Setor = "Financeiro / Bancos", PrecoAtual = 34.60m, VariacaoDia = 0.75m, DividendYield = 7.90m },
