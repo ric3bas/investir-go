@@ -300,6 +300,7 @@ app.MapAuthEndpoints();
 app.MapInvestirEndpoints();
 
 app.MapGet("/", () => Results.Redirect("/swagger"));
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 
 app.Run();
 

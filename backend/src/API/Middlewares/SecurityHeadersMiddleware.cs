@@ -16,6 +16,13 @@ public class SecurityHeadersMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        // Swagger UI requer scripts e estilos embutidos para renderizar a interface
+        if (context.Request.Path.StartsWithSegments("/swagger"))
+        {
+            await _next(context);
+            return;
+        }
+
         // 1. Prevenção de MIME Sniffing
         context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
 
