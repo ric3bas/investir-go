@@ -21,4 +21,5 @@ USER $APP_UID
 COPY --from=build /app/publish .
 
 EXPOSE 5050
+EXPOSE 8080
 ENTRYPOINT ["dotnet", "InvestirGo.API.dll"]
