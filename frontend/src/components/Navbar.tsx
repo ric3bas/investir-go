@@ -77,48 +77,48 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
-    <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40">
+    <header className="border-b border-white/[0.06] bg-[#080c14]/85 backdrop-blur-xl sticky top-0 z-40 transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
+          {/* Logo & Brand Identity */}
           <div
             onClick={() => setActiveTab('dashboard')}
-            className="flex items-center gap-3 cursor-pointer group"
+            className="flex items-center gap-3 cursor-pointer group select-none"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition">
-              <TrendingUp className="w-6 h-6 text-slate-950 stroke-[2.5]" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-[0_1px_0_0_rgba(255,255,255,0.2)_inset,0_4px_12px_rgba(16,185,129,0.25)] group-hover:scale-105 transition-transform">
+              <TrendingUp className="w-5 h-5 text-slate-950 stroke-[2.5]" />
             </div>
-            <div>
-              <span className="text-xl font-black tracking-tight bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
-                InvestirGo
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold tracking-tight text-slate-100">
+                Investir<span className="text-emerald-400">Go</span>
               </span>
-              <span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="hidden sm:inline-flex items-center text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 B3 & FIIs
               </span>
             </div>
           </div>
 
-          {/* Quick Resumo Badge */}
+          {/* Institutional KPI Summary Pills */}
           {resumo && (
-            <div className="hidden xl:flex items-center gap-6 px-4 py-1.5 rounded-xl bg-slate-950/60 border border-slate-800 text-sm">
+            <div className="hidden xl:flex items-center gap-6 px-4 py-1.5 rounded-xl bg-slate-900/60 border border-white/[0.06] text-xs shadow-sm">
               <div>
-                <span className="text-[11px] text-slate-400 block font-medium">Patrimônio Atual</span>
-                <span className="font-bold text-slate-100 font-mono">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Patrimônio</span>
+                <span className="font-mono font-bold text-slate-100 tabular-nums">
                   {resumo.saldoAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </span>
               </div>
-              <div className="h-6 w-px bg-slate-800" />
+              <div className="h-6 w-px bg-white/[0.08]" />
               <div>
-                <span className="text-[11px] text-slate-400 block font-medium">Rentabilidade</span>
-                <span className={`font-bold font-mono flex items-center gap-1 ${resumo.lucroPrejuizoNaoRealizado >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Rentabilidade</span>
+                <span className={`font-mono font-bold tabular-nums flex items-center gap-1 ${resumo.lucroPrejuizoNaoRealizado >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                   {resumo.lucroPrejuizoNaoRealizado >= 0 ? '+' : ''}
                   {resumo.rentabilidadePercentual.toFixed(2)}%
                 </span>
               </div>
-              <div className="h-6 w-px bg-slate-800" />
+              <div className="h-6 w-px bg-white/[0.08]" />
               <div>
-                <span className="text-[11px] text-slate-400 block font-medium">Proventos</span>
-                <span className="font-bold font-mono text-amber-400">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Proventos</span>
+                <span className="font-mono font-bold text-amber-400 tabular-nums">
                   {resumo.totalProventos.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </span>
               </div>
@@ -130,47 +130,48 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Quick Favorites Shortcut */}
             <button
               onClick={() => setActiveTab('noticias')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition ${activeTab === 'noticias'
-                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                : 'bg-slate-950/80 hover:bg-slate-800 text-slate-300 border-slate-800'
-                }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition ${
+                activeTab === 'noticias'
+                  ? 'bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-sm'
+                  : 'bg-slate-900/70 hover:bg-slate-800 text-slate-300 border-white/[0.06]'
+              }`}
               title="Acompanhar Notícias e Ativos Favoritos"
             >
               <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
               <span className="hidden sm:inline">Favoritos</span>
-              <span className="px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono text-[10px]">
+              <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 font-mono text-[10px]">
                 {favoritosCount}
               </span>
             </button>
 
             <button
               onClick={() => onOpenNovoProvento()}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30 transition shadow-sm"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/25 transition shadow-sm"
             >
-              <Coins className="w-4 h-4 text-amber-400" />
+              <Coins className="w-3.5 h-3.5 text-amber-400" />
               <span className="hidden sm:inline">+ Provento</span>
             </button>
 
             <button
               onClick={() => onOpenNovaOperacao()}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-lg shadow-emerald-600/25"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-[0_1px_0_0_rgba(255,255,255,0.2)_inset,0_4px_12px_rgba(16,185,129,0.25)]"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span className="hidden sm:inline">Nova Operação</span>
             </button>
 
-            {/* Divisor de Ações */}
-            <div className="h-6 w-px bg-slate-800 mx-1 hidden sm:block" />
+            {/* Separator */}
+            <div className="h-5 w-px bg-white/[0.08] mx-1 hidden sm:block" />
 
-            {/* Bloco de Autenticação com Dropdown Menu Unificado */}
+            {/* Authentication & User Dropdown */}
             {isAuthenticated && user ? (
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setMenuAberto(!menuAberto)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border transition shadow-sm ${
+                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition shadow-sm ${
                     menuAberto
-                      ? 'bg-slate-750 border-emerald-500/50 text-white'
-                      : 'bg-slate-800 hover:bg-slate-700/80 border-slate-700 text-slate-200'
+                      ? 'bg-slate-800 border-emerald-500/40 text-white'
+                      : 'bg-slate-900/80 hover:bg-slate-800/80 border-white/[0.06] text-slate-200'
                   }`}
                   aria-expanded={menuAberto}
                   aria-haspopup="true"
@@ -183,7 +184,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {user.nome}
                   </span>
                   <span
-                    className={`px-1.5 py-0.5 text-[10px] rounded font-bold uppercase tracking-wider ${
+                    className={`px-1.5 py-0.2 text-[9px] rounded font-mono font-bold uppercase tracking-wider ${
                       isAdmin
                         ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
                         : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
@@ -200,51 +201,48 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                 {/* Dropdown Menu Flutuante */}
                 {menuAberto && (
-                  <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-white/[0.08] shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
                     {/* Cabeçalho do Perfil */}
-                    <div className="px-4 py-3 border-b border-slate-800/80">
+                    <div className="px-4 py-3 border-b border-white/[0.06]">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center font-black text-slate-950 text-sm shadow-md shadow-emerald-500/20">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center font-bold text-slate-950 text-sm shadow-md shadow-emerald-500/20">
                           {user.nome.charAt(0).toUpperCase()}
                         </div>
                         <div className="overflow-hidden">
                           <p className="text-xs font-bold text-slate-100 truncate">{user.nome}</p>
-                          <p className="text-[11px] text-slate-400 truncate mt-0.5">{user.email}</p>
+                          <p className="text-[11px] text-slate-400 truncate mt-0.5 font-mono">{user.email}</p>
                         </div>
                       </div>
 
-                      <div className="mt-3 flex items-center gap-1.5 flex-wrap">
-                        <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                          👤 Investidor
+                      <div className="mt-2.5 flex items-center gap-1.5 flex-wrap">
+                        <span className="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
+                          Investidor Ativo
                         </span>
                       </div>
                     </div>
 
-                    {/* Ações e Navegação Interna do Menu */}
+                    {/* Ações do Menu */}
                     <div className="py-1.5 text-xs space-y-0.5">
-
-                      {/* Meu Perfil e Sessões */}
                       <button
                         onClick={() => {
                           setMenuAberto(false);
                           setProfileModalOpen(true);
                         }}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 transition text-left"
+                        className="w-full flex items-center gap-2.5 px-4 py-2 text-slate-300 hover:text-white hover:bg-white/[0.04] transition text-left"
                       >
                         <User className="w-4 h-4 text-emerald-400 shrink-0" />
                         <div>
                           <span className="font-semibold block">Meu Perfil & Sessões</span>
-                          <span className="text-[10px] text-slate-400">Dados da conta e dispositivos conectados</span>
+                          <span className="text-[10px] text-slate-400">Dados da conta e dispositivos</span>
                         </div>
                       </button>
 
-                      {/* Segurança & MFA */}
                       <button
                         onClick={() => {
                           setMenuAberto(false);
                           setSecurityModalOpen(true);
                         }}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 transition text-left"
+                        className="w-full flex items-center gap-2.5 px-4 py-2 text-slate-300 hover:text-white hover:bg-white/[0.04] transition text-left"
                       >
                         <KeyRound className="w-4 h-4 text-cyan-400 shrink-0" />
                         <div>
@@ -253,14 +251,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                         </div>
                       </button>
 
-                      {/* Histórico de Lançamentos */}
                       {onOpenLancamentos && (
                         <button
                           onClick={() => {
                             setMenuAberto(false);
                             onOpenLancamentos();
                           }}
-                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 transition text-left"
+                          className="w-full flex items-center gap-2.5 px-4 py-2 text-slate-300 hover:text-white hover:bg-white/[0.04] transition text-left"
                         >
                           <ArrowDownUp className="w-4 h-4 text-amber-400 shrink-0" />
                           <div>
@@ -272,7 +269,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </div>
 
                     {/* Divisor */}
-                    <div className="border-t border-slate-800/80 my-1" />
+                    <div className="border-t border-white/[0.06] my-1" />
 
                     {/* Botão de Logout */}
                     <div className="px-2 py-1">
@@ -281,7 +278,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                           setMenuAberto(false);
                           logout();
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 transition text-left"
+                        className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 transition text-left"
                       >
                         <LogOut className="w-4 h-4 text-rose-400 shrink-0" />
                         <span>Sair da Conta (Logout)</span>
@@ -311,7 +308,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Navigation Tabs */}
-        <nav className="flex space-x-1 sm:space-x-2 overflow-x-auto py-2.5 border-t border-slate-800/60 no-scrollbar">
+        <nav className="flex space-x-1 sm:space-x-1.5 overflow-x-auto py-2 border-t border-white/[0.04] no-scrollbar">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -319,15 +316,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-3 py-2 text-xs sm:text-sm font-semibold rounded-xl whitespace-nowrap transition-all duration-150 ${isActive
-                  ? 'bg-slate-800 text-emerald-400 border border-slate-700 shadow-md shadow-slate-950/40'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                  }`}
+                className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-all duration-150 ${
+                  isActive
+                    ? 'bg-slate-800/90 text-emerald-400 border border-white/[0.08] shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset]'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'
+                }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-400' : 'text-slate-500'}`} />
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-emerald-400' : 'text-slate-500'}`} />
                 <span>{tab.label}</span>
                 {tab.badge !== undefined && (
-                  <span className="px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-mono font-bold">
+                  <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-mono font-bold">
                     {tab.badge}
                   </span>
                 )}

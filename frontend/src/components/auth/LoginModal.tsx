@@ -13,6 +13,7 @@ export const LoginModal: React.FC = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,7 +32,7 @@ export const LoginModal: React.FC = () => {
     setLoading(true);
 
     try {
-      await login(email, password);
+      await login(email, password, rememberMe);
       handleClose();
     } catch (err: any) {
       setError(err.message || 'E-mail ou senha incorretos.');
@@ -77,28 +78,6 @@ export const LoginModal: React.FC = () => {
 
         {/* Formulário de Login */}
         <form onSubmit={handleLoginSubmit} className="p-6 space-y-4">
-          {/* Preenchimento Rápido com Usuário Padrão */}
-          <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-700/60 text-xs flex items-center justify-between">
-            <div>
-              <span className="font-semibold text-slate-700 dark:text-slate-300 block">
-                Conta de Acesso:
-              </span>
-              <span className="text-slate-500 dark:text-slate-400 text-[11px]">
-                usuario@investirgo.com
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('usuario@investirgo.com');
-                setPassword('User@InvestirGo2026!');
-              }}
-              className="px-2.5 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 rounded-lg transition"
-            >
-              Preencher dados
-            </button>
-          </div>
-
           <div>
             <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5" htmlFor="login-email">
               E-mail
@@ -147,6 +126,21 @@ export const LoginModal: React.FC = () => {
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm transition-all"
               />
             </div>
+          </div>
+
+          {/* Opção Manter Conectado / Lembrar de mim */}
+          <div className="flex items-center justify-between pt-1">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+              />
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                Lembrar de mim (manter conectado)
+              </span>
+            </label>
           </div>
 
           <button

@@ -25,6 +25,14 @@ let ativosLocais: Ativo[] = [...TOP_30_ATIVOS];
 let operacoesLocais: Operacao[] = [...MOCK_OPERACOES];
 let proventosLocais: Provento[] = [...MOCK_PROVENTOS];
 
+// Identifica se o usuário autenticado é o usuário padrão da planilha do investidor
+const isSpreadsheetUser = (): boolean => {
+  const user = AuthService.getUser();
+  const storedEmail = typeof localStorage !== 'undefined' ? localStorage.getItem('investir_user_email') : null;
+  const email = (user?.email || storedEmail || '').toLowerCase().trim();
+  return email === 'usuario@investirgo.com';
+};
+
 export const InvestirApi = {
   // ----------------- CARTEIRA (PROTEGIDA) -----------------
   getResumo: async (): Promise<ResumoCarteira> => {
@@ -35,7 +43,24 @@ export const InvestirApi = {
       if (err?.response?.status === 401 || err?.response?.status === 403 || !AuthService.getAccessToken()) {
         throw new Error('Sessão não autenticada. Faça login para acessar o resumo da carteira.');
       }
-      // Contingência para usuário logado caso PostgreSQL esteja offline
+      // Novos usuários começam com dados 100% zerados
+      if (!isSpreadsheetUser()) {
+        return {
+          totalInvestido: 0,
+          saldoAtual: 0,
+          lucroPrejuizoNaoRealizado: 0,
+          rentabilidadePercentual: 0,
+          totalProventos: 0,
+          lucroRealizadoVendas: 0,
+          retornoTotalGeral: 0,
+          quantidadeAtivos: 0,
+          totalAcoes: 0,
+          totalFIIs: 0,
+          percentualAcoes: 0,
+          percentualFIIs: 0,
+        };
+      }
+      // Contingência para usuário padrão caso PostgreSQL esteja offline
       const { resumo } = calcularResumoEPosicoesMock(operacoesLocais, proventosLocais, ativosLocais);
       return resumo;
     }
@@ -48,6 +73,9 @@ export const InvestirApi = {
     } catch (err: any) {
       if (err?.response?.status === 401 || err?.response?.status === 403 || !AuthService.getAccessToken()) {
         throw new Error('Sessão não autenticada. Faça login para acessar as posições da carteira.');
+      }
+      if (!isSpreadsheetUser()) {
+        return [];
       }
       const { posicoes } = calcularResumoEPosicoesMock(operacoesLocais, proventosLocais, ativosLocais);
       return posicoes;
@@ -62,6 +90,9 @@ export const InvestirApi = {
     } catch (err: any) {
       if (err?.response?.status === 401 || err?.response?.status === 403 || !AuthService.getAccessToken()) {
         throw new Error('Sessão não autenticada. Faça login para visualizar as operações.');
+      }
+      if (!isSpreadsheetUser()) {
+        return [];
       }
       let filtradas = [...operacoesLocais];
       if (ticker) {
@@ -128,6 +159,9 @@ export const InvestirApi = {
     } catch (err: any) {
       if (err?.response?.status === 401 || err?.response?.status === 403 || !AuthService.getAccessToken()) {
         throw new Error('Sessão não autenticada. Faça login para visualizar proventos.');
+      }
+      if (!isSpreadsheetUser()) {
+        return [];
       }
       let filtrados = [...proventosLocais];
       if (ticker) {

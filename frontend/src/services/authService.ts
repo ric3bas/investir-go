@@ -4,6 +4,7 @@ import { User, UserSession, LoginResponse, MfaSetupData, AuditLogItem } from '..
 // O token de acesso NUNCA é armazenado em localStorage, sessionStorage ou IndexedDB
 // Ele reside estritamente em memória volátil de JavaScript (fechamento de módulo)
 let inMemoryAccessToken: string | null = null;
+let inMemoryUser: User | null = null;
 
 // Controle de concorrência para renovação coordenada de refresh token (evita tempestade de refresh)
 let refreshPromise: Promise<string | null> | null = null;
@@ -88,6 +89,7 @@ authClient.interceptors.response.use(
 
 export const AuthService = {
   getAccessToken: (): string | null => inMemoryAccessToken,
+  getUser: (): User | null => inMemoryUser,
 
   setAccessToken: (token: string | null) => {
     inMemoryAccessToken = token;
@@ -95,7 +97,10 @@ export const AuthService = {
 
   clearSession: () => {
     inMemoryAccessToken = null;
+    inMemoryUser = null;
     refreshPromise = null;
+    localStorage.removeItem('investir_remember_me');
+    localStorage.removeItem('investir_user_email');
     notifyAuthState(null);
   },
 
@@ -122,12 +127,20 @@ export const AuthService = {
   },
 
   // 3. Login
-  login: async (email: string, password: string): Promise<LoginResponse> => {
+  login: async (email: string, password: string, rememberMe = true): Promise<LoginResponse> => {
     await AuthService.initCsrf();
-    const { data } = await authClient.post<LoginResponse>('/auth/login', { email, password });
+    const { data } = await authClient.post<LoginResponse>('/auth/login', { email, password, rememberMe });
 
     if (!data.requiresMfa && data.accessToken && data.user) {
       inMemoryAccessToken = data.accessToken;
+      inMemoryUser = data.user;
+      if (rememberMe) {
+        localStorage.setItem('investir_remember_me', 'true');
+        localStorage.setItem('investir_user_email', data.user.email);
+      } else {
+        localStorage.removeItem('investir_remember_me');
+        localStorage.removeItem('investir_user_email');
+      }
       notifyAuthState(data.user);
     }
 
@@ -144,6 +157,7 @@ export const AuthService = {
 
     if (data.accessToken && data.user) {
       inMemoryAccessToken = data.accessToken;
+      inMemoryUser = data.user;
       notifyAuthState(data.user);
     }
 
@@ -154,6 +168,7 @@ export const AuthService = {
   getCurrentUser: async (): Promise<User | null> => {
     try {
       const { data } = await authClient.get<User>('/auth/me');
+      inMemoryUser = data;
       notifyAuthState(data);
       return data;
     } catch {
@@ -172,6 +187,10 @@ export const AuthService = {
         await AuthService.initCsrf();
         const { data } = await authClient.post<{ accessToken: string; user: User }>('/auth/refresh');
         inMemoryAccessToken = data.accessToken;
+        inMemoryUser = data.user;
+        if (data.user) {
+          localStorage.setItem('investir_user_email', data.user.email);
+        }
         notifyAuthState(data.user);
         return data.accessToken;
       } catch {

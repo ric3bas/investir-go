@@ -38,7 +38,7 @@ public class OperacaoRepository : IOperacaoRepository
         _dbFactory = dbFactory;
     }
 
-    public async Task<IEnumerable<Operacao>> ObterTodasAsync(string? ticker = null, string? tipoOperacao = null)
+    public async Task<IEnumerable<Operacao>> ObterTodasAsync(string? ticker = null, string? tipoOperacao = null, Guid? userId = null)
     {
         try
         {
@@ -55,6 +55,12 @@ public class OperacaoRepository : IOperacaoRepository
             """;
 
             var parameters = new DynamicParameters();
+            if (userId.HasValue)
+            {
+                sql += " AND (o.usuario_id = @UserId OR o.user_id = @UserId)";
+                parameters.Add("UserId", userId.Value);
+            }
+
             if (!string.IsNullOrWhiteSpace(ticker))
             {
                 sql += " AND UPPER(a.ticker) = UPPER(@Ticker)";
@@ -69,10 +75,17 @@ public class OperacaoRepository : IOperacaoRepository
 
             sql += " ORDER BY o.data_operacao DESC, o.id DESC;";
 
-            var result = await conn.QueryAsync<Operacao>(sql, parameters);
-            if (result.Any()) return result;
+            var result = (await conn.QueryAsync<Operacao>(sql, parameters)).ToList();
+            return result;
         }
         catch { }
+
+        // Fallback em memória para quando o banco estiver inacessível
+        // Novos usuários (diferentes do usuário padrão da planilha) possuem carteira zerada
+        if (userId.HasValue && userId.Value != _defaultUserId)
+        {
+            return Enumerable.Empty<Operacao>();
+        }
 
         var filtradas = _operacoesFallback.AsEnumerable();
         if (!string.IsNullOrWhiteSpace(ticker))
@@ -115,8 +128,8 @@ public class OperacaoRepository : IOperacaoRepository
         {
             using var conn = _dbFactory.CreateConnection();
             const string sql = """
-                INSERT INTO inv.operacoes (ativo_id, tipo_operacao, data_operacao, quantidade, preco_unitario, valor_total, taxas, observacoes)
-                VALUES (@AtivoId, UPPER(@TipoOperacao), @DataOperacao, @Quantidade, @PrecoUnitario, @ValorTotal, @Taxas, @Observacoes)
+                INSERT INTO inv.operacoes (ativo_id, user_id, usuario_id, tipo_operacao, data_operacao, quantidade, preco_unitario, valor_total, taxas, observacoes)
+                VALUES (@AtivoId, @UserId, @UserId, UPPER(@TipoOperacao), @DataOperacao, @Quantidade, @PrecoUnitario, @ValorTotal, @Taxas, @Observacoes)
                 RETURNING id;
             """;
             return await conn.ExecuteScalarAsync<int>(sql, operacao);

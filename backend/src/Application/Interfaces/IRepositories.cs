@@ -13,7 +13,7 @@ public interface IAtivoRepository
 
 public interface IOperacaoRepository
 {
-    Task<IEnumerable<Operacao>> ObterTodasAsync(string? ticker = null, string? tipoOperacao = null);
+    Task<IEnumerable<Operacao>> ObterTodasAsync(string? ticker = null, string? tipoOperacao = null, Guid? userId = null);
     Task<Operacao?> ObterPorIdAsync(int id);
     Task<int> CriarAsync(Operacao operacao);
     Task<bool> AtualizarAsync(Operacao operacao);
@@ -22,9 +22,9 @@ public interface IOperacaoRepository
 
 public interface IProventoRepository
 {
-    Task<IEnumerable<Provento>> ObterTodosAsync(string? ticker = null, int? ano = null);
+    Task<IEnumerable<Provento>> ObterTodosAsync(string? ticker = null, int? ano = null, Guid? userId = null);
     Task<Provento?> ObterPorIdAsync(int id);
     Task<int> CriarAsync(Provento provento);
     Task<bool> ExcluirAsync(int id);
-    Task<decimal> ObterTotalProventosAsync();
+    Task<decimal> ObterTotalProventosAsync(Guid? userId = null);
 }

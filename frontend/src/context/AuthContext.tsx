@@ -8,7 +8,7 @@ interface AuthContextType {
   isAdmin: boolean;
   loading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<LoginResponse>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<LoginResponse>;
   verifyMfa: (mfaToken: string, code: string, isRecoveryCode?: boolean) => Promise<LoginResponse>;
   register: (nome: string, email: string, password: string) => Promise<{ message: string; verificationToken?: string }>;
   logout: () => Promise<void>;
@@ -67,10 +67,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string): Promise<LoginResponse> => {
+  const login = async (email: string, password: string, rememberMe = true): Promise<LoginResponse> => {
     setError(null);
     try {
-      const res = await AuthService.login(email, password);
+      const res = await AuthService.login(email, password, rememberMe);
       if (!res.requiresMfa && res.user) {
         setUser(res.user);
         setLoginModalOpen(false);

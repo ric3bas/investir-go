@@ -8,7 +8,8 @@ public record RegisterRequestDto(
 
 public record LoginRequestDto(
     string Email,
-    string Password
+    string Password,
+    bool? RememberMe = true
 );
 
 public record LoginResponseDto(
@@ -17,6 +18,10 @@ public record LoginResponseDto(
     string? AccessToken,
     int? ExpiresIn,
     UserDto? User
+);
+
+public record RefreshTokenRequestDto(
+    string? RefreshToken = null
 );
 
 public record MfaVerifyRequestDto(

@@ -12,22 +12,22 @@ public static class ApiEndpoints
         var group = app.MapGroup("/api");
 
         // ----------------- CARTEIRA -----------------
-        group.MapGet("/carteira/posicoes", async (ICarteiraService carteiraService) =>
+        group.MapGet("/carteira/posicoes", async (ICarteiraService carteiraService, ICurrentUserService currentUser) =>
         {
-            var posicoes = await carteiraService.ObterPosicoesAsync();
+            var posicoes = await carteiraService.ObterPosicoesAsync(currentUser.UserId);
             return Results.Ok(posicoes);
         }).WithTags("Carteira").RequireAuthorization();
 
-        group.MapGet("/carteira/resumo", async (ICarteiraService carteiraService) =>
+        group.MapGet("/carteira/resumo", async (ICarteiraService carteiraService, ICurrentUserService currentUser) =>
         {
-            var resumo = await carteiraService.ObterResumoAsync();
+            var resumo = await carteiraService.ObterResumoAsync(currentUser.UserId);
             return Results.Ok(resumo);
         }).WithTags("Carteira").RequireAuthorization();
 
         // ----------------- OPERAÇÕES (COMPRAS & VENDAS) -----------------
-        group.MapGet("/operacoes", async (string? ticker, string? tipo, IOperacaoRepository operacaoRepo) =>
+        group.MapGet("/operacoes", async (string? ticker, string? tipo, IOperacaoRepository operacaoRepo, ICurrentUserService currentUser) =>
         {
-            var operacoes = await operacaoRepo.ObterTodasAsync(ticker, tipo);
+            var operacoes = await operacaoRepo.ObterTodasAsync(ticker, tipo, currentUser.UserId);
             return Results.Ok(operacoes);
         }).WithTags("Operacoes").RequireAuthorization();
 
@@ -112,13 +112,13 @@ public static class ApiEndpoints
         }).WithTags("Operacoes").RequireAuthorization();
 
         // ----------------- PROVENTOS -----------------
-        group.MapGet("/proventos", async (string? ticker, int? ano, IProventoRepository proventoRepo) =>
+        group.MapGet("/proventos", async (string? ticker, int? ano, IProventoRepository proventoRepo, ICurrentUserService currentUser) =>
         {
-            var proventos = await proventoRepo.ObterTodosAsync(ticker, ano);
+            var proventos = await proventoRepo.ObterTodosAsync(ticker, ano, currentUser.UserId);
             return Results.Ok(proventos);
         }).WithTags("Proventos").RequireAuthorization();
 
-        group.MapPost("/proventos", async (CriarProventoDto dto, IProventoRepository proventoRepo, IAtivoRepository ativoRepo) =>
+        group.MapPost("/proventos", async (CriarProventoDto dto, IProventoRepository proventoRepo, IAtivoRepository ativoRepo, ICurrentUserService currentUser) =>
         {
             int ativoId = dto.AtivoId ?? 0;
             if (ativoId <= 0 && !string.IsNullOrWhiteSpace(dto.Ticker))
@@ -139,6 +139,7 @@ public static class ApiEndpoints
             var provento = new Provento
             {
                 AtivoId = ativoId,
+                UserId = currentUser.UserId,
                 TipoProvento = dto.TipoProvento,
                 DataCom = dto.DataCom,
                 DataPagamento = dto.DataPagamento == default ? DateTime.UtcNow.Date : dto.DataPagamento.Date,

@@ -27,6 +27,7 @@ export const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,18 +37,12 @@ export const LoginScreen: React.FC = () => {
     setLoading(true);
 
     try {
-      await login(email, password);
+      await login(email, password, rememberMe);
     } catch (err: any) {
       setError(err.message || 'Falha ao autenticar. Verifique seu e-mail e senha.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const fillQuickAccount = () => {
-    setError(null);
-    setEmail('usuario@investirgo.com');
-    setPassword('User@InvestirGo2026!');
   };
 
   return (
@@ -173,23 +168,6 @@ export const LoginScreen: React.FC = () => {
 
               {/* Formulário de Credenciais */}
               <form onSubmit={handleLoginSubmit} className="space-y-4">
-                {/* Botão de Acesso Rápido para Testes */}
-                <div className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs flex items-center justify-between">
-                  <div>
-                    <span className="font-semibold text-slate-300 block text-[11px] uppercase tracking-wider">
-                      Conta para Teste Imediato:
-                    </span>
-                    <p className="text-[11px] text-slate-400 mt-0.5">usuario@investirgo.com</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={fillQuickAccount}
-                    className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-emerald-500/50 hover:bg-slate-800 transition text-emerald-400 font-bold text-xs"
-                  >
-                    Preencher
-                  </button>
-                </div>
-
                 {/* Campo E-mail */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5" htmlFor="screen-email">
@@ -245,6 +223,19 @@ export const LoginScreen: React.FC = () => {
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                </div>
+
+                {/* Opção Manter Conectado / Lembrar de mim */}
+                <div className="flex items-center justify-between pt-1">
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-950 cursor-pointer"
+                    />
+                    <span className="text-xs font-medium text-slate-300">Lembrar de mim (manter conectado)</span>
+                  </label>
                 </div>
 
                 {/* Botão Entrar */}

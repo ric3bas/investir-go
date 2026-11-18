@@ -19,7 +19,7 @@ public class CarteiraService : ICarteiraService
         _proventoRepository = proventoRepository;
     }
 
-    public async Task<IEnumerable<PosicaoCarteira>> ObterPosicoesAsync()
+    public async Task<IEnumerable<PosicaoCarteira>> ObterPosicoesAsync(Guid? userId = null)
     {
         var todosAtivos = (await _ativoRepository.ObterTodosAsync()).ToList();
         var ativosPorTicker = todosAtivos
@@ -27,12 +27,12 @@ public class CarteiraService : ICarteiraService
             .GroupBy(a => a.Ticker.Trim().ToUpper())
             .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
-        var operacoes = (await _operacaoRepository.ObterTodasAsync())
+        var operacoes = (await _operacaoRepository.ObterTodasAsync(userId: userId))
             .OrderBy(o => o.DataOperacao)
             .ThenBy(o => o.Id)
             .ToList();
 
-        var todosProventos = (await _proventoRepository.ObterTodosAsync()).ToList();
+        var todosProventos = (await _proventoRepository.ObterTodosAsync(userId: userId)).ToList();
         var proventosPorTicker = todosProventos
             .Where(p => !string.IsNullOrWhiteSpace(p.Ticker))
             .GroupBy(p => p.Ticker.Trim().ToUpper())
@@ -117,14 +117,14 @@ public class CarteiraService : ICarteiraService
         return resultado.OrderByDescending(r => r.SaldoAtual);
     }
 
-    public async Task<ResumoCarteira> ObterResumoAsync()
+    public async Task<ResumoCarteira> ObterResumoAsync(Guid? userId = null)
     {
-        var posicoes = await ObterPosicoesAsync();
+        var posicoes = await ObterPosicoesAsync(userId);
         var lista = posicoes.ToList();
 
         var totalInvestido = lista.Sum(p => p.TotalInvestido);
         var saldoAtual = lista.Sum(p => p.SaldoAtual);
-        var totalProventos = (await _proventoRepository.ObterTotalProventosAsync());
+        var totalProventos = await _proventoRepository.ObterTotalProventosAsync(userId);
         var lucroRealizado = lista.Sum(p => p.LucroRealizadoVendas);
 
         var totalAcoes = lista.Where(p => p.Tipo.Equals("Acao", StringComparison.OrdinalIgnoreCase)).Sum(p => p.SaldoAtual);

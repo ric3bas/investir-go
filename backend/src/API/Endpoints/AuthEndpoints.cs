@@ -224,8 +224,10 @@ public static class AuthEndpoints
             // Sucesso na verificação de senha -> reseta limites de falha para a conta
             rateLimiter.ResetRateLimit($"login:acc:{emailNormalized}");
 
+            bool rememberMe = dto.RememberMe ?? true;
+
             // Emissão direta de Sessão e Tokens (autenticação simples com usuário e senha)
-            return await IssueSessionAndTokensAsync(context, user, authRepo, tokenService, auditService, secOptions.Value, currentUser);
+            return await IssueSessionAndTokensAsync(context, user, authRepo, tokenService, auditService, secOptions.Value, currentUser, rememberMe);
         });
 
         // --------------------------------------------------------------------
@@ -336,10 +338,11 @@ public static class AuthEndpoints
             ));
         }).RequireAuthorization();
 
-        // --------------------------------------------------------------------
+        // ----------------- CARTEIRA / AUTENTICAÇÃO / SESSÃO -----------------
         // 6. Renovação da Autenticação (/api/auth/refresh)
         // --------------------------------------------------------------------
         authGroup.MapPost("/refresh", async (
+            [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] RefreshTokenRequestDto? bodyDto,
             IAuthRepository authRepo,
             ITokenService tokenService,
             IRateLimiterService rateLimiter,
@@ -356,8 +359,28 @@ public static class AuthEndpoints
                 return Results.Problem(detail: "Muitas requisições de renovação. Aguarde.", statusCode: StatusCodes.Status429TooManyRequests);
             }
 
-            string cookieName = GetRefreshCookieName(context, secOptions.Value);
-            if (!context.Request.Cookies.TryGetValue(cookieName, out var refreshToken) || string.IsNullOrWhiteSpace(refreshToken))
+            string? refreshToken = null;
+            if (!string.IsNullOrWhiteSpace(bodyDto?.RefreshToken))
+            {
+                refreshToken = bodyDto.RefreshToken.Trim();
+            }
+            else if (context.Request.Headers.TryGetValue("X-Refresh-Token", out var headerVal) && !string.IsNullOrWhiteSpace(headerVal))
+            {
+                refreshToken = headerVal.ToString().Trim();
+            }
+            else
+            {
+                string cookieName = GetRefreshCookieName(context, secOptions.Value);
+                if (!context.Request.Cookies.TryGetValue(cookieName, out refreshToken) || string.IsNullOrWhiteSpace(refreshToken))
+                {
+                    if (!context.Request.Cookies.TryGetValue(secOptions.Value.Session.CookieName, out refreshToken) || string.IsNullOrWhiteSpace(refreshToken))
+                    {
+                        context.Request.Cookies.TryGetValue(secOptions.Value.Session.FallbackCookieName, out refreshToken);
+                    }
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(refreshToken))
             {
                 return Results.Unauthorized();
             }
@@ -453,14 +476,35 @@ public static class AuthEndpoints
         // 7. Logout da Sessão Atual (/api/auth/logout)
         // --------------------------------------------------------------------
         authGroup.MapPost("/logout", async (
+            [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] RefreshTokenRequestDto? bodyDto,
             IAuthRepository authRepo,
             ITokenService tokenService,
             ISecurityAuditService auditService,
             IOptions<SecurityOptions> secOptions,
             HttpContext context) =>
         {
-            string cookieName = GetRefreshCookieName(context, secOptions.Value);
-            if (context.Request.Cookies.TryGetValue(cookieName, out var refreshToken) && !string.IsNullOrWhiteSpace(refreshToken))
+            string? refreshToken = null;
+            if (!string.IsNullOrWhiteSpace(bodyDto?.RefreshToken))
+            {
+                refreshToken = bodyDto.RefreshToken.Trim();
+            }
+            else if (context.Request.Headers.TryGetValue("X-Refresh-Token", out var headerVal) && !string.IsNullOrWhiteSpace(headerVal))
+            {
+                refreshToken = headerVal.ToString().Trim();
+            }
+            else
+            {
+                string cookieName = GetRefreshCookieName(context, secOptions.Value);
+                if (!context.Request.Cookies.TryGetValue(cookieName, out refreshToken) || string.IsNullOrWhiteSpace(refreshToken))
+                {
+                    if (!context.Request.Cookies.TryGetValue(secOptions.Value.Session.CookieName, out refreshToken) || string.IsNullOrWhiteSpace(refreshToken))
+                    {
+                        context.Request.Cookies.TryGetValue(secOptions.Value.Session.FallbackCookieName, out refreshToken);
+                    }
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(refreshToken))
             {
                 string tokenHash = tokenService.ComputeSha256Hash(refreshToken);
                 var session = await authRepo.GetSessionByRefreshTokenHashAsync(tokenHash);
@@ -867,15 +911,20 @@ public static class AuthEndpoints
         ITokenService tokenService,
         ISecurityAuditService auditService,
         SecurityOptions secOptions,
-        ICurrentUserService currentUser)
+        ICurrentUserService currentUser,
+        bool rememberMe = true)
     {
         var now = DateTime.UtcNow;
         var familyId = Guid.NewGuid();
         string rawRefreshToken = tokenService.GenerateOpaqueToken();
         string refreshTokenHash = tokenService.ComputeSha256Hash(rawRefreshToken);
 
-        var expiresAt = now.AddDays(secOptions.Session.AbsoluteLifetimeDays);
-        var idleExpiresAt = now.AddHours(secOptions.Session.InactivityLifetimeHours);
+        var expiresAt = rememberMe
+            ? now.AddDays(secOptions.Session.AbsoluteLifetimeDays)
+            : now.AddHours(24);
+        var idleExpiresAt = rememberMe
+            ? now.AddHours(secOptions.Session.InactivityLifetimeHours)
+            : now.AddHours(12);
 
         var session = new UserSession
         {
@@ -893,7 +942,7 @@ public static class AuthEndpoints
 
         await authRepo.CreateSessionAsync(session);
 
-        // Define Cookie HttpOnly estrito
+        // Define Cookie HttpOnly
         SetRefreshCookie(context, rawRefreshToken, expiresAt, secOptions);
 
         string accessToken = tokenService.GenerateAccessToken(user, session.Id);

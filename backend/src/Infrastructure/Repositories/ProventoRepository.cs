@@ -23,7 +23,7 @@ public class ProventoRepository : IProventoRepository
         _dbFactory = dbFactory;
     }
 
-    public async Task<IEnumerable<Provento>> ObterTodosAsync(string? ticker = null, int? ano = null)
+    public async Task<IEnumerable<Provento>> ObterTodosAsync(string? ticker = null, int? ano = null, Guid? userId = null)
     {
         try
         {
@@ -40,6 +40,12 @@ public class ProventoRepository : IProventoRepository
             """;
 
             var parameters = new DynamicParameters();
+            if (userId.HasValue)
+            {
+                sql += " AND (p.usuario_id = @UserId OR p.user_id = @UserId)";
+                parameters.Add("UserId", userId.Value);
+            }
+
             if (!string.IsNullOrWhiteSpace(ticker))
             {
                 sql += " AND UPPER(a.ticker) = UPPER(@Ticker)";
@@ -54,10 +60,17 @@ public class ProventoRepository : IProventoRepository
 
             sql += " ORDER BY p.data_pagamento DESC, p.id DESC;";
 
-            var result = await conn.QueryAsync<Provento>(sql, parameters);
-            if (result.Any()) return result;
+            var result = (await conn.QueryAsync<Provento>(sql, parameters)).ToList();
+            return result;
         }
         catch { }
+
+        // Fallback em memória para quando o banco estiver inacessível
+        // Novos usuários (diferentes do usuário padrão da planilha) possuem carteira zerada
+        if (userId.HasValue && userId.Value != _defaultUserId)
+        {
+            return Enumerable.Empty<Provento>();
+        }
 
         var filtrados = _proventosFallback.AsEnumerable();
         if (!string.IsNullOrWhiteSpace(ticker))
@@ -100,8 +113,8 @@ public class ProventoRepository : IProventoRepository
         {
             using var conn = _dbFactory.CreateConnection();
             const string sql = """
-                INSERT INTO inv.proventos (ativo_id, tipo_provento, data_com, data_pagamento, valor_por_cota, quantidade_cotas, valor_total, observacoes)
-                VALUES (@AtivoId, @TipoProvento, @DataCom, @DataPagamento, @ValorPorCota, @QuantidadeCotas, @ValorTotal, @Observacoes)
+                INSERT INTO inv.proventos (ativo_id, user_id, usuario_id, tipo_provento, data_com, data_pagamento, valor_por_cota, quantidade_cotas, valor_total, observacoes)
+                VALUES (@AtivoId, @UserId, @UserId, @TipoProvento, @DataCom, @DataPagamento, @ValorPorCota, @QuantidadeCotas, @ValorTotal, @Observacoes)
                 RETURNING id;
             """;
             return await conn.ExecuteScalarAsync<int>(sql, provento);
@@ -134,15 +147,29 @@ public class ProventoRepository : IProventoRepository
         return false;
     }
 
-    public async Task<decimal> ObterTotalProventosAsync()
+    public async Task<decimal> ObterTotalProventosAsync(Guid? userId = null)
     {
         try
         {
             using var conn = _dbFactory.CreateConnection();
-            const string sql = "SELECT COALESCE(SUM(valor_total), 0) FROM inv.proventos;";
-            return await conn.ExecuteScalarAsync<decimal>(sql);
+            string sql;
+            if (userId.HasValue)
+            {
+                sql = "SELECT COALESCE(SUM(valor_total), 0) FROM inv.proventos WHERE (usuario_id = @UserId OR user_id = @UserId);";
+                return await conn.ExecuteScalarAsync<decimal>(sql, new { UserId = userId.Value });
+            }
+            else
+            {
+                sql = "SELECT COALESCE(SUM(valor_total), 0) FROM inv.proventos;";
+                return await conn.ExecuteScalarAsync<decimal>(sql);
+            }
         }
         catch { }
+
+        if (userId.HasValue && userId.Value != _defaultUserId)
+        {
+            return 0m;
+        }
 
         return _proventosFallback.Sum(p => p.ValorTotal);
     }
