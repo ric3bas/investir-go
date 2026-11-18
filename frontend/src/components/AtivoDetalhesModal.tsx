@@ -703,21 +703,18 @@ export const AtivoDetalhesModal: React.FC<AtivoDetalhesModalProps> = ({
           <div className="text-xs text-slate-500 text-center sm:text-left">
             <span>Dados de cotação e perfil corporativo atualizados para {ativo.ticker}</span>
           </div>
-        </div>
-
-            {onOpenNovaOperacao && (
-              <button
-                onClick={() => {
-                  onClose();
-                  onOpenNovaOperacao(ativo.ticker, 'COMPRA');
-                }}
-                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 transition"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Comprar {ativo.ticker}</span>
-              </button>
-            )}
-          </div>
+          {onOpenNovaOperacao && (
+            <button
+              onClick={() => {
+                onClose();
+                onOpenNovaOperacao(ativo.ticker, 'COMPRA');
+              }}
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 transition"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Comprar {ativo.ticker}</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

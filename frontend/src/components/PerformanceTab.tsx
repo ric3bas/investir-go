@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { Ativo, PeriodoPerformance } from '../types';
 import { getPerformanceRanking, buscarAtivosMercado, AtivoPesquisaResultado } from '../utils/marketData';
 import {
-import {
   TrendingUp,
   TrendingDown,
   Award,
