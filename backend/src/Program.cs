@@ -221,8 +221,8 @@ using (var scope = app.Services.CreateScope())
         if (builder.Environment.IsProduction())
         {
             throw new InvalidOperationException(
-                "Não foi possível conectar ao PostgreSQL. Confira POSTGRES_USER e POSTGRES_PASSWORD; " +
-                "em volumes já existentes, alterar a variável não altera a senha gravada no banco.", ex);
+                "Não foi possível conectar ao PostgreSQL. No EasyPanel, copie a Internal Connection URL " +
+                "para DATABASE_URL; em Docker Compose, confira POSTGRES_USER e POSTGRES_PASSWORD.", ex);
         }
     }
 }
