@@ -7,7 +7,7 @@ namespace InvestirGo.API.Infrastructure.Services;
 public class MarketDataService
 {
     private readonly HttpClient _httpClient;
-    private readonly string _apiKey = "pwAf7GuRVSyJpETLGUkKuD; // Substitua pela sua chave da Brapi
+    private readonly string _apiKey = "pwAf7GuRVSyJpETLGUkKuD"; // Substitua pela sua chave da Brapi
 
     public MarketDataService(HttpClient httpClient)
     {
