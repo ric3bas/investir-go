@@ -70,8 +70,18 @@ export const LancamentosModal: React.FC<LancamentosModalProps> = ({
 
   return (
     <div
-      onClick={onClose}
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) {
+          (e.target as HTMLElement).dataset.mousedown = "true";
+        }
+      }}
+      onMouseUp={(e) => {
+        if (e.target === e.currentTarget && (e.target as HTMLElement).dataset.mousedown === "true") {
+          onClose();
+        }
+        (e.target as HTMLElement).dataset.mousedown = "false";
+      }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -193,15 +203,13 @@ export const LancamentosModal: React.FC<LancamentosModalProps> = ({
                 <th className="py-3 px-3 text-right">Qtd</th>
                 <th className="py-3 px-3 text-right font-bold text-emerald-400">Preço Compra/Venda</th>
                 <th className="py-3 px-3 text-right">Valor Total</th>
-                <th className="py-3 px-3 text-right font-bold text-cyan-400">Preço Agora</th>
-                <th className="py-3 px-3 text-right font-bold text-slate-200">Valor Agora</th>
                 <th className="py-3 px-4 text-center">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-slate-300">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-12 text-center text-slate-500">
+                  <td colSpan={8} className="py-12 text-center text-slate-500">
                     <p className="text-sm">Nenhum lançamento encontrado com os filtros atuais.</p>
                     {searchTerm && (
                       <button
@@ -269,25 +277,6 @@ export const LancamentosModal: React.FC<LancamentosModalProps> = ({
                         {formatarValor(op.valorTotal)}
                       </td>
 
-                      {/* Preço Agora */}
-                      <td className="py-3 px-3 text-right font-mono font-semibold text-cyan-400">
-                        {op.precoAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      </td>
-
-                      {/* Valor Agora Total */}
-                      <td className="py-3 px-3 text-right font-mono">
-                        <span className="font-bold text-slate-100 block">
-                          {formatarValor(valorAgoraTotal)}
-                        </span>
-                        {isCompra && (
-                          <span
-                            className={`text-[10px] block ${diferencaValor >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                              }`}
-                          >
-                            {esconderValores ? '••••••••' : `${diferencaValor >= 0 ? '+' : ''}${diferencaValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`}
-                          </span>
-                        )}
-                      </td>
 
                       {/* Ações */}
                       <td className="py-3 px-4 text-center">

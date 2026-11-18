@@ -277,7 +277,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                 <span className="text-lg font-bold font-mono text-white tabular-nums">
                   {posicoes.length}
                 </span>
-                <span className="text-[9px] text-emerald-400 font-mono">Posições</span>
+                <span className="text-[9px] text-emerald-400 font-mono">Posições 💼</span>
               </div>
             </div>
 

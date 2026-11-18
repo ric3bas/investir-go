@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { PosicaoCarteira } from '../types';
 import { Plus, Minus, Coins, Search, LineChart, ArrowDownUp, TrendingUp, TrendingDown, DollarSign, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { usePrivacy } from '../context/PrivacyContext';
+import { formatarDinheiro } from '../utils/formatters';
 
 interface CarteiraTabProps {
   posicoes: PosicaoCarteira[];
@@ -248,12 +249,12 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
 
                       {/* Preço Médio */}
                       <td className="py-3.5 px-3 text-right font-mono font-bold text-emerald-400 tabular-nums">
-                        {pos.precoMedio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                        {formatarDinheiro(pos.precoMedio)}
                       </td>
 
                       {/* Preço Atual */}
                       <td className="py-3.5 px-3 text-right font-mono font-bold text-cyan-400 tabular-nums">
-                        {pos.precoAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 })}
+                        {formatarDinheiro(pos.precoAtual)}
                       </td>
 
                       {/* Total Investido */}

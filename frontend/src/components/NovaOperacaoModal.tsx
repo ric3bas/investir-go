@@ -125,8 +125,18 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
 
   return (
     <div
-      onClick={onClose}
       className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) {
+          (e.target as HTMLElement).dataset.mousedown = "true";
+        }
+      }}
+      onMouseUp={(e) => {
+        if (e.target === e.currentTarget && (e.target as HTMLElement).dataset.mousedown === "true") {
+          onClose();
+        }
+        (e.target as HTMLElement).dataset.mousedown = "false";
+      }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
