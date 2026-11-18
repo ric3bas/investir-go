@@ -9,8 +9,11 @@ import {
   ArrowDownRight,
   Search,
   Calendar,
-  Layers
+  Layers,
+  Eye,
+  EyeOff
 } from 'lucide-react';
+import { usePrivacy } from '../context/PrivacyContext';
 
 interface LancamentosModalProps {
   isOpen: boolean;
@@ -27,6 +30,7 @@ export const LancamentosModal: React.FC<LancamentosModalProps> = ({
   onOpenNovaOperacao,
   onExcluirOperacao,
 }) => {
+  const { esconderValores, toggleEsconderValores, formatarValor } = usePrivacy();
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroTipo, setFiltroTipo] = useState<'TODOS' | 'COMPRA' | 'VENDA'>('TODOS');
 
@@ -65,7 +69,7 @@ export const LancamentosModal: React.FC<LancamentosModalProps> = ({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -161,11 +165,18 @@ export const LancamentosModal: React.FC<LancamentosModalProps> = ({
           <span>
             Mostrando <strong className="text-slate-200">{filtered.length}</strong> de {operacoes.length} lançamentos
           </span>
-          <div>
-            <span className="mr-2">Volume Total:</span>
+          <div className="flex items-center gap-2">
+            <span>Volume Total:</span>
             <strong className="text-slate-100 font-mono text-sm">
-              {totalOperado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              {formatarValor(totalOperado)}
             </strong>
+            <button
+              onClick={toggleEsconderValores}
+              className="p-1 rounded text-slate-500 hover:text-slate-200 transition"
+              title={esconderValores ? 'Mostrar valores' : 'Ocultar valores'}
+            >
+              {esconderValores ? <EyeOff className="w-3.5 h-3.5 text-amber-400" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
           </div>
         </div>
 
@@ -255,7 +266,7 @@ export const LancamentosModal: React.FC<LancamentosModalProps> = ({
 
                       {/* Valor Total */}
                       <td className="py-3 px-3 text-right font-mono font-bold text-slate-200">
-                        {op.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        {formatarValor(op.valorTotal)}
                       </td>
 
                       {/* Preço Agora */}
@@ -266,7 +277,7 @@ export const LancamentosModal: React.FC<LancamentosModalProps> = ({
                       {/* Valor Agora Total */}
                       <td className="py-3 px-3 text-right font-mono">
                         <span className="font-bold text-slate-100 block">
-                          {valorAgoraTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          {formatarValor(valorAgoraTotal)}
                         </span>
                         {isCompra && (
                           <span
@@ -274,8 +285,7 @@ export const LancamentosModal: React.FC<LancamentosModalProps> = ({
                               diferencaValor >= 0 ? 'text-emerald-400' : 'text-rose-400'
                             }`}
                           >
-                            {diferencaValor >= 0 ? '+' : ''}
-                            {diferencaValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            {esconderValores ? '••••••••' : `${diferencaValor >= 0 ? '+' : ''}${diferencaValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`}
                           </span>
                         )}
                       </td>

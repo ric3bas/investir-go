@@ -362,15 +362,6 @@ export const App: React.FC = () => {
         onSubmit={handleCriarProvento}
       />
 
-      {/* Modal de Extrato Completo de Lançamentos */}
-      <LancamentosModal
-        isOpen={modalLancamentosOpen}
-        onClose={() => setModalLancamentosOpen(false)}
-        operacoes={operacoes}
-        onOpenNovaOperacao={handleOpenNovaOperacao}
-        onExcluirOperacao={handleExcluirOperacao}
-      />
-
       {/* Modal de Cadastro de Novo Ativo */}
       <NovoAtivoModal
         isOpen={modalAtivoOpen}

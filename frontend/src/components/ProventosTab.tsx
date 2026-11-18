@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Provento } from '../types';
-import { Coins, Plus, Trash2, Calendar, Search, Award } from 'lucide-react';
+import { Coins, Plus, Trash2, Calendar, Search, Award, Eye, EyeOff } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { usePrivacy } from '../context/PrivacyContext';
 
 interface ProventosTabProps {
   proventos: Provento[];
@@ -14,6 +15,7 @@ export const ProventosTab: React.FC<ProventosTabProps> = ({
   onOpenNovoProvento,
   onExcluirProvento,
 }) => {
+  const { esconderValores, toggleEsconderValores, formatarValor } = usePrivacy();
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroTipo, setFiltroTipo] = useState<string>('TODOS');
 
@@ -78,9 +80,18 @@ export const ProventosTab: React.FC<ProventosTabProps> = ({
       {/* Cards de Métricas de Proventos */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-          <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Total de Proventos</span>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Total de Proventos</span>
+            <button
+              onClick={toggleEsconderValores}
+              className="p-1 rounded text-slate-500 hover:text-slate-200 transition"
+              title={esconderValores ? 'Mostrar valores' : 'Ocultar valores'}
+            >
+              {esconderValores ? <EyeOff className="w-3.5 h-3.5 text-amber-400" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
+          </div>
           <h3 className="text-2xl font-bold text-amber-400 mt-2">
-            {totalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            {formatarValor(totalGeral)}
           </h3>
           <p className="text-[11px] text-slate-500 mt-1">{proventos.length} lançamentos efetuados</p>
         </div>
@@ -88,7 +99,7 @@ export const ProventosTab: React.FC<ProventosTabProps> = ({
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Dividendos (Ações)</span>
           <h3 className="text-xl font-bold text-emerald-400 mt-2">
-            {totalDividendos.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            {formatarValor(totalDividendos)}
           </h3>
           <p className="text-[11px] text-slate-500 mt-1">Isentos de imposto de renda</p>
         </div>
@@ -96,7 +107,7 @@ export const ProventosTab: React.FC<ProventosTabProps> = ({
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">JCP (Juros s/ Capital)</span>
           <h3 className="text-xl font-bold text-cyan-400 mt-2">
-            {totalJcp.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            {formatarValor(totalJcp)}
           </h3>
           <p className="text-[11px] text-slate-500 mt-1">Líquido recebido na conta</p>
         </div>
@@ -104,7 +115,7 @@ export const ProventosTab: React.FC<ProventosTabProps> = ({
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Rendimentos FIIs</span>
           <h3 className="text-xl font-bold text-teal-400 mt-2">
-            {totalRendimentos.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            {formatarValor(totalRendimentos)}
           </h3>
           <p className="text-[11px] text-slate-500 mt-1">Aluguéis mensais isentos</p>
         </div>
@@ -227,7 +238,7 @@ export const ProventosTab: React.FC<ProventosTabProps> = ({
                         {p.quantidadeCotas > 0 ? p.quantidadeCotas.toLocaleString('pt-BR') : '-'}
                       </td>
                       <td className="py-3 px-4 text-right font-mono font-bold text-amber-400 text-sm">
-                        {p.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        {formatarValor(p.valorTotal)}
                       </td>
                       <td className="py-3 px-4 text-slate-400 text-[11px] max-w-[200px] truncate">
                         {p.observacoes || '-'}

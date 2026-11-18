@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
+import { PrivacyProvider } from './context/PrivacyContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
@@ -9,7 +10,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <ErrorBoundary>
       <AuthProvider>
-        <App />
+        <PrivacyProvider>
+          <App />
+        </PrivacyProvider>
       </AuthProvider>
     </ErrorBoundary>
   </React.StrictMode>

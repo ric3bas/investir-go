@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Ativo, PeriodoHistorico } from '../types';
-import { getHistoricoAtivo } from '../utils/marketData';
+import { getHistoricoAtivo, NOTICIAS_MERCADO } from '../utils/marketData';
+import { getInformacoesEmpresa } from '../utils/empresaData';
 import {
   X,
   TrendingUp,
@@ -13,8 +14,18 @@ import {
   DollarSign,
   BarChart2,
   Activity,
-  ArrowUpRight,
-  ArrowDownRight
+  Building2,
+  ShieldCheck,
+  PieChart,
+  Coins,
+  Scale,
+  Award,
+  CheckCircle2,
+  Briefcase,
+  MapPin,
+  FileText,
+  Clock,
+  Sparkles
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -45,11 +56,13 @@ export const AtivoDetalhesModal: React.FC<AtivoDetalhesModalProps> = ({
   onOpenNovaOperacao,
   onNavigateToNoticias,
 }) => {
+  const [abaAtiva, setAbaAtiva] = useState<'empresa' | 'grafico' | 'noticias'>('empresa');
   const [periodo, setPeriodo] = useState<PeriodoHistorico>('1D');
 
-  // Garante que o modal abra sempre no período de 1 dia (1D)
+  // Abre sempre na aba de informações da empresa por padrão e período 1D
   useEffect(() => {
     if (isOpen) {
+      setAbaAtiva('empresa');
       setPeriodo('1D');
     }
   }, [isOpen, ativo?.ticker]);
@@ -81,7 +94,20 @@ export const AtivoDetalhesModal: React.FC<AtivoDetalhesModalProps> = ({
     return getHistoricoAtivo(ativo.ticker, periodo, ativo.precoAtual);
   }, [ativo, periodo]);
 
-  if (!isOpen || !ativo || !historico) return null;
+  const infoEmpresa = useMemo(() => {
+    if (!ativo) return null;
+    return getInformacoesEmpresa(ativo);
+  }, [ativo]);
+
+  const noticiasDoAtivo = useMemo(() => {
+    if (!ativo) return [];
+    const t = ativo.ticker.toUpperCase();
+    return NOTICIAS_MERCADO.filter(
+      (n) => n.ticker.toUpperCase() === t || n.tickersRelacionados?.some((r) => r.toUpperCase() === t)
+    );
+  }, [ativo]);
+
+  if (!isOpen || !ativo || !historico || !infoEmpresa) return null;
 
   const isAlta = historico.variacaoPercentual >= 0;
   const isFII = ativo.tipo === 'FII';
@@ -107,7 +133,7 @@ export const AtivoDetalhesModal: React.FC<AtivoDetalhesModalProps> = ({
         className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92vh]"
       >
         {/* Header Superior do Modal */}
-        <div className="px-6 py-5 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between gap-4">
+        <div className="px-6 py-4 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between gap-4 shrink-0">
           <div className="flex items-center gap-3">
             <div
               className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg font-mono shadow-inner ${
@@ -165,227 +191,597 @@ export const AtivoDetalhesModal: React.FC<AtivoDetalhesModalProps> = ({
           </div>
         </div>
 
-        {/* Corpo com Scroll */}
-        <div className="p-6 space-y-6 overflow-y-auto">
-          {/* Destaque de Cotação e Variação no Período Selecionado */}
-          <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <span className="text-xs font-medium text-slate-400 uppercase tracking-wider block">
-                Cotação Atual a Mercado
-              </span>
-              <div className="flex items-baseline gap-3 mt-1">
-                <span className="text-3xl sm:text-4xl font-extrabold text-slate-100 font-mono tracking-tight">
-                  {ativo.precoAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                </span>
-                <span
-                  className={`text-xs font-bold px-2 py-0.5 rounded-md flex items-center gap-0.5 ${
-                    ativo.variacaoDia >= 0
-                      ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
-                      : 'bg-rose-500/15 text-rose-400 border border-rose-500/20'
-                  }`}
-                  title="Variação no pregão de hoje"
-                >
-                  {ativo.variacaoDia >= 0 ? '+' : ''}
-                  {ativo.variacaoDia.toFixed(2)}% no dia
-                </span>
-              </div>
-            </div>
-
-            {/* Performance no Período Selecionado (Subiu ou Caiu) */}
-            <div
-              className={`p-3.5 rounded-xl border flex items-center gap-3 ${
-                isAlta
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                  : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+        {/* Resumo Rápido de Cotação Fixado */}
+        <div className="px-6 py-3 bg-slate-950/60 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div className="flex items-baseline gap-3">
+            <span className="text-2xl font-extrabold text-slate-100 font-mono">
+              {ativo.precoAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            </span>
+            <span
+              className={`text-xs font-bold px-2 py-0.5 rounded-md flex items-center gap-0.5 ${
+                ativo.variacaoDia >= 0
+                  ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
+                  : 'bg-rose-500/15 text-rose-400 border border-rose-500/20'
               }`}
             >
-              <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                  isAlta ? 'bg-emerald-500/20' : 'bg-rose-500/20'
-                }`}
-              >
-                {isAlta ? <TrendingUp className="w-6 h-6 stroke-[2.5]" /> : <TrendingDown className="w-6 h-6 stroke-[2.5]" />}
-              </div>
-              <div>
-                <span className="text-[11px] uppercase font-bold tracking-wide opacity-80 block">
-                  {isAlta ? 'Subiu no período' : 'Caiu no período'} ({periodo})
-                </span>
-                <div className="flex items-baseline gap-1.5 font-mono">
-                  <span className="text-lg font-black">
-                    {isAlta ? '+' : ''}
-                    {historico.variacaoPercentual.toFixed(2)}%
-                  </span>
-                  <span className="text-xs font-semibold opacity-90">
-                    ({isAlta ? '+' : ''}
-                    {historico.variacaoReais.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})
-                  </span>
-                </div>
-                <span className="text-[10px] text-slate-400 block mt-0.5">
-                  Variação {periodoDescricao[periodo]}
-                </span>
-              </div>
-            </div>
+              {ativo.variacaoDia >= 0 ? '+' : ''}
+              {ativo.variacaoDia.toFixed(2)}% no dia
+            </span>
+            <span className="text-xs text-amber-400 font-mono font-semibold ml-2">
+              DY: {ativo.dividendYield.toFixed(2)}% a.a.
+            </span>
           </div>
 
-          {/* Seletor de Períodos (Tabs) */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 text-xs text-slate-400">
-              <Calendar className="w-4 h-4 text-emerald-400" />
-              <span className="font-semibold text-slate-300">Consultar Histórico:</span>
-              <span className="text-slate-500">Selecione até 5 anos com gráfico</span>
-            </div>
+          {/* Abas de Navegação Interna */}
+          <div className="flex rounded-xl bg-slate-900 p-1 border border-slate-800">
+            <button
+              onClick={() => setAbaAtiva('empresa')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                abaAtiva === 'empresa'
+                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              <span>Sobre a Empresa & Fundamentos</span>
+            </button>
 
-            <div className="flex rounded-xl bg-slate-950 p-1 border border-slate-800 overflow-x-auto no-scrollbar">
-              {periodosDisponiveis.map((p) => {
-                const isActive = periodo === p.id;
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => setPeriodo(p.id)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 whitespace-nowrap ${
-                      isActive
-                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                    }`}
-                  >
-                    <span>{p.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+            <button
+              onClick={() => setAbaAtiva('grafico')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                abaAtiva === 'grafico'
+                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+            >
+              <BarChart2 className="w-3.5 h-3.5" />
+              <span>Gráficos & Cotação</span>
+            </button>
 
-          {/* Gráfico Interativo com Recharts */}
-          <div className="bg-slate-950/80 border border-slate-800/90 rounded-2xl p-4 sm:p-5">
-            <div className="flex items-center justify-between mb-3 text-xs text-slate-400">
-              <div className="flex items-center gap-2">
-                <BarChart2 className="w-4 h-4 text-emerald-400" />
-                <span className="font-medium">
-                  Evolução do Preço da Cotação — Período de {periodo} ({historico.pontos.length} amostras)
-                </span>
-              </div>
-              <div className="flex items-center gap-3 text-[11px] font-mono">
-                <span className="text-slate-500">
-                  Início: <strong className="text-slate-300">{historico.precoInicial.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
-                </span>
-                <span className="text-slate-500">
-                  Final: <strong className="text-slate-300">{historico.precoFinal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
-                </span>
-              </div>
-            </div>
-
-            <div className="h-64 sm:h-72 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={historico.pontos} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="areaGradientVerde" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
-                    </linearGradient>
-                    <linearGradient id="areaGradientVermelho" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#f43f5e" stopOpacity={0.0} />
-                    </linearGradient>
-                  </defs>
-
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
-
-                  <XAxis
-                    dataKey="data"
-                    stroke="#64748b"
-                    fontSize={11}
-                    tickLine={false}
-                    axisLine={{ stroke: '#334155' }}
-                  />
-
-                  <YAxis
-                    stroke="#64748b"
-                    fontSize={11}
-                    tickLine={false}
-                    axisLine={{ stroke: '#334155' }}
-                    domain={['dataMin - 1', 'dataMax + 1']}
-                    tickFormatter={(val) => `R$ ${val.toFixed(0)}`}
-                  />
-
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        const varPonto = data.variacaoPeriodo;
-                        const isPontoAlta = varPonto >= 0;
-                        return (
-                          <div className="bg-slate-900 border border-slate-700 rounded-xl p-3 shadow-xl text-xs space-y-1">
-                            <p className="text-slate-400 font-medium">{data.dataCompleta}</p>
-                            <div className="flex items-baseline gap-2">
-                              <span className="text-slate-400">Preço:</span>
-                              <span className="text-base font-extrabold text-slate-100 font-mono">
-                                {data.preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1 font-mono">
-                              <span className="text-slate-400">Var. acumulada:</span>
-                              <span className={`font-bold ${isPontoAlta ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                {isPontoAlta ? '+' : ''}
-                                {varPonto.toFixed(2)}%
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-
-                  <Area
-                    type="monotone"
-                    dataKey="preco"
-                    stroke={isAlta ? '#10b981' : '#f43f5e'}
-                    strokeWidth={2.5}
-                    fill={isAlta ? 'url(#areaGradientVerde)' : 'url(#areaGradientVermelho)'}
-                    dot={historico.pontos.length <= 15 ? { r: 3, fill: isAlta ? '#10b981' : '#f43f5e' } : false}
-                    activeDot={{ r: 6, fill: isAlta ? '#10b981' : '#f43f5e', stroke: '#0f172a', strokeWidth: 2 }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Cards com Estatísticas do Período */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
-              <span className="text-[10px] uppercase font-semibold text-slate-400 block">Mínima do Período</span>
-              <span className="text-sm font-bold text-slate-200 font-mono mt-0.5 block">
-                {historico.minima.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-              </span>
-            </div>
-
-            <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
-              <span className="text-[10px] uppercase font-semibold text-slate-400 block">Máxima do Período</span>
-              <span className="text-sm font-bold text-slate-200 font-mono mt-0.5 block">
-                {historico.maxima.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-              </span>
-            </div>
-
-            <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
-              <span className="text-[10px] uppercase font-semibold text-slate-400 block">Preço Médio Período</span>
-              <span className="text-sm font-bold text-slate-200 font-mono mt-0.5 block">
-                {historico.precoMedio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-              </span>
-            </div>
-
-            <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
-              <span className="text-[10px] uppercase font-semibold text-slate-400 block">Dividend Yield Atual</span>
-              <span className="text-sm font-bold text-amber-400 font-mono mt-0.5 block">
-                {ativo.dividendYield > 0 ? `${ativo.dividendYield.toFixed(2)}% a.a.` : '0.00%'}
-              </span>
-            </div>
+            <button
+              onClick={() => setAbaAtiva('noticias')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition relative ${
+                abaAtiva === 'noticias'
+                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+            >
+              <Newspaper className="w-3.5 h-3.5" />
+              <span>Notícias ({noticiasDoAtivo.length})</span>
+            </button>
           </div>
         </div>
 
+        {/* Corpo com Scroll */}
+        <div className="p-6 space-y-6 overflow-y-auto flex-1">
+          {/* ======================================================= */}
+          {/* ABA 1: INFORMAÇÕES RELEVANTES DA EMPRESA & FUNDAMENTOS  */}
+          {/* ======================================================= */}
+          {abaAtiva === 'empresa' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              {/* Sobre a Empresa e Modelo de Negócio */}
+              <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center gap-2 text-emerald-400">
+                  <Building2 className="w-5 h-5" />
+                  <h4 className="font-extrabold text-base text-slate-100">
+                    {isFII ? 'Tese & Perfil do Fundo Imobiliário' : 'Perfil Institucional & Atuação da Empresa'}
+                  </h4>
+                </div>
+
+                <p className="text-sm text-slate-300 leading-relaxed">
+                  {infoEmpresa.descricao}
+                </p>
+
+                <div className="pt-3 border-t border-slate-800/80">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                    {isFII ? 'Estratégia de Alocação de Recursos:' : 'Modelo de Negócio e Geração de Receita:'}
+                  </span>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    {infoEmpresa.modeloNegocio}
+                  </p>
+                </div>
+              </div>
+
+              {/* Destaques Operacionais */}
+              {infoEmpresa.destaquesOperacionais && infoEmpresa.destaquesOperacionais.length > 0 && (
+                <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 space-y-3">
+                  <div className="flex items-center gap-2 text-cyan-400">
+                    <Sparkles className="w-4 h-4" />
+                    <h4 className="font-extrabold text-sm text-slate-100 uppercase tracking-wider">
+                      Destaques Operacionais e Estratégicos
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {infoEmpresa.destaquesOperacionais.map((dest, i) => (
+                      <div
+                        key={i}
+                        className="bg-slate-900/80 border border-slate-800 rounded-xl p-3 flex items-start gap-2.5 text-xs text-slate-300"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                        <span className="leading-snug">{dest}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Dados Corporativos e Governança */}
+              <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center gap-2 text-emerald-400">
+                  <ShieldCheck className="w-5 h-5" />
+                  <h4 className="font-extrabold text-base text-slate-100">
+                    Governança Corporativa & Dados Cadastrais
+                  </h4>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Razão Social</span>
+                    <span className="text-xs font-semibold text-slate-200 block mt-1 truncate" title={infoEmpresa.razaoSocial}>
+                      {infoEmpresa.razaoSocial}
+                    </span>
+                  </div>
+
+                  <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">CNPJ</span>
+                    <span className="text-xs font-mono font-semibold text-slate-200 block mt-1">
+                      {infoEmpresa.cnpj}
+                    </span>
+                  </div>
+
+                  <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Segmento de Listagem</span>
+                    <span className="text-xs font-semibold text-emerald-400 block mt-1">
+                      {infoEmpresa.governanca}
+                    </span>
+                  </div>
+
+                  <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Tag Along (Proteção)</span>
+                    <span className="text-xs font-bold text-slate-200 block mt-1">
+                      {infoEmpresa.tagAlong}
+                    </span>
+                  </div>
+
+                  <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Free Float (Circulação)</span>
+                    <span className="text-xs font-bold text-slate-200 block mt-1">
+                      {infoEmpresa.freeFloat}
+                    </span>
+                  </div>
+
+                  <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Sede & Fundação</span>
+                    <span className="text-xs text-slate-300 block mt-1 truncate">
+                      {infoEmpresa.sede} • {infoEmpresa.fundacao}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Indicadores Fundamentalistas */}
+              <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-cyan-400">
+                    <Activity className="w-5 h-5" />
+                    <h4 className="font-extrabold text-base text-slate-100">
+                      {isFII ? 'Métricas & Indicadores do Fundo Imobiliário' : 'Indicadores Fundamentalistas Chave'}
+                    </h4>
+                  </div>
+                  <span className="text-xs text-slate-500 font-mono">B3 / CVM</span>
+                </div>
+
+                {isFII ? (
+                  // Indicadores para FIIs
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3.5">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">P/VP (Preço/Valor Patrimonial)</span>
+                      <span className="text-lg font-black text-slate-100 font-mono mt-1 block">
+                        {infoEmpresa.indicadores.pvp.toFixed(2)}x
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5 block">
+                        {infoEmpresa.indicadores.pvp < 1 ? 'Negociando com desconto' : 'Com ágio sobre VP'}
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3.5">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Dividend Yield Anual</span>
+                      <span className="text-lg font-black text-emerald-400 font-mono mt-1 block">
+                        {infoEmpresa.indicadores.dividendYield.toFixed(2)}%
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5 block">Isento de IRPF</span>
+                    </div>
+
+                    <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3.5">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">VP por Cota</span>
+                      <span className="text-lg font-black text-slate-100 font-mono mt-1 block">
+                        {(infoEmpresa.indicadores.valorPatrimonialCota || ativo.precoAtual).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5 block">Valor Patrimonial Real</span>
+                    </div>
+
+                    <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3.5">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Último Rendimento</span>
+                      <span className="text-lg font-black text-amber-400 font-mono mt-1 block">
+                        {(infoEmpresa.indicadores.ultimoRendimento || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5 block">Rendimento/cota no mês</span>
+                    </div>
+
+                    <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3.5">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Vacância Física</span>
+                      <span className="text-lg font-black text-slate-200 font-mono mt-1 block">
+                        {infoEmpresa.indicadores.vacanciaFisica !== undefined ? `${infoEmpresa.indicadores.vacanciaFisica}%` : '0%'}
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5 block">Área Desocupada</span>
+                    </div>
+
+                    <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3.5">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Qtd. de Imóveis/Ativos</span>
+                      <span className="text-lg font-black text-slate-200 font-mono mt-1 block">
+                        {infoEmpresa.indicadores.quantidadeImoveis || (ativo.setor?.includes('Papel') ? 'CRIs múltiplos' : 'Diversos')}
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5 block">Portfólio Imobiliário</span>
+                    </div>
+
+                    <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3.5 col-span-2">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Gestão & Administração</span>
+                      <span className="text-xs font-semibold text-slate-200 mt-1 block truncate">
+                        Gestor: {infoEmpresa.indicadores.gestor || 'Gestora Habilitada'}
+                      </span>
+                      <span className="text-[10px] text-slate-400 block truncate mt-0.5">
+                        Admin: {infoEmpresa.indicadores.administrador || 'Administrador B3'}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  // Indicadores para Ações
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3.5">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">P/L (Preço / Lucro)</span>
+                      <span className="text-lg font-black text-slate-100 font-mono mt-1 block">
+                        {infoEmpresa.indicadores.pl ? `${infoEmpresa.indicadores.pl.toFixed(1)}x` : '-'}
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5 block">Anos p/ retorno em lucro</span>
+                    </div>
+
+                    <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3.5">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">P/VP (Preço / Valor Patr.)</span>
+                      <span className="text-lg font-black text-slate-100 font-mono mt-1 block">
+                        {infoEmpresa.indicadores.pvp.toFixed(2)}x
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5 block">Multiplicador de patrimônio</span>
+                    </div>
+
+                    <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3.5">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">ROE (Rentab. Patrimônio)</span>
+                      <span className="text-lg font-black text-emerald-400 font-mono mt-1 block">
+                        {infoEmpresa.indicadores.roe ? `${infoEmpresa.indicadores.roe.toFixed(1)}%` : '-'}
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5 block">Eficiência do capital</span>
+                    </div>
+
+                    <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3.5">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Dividend Yield (DY)</span>
+                      <span className="text-lg font-black text-amber-400 font-mono mt-1 block">
+                        {infoEmpresa.indicadores.dividendYield.toFixed(2)}%
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5 block">Retorno em proventos a.a.</span>
+                    </div>
+
+                    <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3.5">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">ROIC</span>
+                      <span className="text-lg font-black text-slate-200 font-mono mt-1 block">
+                        {infoEmpresa.indicadores.roic ? `${infoEmpresa.indicadores.roic.toFixed(1)}%` : '-'}
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5 block">Retorno do capital investido</span>
+                    </div>
+
+                    <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3.5">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Margem Líquida</span>
+                      <span className="text-lg font-black text-slate-200 font-mono mt-1 block">
+                        {infoEmpresa.indicadores.margemLiquida ? `${infoEmpresa.indicadores.margemLiquida.toFixed(1)}%` : '-'}
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5 block">Lucro líquido s/ receita</span>
+                    </div>
+
+                    <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3.5">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Margem EBITDA</span>
+                      <span className="text-lg font-black text-slate-200 font-mono mt-1 block">
+                        {infoEmpresa.indicadores.margemEbitda ? `${infoEmpresa.indicadores.margemEbitda.toFixed(1)}%` : '-'}
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5 block">Eficiência operacional</span>
+                    </div>
+
+                    <div className="bg-slate-900/90 border border-slate-800/80 rounded-xl p-3.5">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Dívida Líq / EBITDA</span>
+                      <span className="text-lg font-black text-slate-200 font-mono mt-1 block">
+                        {infoEmpresa.indicadores.dividaLiquidaEbitda !== undefined
+                          ? `${infoEmpresa.indicadores.dividaLiquidaEbitda.toFixed(2)}x`
+                          : '-'}
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5 block">Alavancagem financeira</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================= */}
+          {/* ABA 2: GRÁFICOS & EVOLUÇÃO HISTÓRICA (1D A 5 ANOS)      */}
+          {/* ======================================================= */}
+          {abaAtiva === 'grafico' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              {/* Performance no Período Selecionado (Subiu ou Caiu) */}
+              <div
+                className={`p-4 rounded-2xl border flex items-center justify-between gap-4 ${
+                  isAlta
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                    : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                      isAlta ? 'bg-emerald-500/20' : 'bg-rose-500/20'
+                    }`}
+                  >
+                    {isAlta ? <TrendingUp className="w-7 h-7 stroke-[2.5]" /> : <TrendingDown className="w-7 h-7 stroke-[2.5]" />}
+                  </div>
+                  <div>
+                    <span className="text-xs uppercase font-bold tracking-wide opacity-80 block">
+                      {isAlta ? 'Valorização no período' : 'Desvalorização no período'} ({periodo})
+                    </span>
+                    <div className="flex items-baseline gap-2 font-mono">
+                      <span className="text-2xl font-black">
+                        {isAlta ? '+' : ''}
+                        {historico.variacaoPercentual.toFixed(2)}%
+                      </span>
+                      <span className="text-sm font-semibold opacity-90">
+                        ({isAlta ? '+' : ''}
+                        {historico.variacaoReais.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-right hidden sm:block">
+                  <span className="text-xs text-slate-400 block">Variação acumulada</span>
+                  <span className="text-xs font-semibold text-slate-200">{periodoDescricao[periodo]}</span>
+                </div>
+              </div>
+
+              {/* Seletor de Períodos (Tabs) */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                  <Calendar className="w-4 h-4 text-emerald-400" />
+                  <span className="font-semibold text-slate-300">Janela de Tempo:</span>
+                  <span className="text-slate-500">Selecione até 5 anos com gráfico</span>
+                </div>
+
+                <div className="flex rounded-xl bg-slate-950 p-1 border border-slate-800 overflow-x-auto no-scrollbar">
+                  {periodosDisponiveis.map((p) => {
+                    const isActive = periodo === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => setPeriodo(p.id)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 whitespace-nowrap ${
+                          isActive
+                            ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                        }`}
+                      >
+                        <span>{p.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Gráfico Interativo com Recharts */}
+              <div className="bg-slate-950/80 border border-slate-800/90 rounded-2xl p-4 sm:p-5">
+                <div className="flex items-center justify-between mb-3 text-xs text-slate-400">
+                  <div className="flex items-center gap-2">
+                    <BarChart2 className="w-4 h-4 text-emerald-400" />
+                    <span className="font-medium">
+                      Evolução do Preço da Cotação — Período de {periodo} ({historico.pontos.length} amostras)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-[11px] font-mono">
+                    <span className="text-slate-500">
+                      Início: <strong className="text-slate-300">{historico.precoInicial.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
+                    </span>
+                    <span className="text-slate-500">
+                      Final: <strong className="text-slate-300">{historico.precoFinal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-64 sm:h-72 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={historico.pontos} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="areaGradientVerde" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                        </linearGradient>
+                        <linearGradient id="areaGradientVermelho" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.4} />
+                          <stop offset="95%" stopColor="#f43f5e" stopOpacity={0.0} />
+                        </linearGradient>
+                      </defs>
+
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
+
+                      <XAxis
+                        dataKey="data"
+                        stroke="#64748b"
+                        fontSize={11}
+                        tickLine={false}
+                        axisLine={{ stroke: '#334155' }}
+                      />
+
+                      <YAxis
+                        stroke="#64748b"
+                        fontSize={11}
+                        tickLine={false}
+                        axisLine={{ stroke: '#334155' }}
+                        domain={['dataMin - 1', 'dataMax + 1']}
+                        tickFormatter={(val) => `R$ ${val.toFixed(0)}`}
+                      />
+
+                      <Tooltip
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            const varPonto = data.variacaoPeriodo;
+                            const isPontoAlta = varPonto >= 0;
+                            return (
+                              <div className="bg-slate-900 border border-slate-700 rounded-xl p-3 shadow-xl text-xs space-y-1">
+                                <p className="text-slate-400 font-medium">{data.dataCompleta}</p>
+                                <div className="flex items-baseline gap-2">
+                                  <span className="text-slate-400">Preço:</span>
+                                  <span className="text-base font-extrabold text-slate-100 font-mono">
+                                    {data.preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1 font-mono">
+                                  <span className="text-slate-400">Var. acumulada:</span>
+                                  <span className={`font-bold ${isPontoAlta ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                    {isPontoAlta ? '+' : ''}
+                                    {varPonto.toFixed(2)}%
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+
+                      <Area
+                        type="monotone"
+                        dataKey="preco"
+                        stroke={isAlta ? '#10b981' : '#f43f5e'}
+                        strokeWidth={2.5}
+                        fill={isAlta ? 'url(#areaGradientVerde)' : 'url(#areaGradientVermelho)'}
+                        dot={historico.pontos.length <= 15 ? { r: 3, fill: isAlta ? '#10b981' : '#f43f5e' } : false}
+                        activeDot={{ r: 6, fill: isAlta ? '#10b981' : '#f43f5e', stroke: '#0f172a', strokeWidth: 2 }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Cards com Estatísticas do Período */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
+                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">Mínima do Período</span>
+                  <span className="text-sm font-bold text-slate-200 font-mono mt-0.5 block">
+                    {historico.minima.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </span>
+                </div>
+
+                <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
+                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">Máxima do Período</span>
+                  <span className="text-sm font-bold text-slate-200 font-mono mt-0.5 block">
+                    {historico.maxima.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </span>
+                </div>
+
+                <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
+                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">Preço Médio Período</span>
+                  <span className="text-sm font-bold text-slate-200 font-mono mt-0.5 block">
+                    {historico.precoMedio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </span>
+                </div>
+
+                <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
+                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">Dividend Yield Atual</span>
+                  <span className="text-sm font-bold text-amber-400 font-mono mt-0.5 block">
+                    {ativo.dividendYield > 0 ? `${ativo.dividendYield.toFixed(2)}% a.a.` : '0.00%'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================= */}
+          {/* ABA 3: NOTÍCIAS & FATOS RELEVANTES VINCULADOS AO ATIVO  */}
+          {/* ======================================================= */}
+          {abaAtiva === 'noticias' && (
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <div className="flex items-center gap-2 text-cyan-400">
+                  <Newspaper className="w-5 h-5" />
+                  <h4 className="font-extrabold text-base text-slate-100">
+                    Últimas Notícias e Fatos Relevantes de {ativo.ticker}
+                  </h4>
+                </div>
+                {onNavigateToNoticias && (
+                  <button
+                    onClick={() => {
+                      onClose();
+                      onNavigateToNoticias(ativo.ticker);
+                    }}
+                    className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 hover:underline flex items-center gap-1"
+                  >
+                    <span>Ver no Feed Geral</span>
+                  </button>
+                )}
+              </div>
+
+              {noticiasDoAtivo.length === 0 ? (
+                <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-8 text-center space-y-2">
+                  <FileText className="w-8 h-8 text-slate-600 mx-auto" />
+                  <p className="text-sm text-slate-300 font-medium">
+                    Nenhum comunicado recente específico registrado para {ativo.ticker} nas últimas 24h.
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Acompanhe a aba de Notícias e Favoritos para alertas do mercado em tempo real.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {noticiasDoAtivo.map((noticia) => (
+                    <div
+                      key={noticia.id}
+                      className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-4 space-y-2 hover:border-slate-700 transition"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                            {noticia.categoria}
+                          </span>
+                          <span className="text-xs text-slate-400 font-medium">{noticia.fonte}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                          <Clock className="w-3 h-3" />
+                          <span>{noticia.dataPublicacao}</span>
+                        </div>
+                      </div>
+
+                      <h5 className="font-bold text-sm text-slate-100 leading-snug">
+                        {noticia.titulo}
+                      </h5>
+
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        {noticia.resumo}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Rodapé de Ações Rápidas */}
-        <div className="px-6 py-4 border-t border-slate-800 bg-slate-900/90 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="px-6 py-4 border-t border-slate-800 bg-slate-900/90 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
           <div className="text-xs text-slate-500 text-center sm:text-left">
-            <span>Dados de cotação atualizados automaticamente para {ativo.ticker}</span>
+            <span>Dados de cotação e perfil corporativo atualizados para {ativo.ticker}</span>
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">

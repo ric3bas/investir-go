@@ -13,10 +13,13 @@ import {
   ArrowRight,
   ShieldCheck,
   Percent,
-  Wallet
+  Wallet,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { PosicaoCarteira, ResumoCarteira } from '../types';
+import { usePrivacy } from '../context/PrivacyContext';
 
 interface DashboardTabProps {
   resumo: ResumoCarteira | null;
@@ -44,6 +47,8 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
   onNavigateTab,
   onOpenNovaOperacao,
 }) => {
+  const { esconderValores, toggleEsconderValores, formatarValor } = usePrivacy();
+
   if (!resumo) {
     return (
       <div className="flex flex-col items-center justify-center p-20 text-slate-400 space-y-3">
@@ -71,7 +76,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
     const ticker = item.name;
     const rawVal = item.value;
     const valor = typeof rawVal === 'number'
-      ? rawVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+      ? formatarValor(rawVal)
       : rawVal;
     const percentual = item.payload?.percentual ?? 0;
     const nome = item.payload?.nome;
@@ -115,11 +120,24 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                 Patrimônio Consolidado • Mercado B3
               </span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <button
+                type="button"
+                onClick={toggleEsconderValores}
+                className={`p-1 rounded-lg border transition cursor-pointer ${
+                  esconderValores
+                    ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                    : 'bg-white/[0.04] text-slate-400 hover:text-slate-200 border-white/[0.08]'
+                }`}
+                title={esconderValores ? 'Mostrar valores monetários' : 'Ocultar valores monetários (Modo Privacidade)'}
+                aria-label={esconderValores ? 'Mostrar valores' : 'Ocultar valores'}
+              >
+                {esconderValores ? <EyeOff className="w-3.5 h-3.5 text-amber-400" /> : <Eye className="w-3.5 h-3.5" />}
+              </button>
             </div>
 
             <div className="flex flex-wrap items-baseline gap-4">
               <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black font-mono tracking-tight text-white tabular-nums">
-                {resumo.saldoAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                {formatarValor(resumo.saldoAtual)}
               </h2>
 
               {/* Badge de Lucro / Prejuízo em Destaque */}
@@ -132,8 +150,9 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
               >
                 {isLucro ? <ArrowUpRight className="w-4 h-4 stroke-[2.5]" /> : <ArrowDownRight className="w-4 h-4 stroke-[2.5]" />}
                 <span>
-                  {isLucro ? '+' : ''}
-                  {resumo.lucroPrejuizoNaoRealizado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  {esconderValores
+                    ? '••••••••'
+                    : `${isLucro ? '+' : ''}${resumo.lucroPrejuizoNaoRealizado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`}
                 </span>
                 <span className="opacity-80">
                   ({isLucro ? '+' : ''}{resumo.rentabilidadePercentual.toFixed(2)}%)
@@ -175,7 +194,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
               <span className="text-[11px] uppercase tracking-wider font-semibold">Total Investido (Custo PM)</span>
             </div>
             <div className="text-xl sm:text-2xl font-bold font-mono text-slate-200 tabular-nums">
-              {resumo.totalInvestido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              {formatarValor(resumo.totalInvestido)}
             </div>
             <span className="text-[10px] text-slate-500 block">Preço médio ponderado de aquisição</span>
           </div>
@@ -187,7 +206,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
               <span className="text-[11px] uppercase tracking-wider font-semibold">Proventos & Dividendos</span>
             </div>
             <div className="text-xl sm:text-2xl font-bold font-mono text-amber-400 tabular-nums">
-              {resumo.totalProventos.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              {formatarValor(resumo.totalProventos)}
             </div>
             <span className="text-[10px] text-slate-500 block">Fluxo de caixa de dividendos e JCP</span>
           </div>
@@ -199,8 +218,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
               <span className="text-[11px] uppercase tracking-wider font-semibold">Retorno Total Geral</span>
             </div>
             <div className={`text-xl sm:text-2xl font-bold font-mono tabular-nums ${resumo.retornoTotalGeral >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-              {resumo.retornoTotalGeral >= 0 ? '+' : ''}
-              {resumo.retornoTotalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              {esconderValores ? '••••••••' : `${resumo.retornoTotalGeral >= 0 ? '+' : ''}${resumo.retornoTotalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`}
             </div>
             <span className="text-[10px] text-slate-500 block">Oscilação de mercado + Proventos creditados</span>
           </div>
@@ -278,7 +296,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                     </div>
                     <div className="text-right">
                       <span className="font-mono font-bold text-slate-200 tabular-nums">
-                        {pos.saldoAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        {formatarValor(pos.saldoAtual)}
                       </span>
                       <span className="text-[10px] text-slate-400 font-mono ml-2">
                         {pos.percentualCarteira}%
@@ -332,7 +350,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
               <div className="flex justify-between text-[11px] font-mono text-slate-400 pt-0.5">
                 <span>Total em Ações:</span>
                 <span className="text-slate-200 font-semibold">
-                  {resumo.totalAcoes.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  {formatarValor(resumo.totalAcoes)}
                 </span>
               </div>
             </div>
@@ -354,7 +372,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
               <div className="flex justify-between text-[11px] font-mono text-slate-400 pt-0.5">
                 <span>Total em FIIs:</span>
                 <span className="text-slate-200 font-semibold">
-                  {resumo.totalFIIs.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  {formatarValor(resumo.totalFIIs)}
                 </span>
               </div>
             </div>

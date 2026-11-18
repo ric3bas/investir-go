@@ -9,10 +9,8 @@ import {
   Star,
   LineChart,
   Filter,
-  Sparkles,
   ArrowUpRight,
   ArrowDownRight,
-  Info,
   Search,
   Plus,
   CheckCircle2,
@@ -461,112 +459,6 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
         )}
       </div>
 
-      {/* Cards de Destaques Rápidos */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Destaque Maior Alta */}
-        {ranking.destaqueAlta && (
-          <div
-            onClick={() => onSelectAtivo(ranking.destaqueAlta.ativo)}
-            className="cursor-pointer bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/30 border border-emerald-500/30 rounded-2xl p-5 hover:border-emerald-500/60 transition group flex flex-col justify-between"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" />
-                Maior Alta do Período ({periodo})
-              </span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
-                1º Lugar
-              </span>
-            </div>
-
-            <div className="mt-4 flex items-end justify-between">
-              <div>
-                <h4 className="text-2xl font-black text-slate-100 font-mono group-hover:text-emerald-400 transition">
-                  {ranking.destaqueAlta.ticker}
-                </h4>
-                <p className="text-xs text-slate-400 line-clamp-1">{ranking.destaqueAlta.nome}</p>
-              </div>
-
-              <div className="text-right">
-                <span className="text-xl font-black text-emerald-400 font-mono block">
-                  +{ranking.destaqueAlta.variacaoPercentual.toFixed(2)}%
-                </span>
-                <span className="text-xs font-semibold text-slate-400 font-mono">
-                  +{ranking.destaqueAlta.variacaoReais.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Destaque Maior Baixa */}
-        {ranking.destaqueBaixa && (
-          <div
-            onClick={() => onSelectAtivo(ranking.destaqueBaixa.ativo)}
-            className="cursor-pointer bg-gradient-to-br from-slate-900 via-slate-900 to-rose-950/30 border border-rose-500/30 rounded-2xl p-5 hover:border-rose-500/60 transition group flex flex-col justify-between"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
-                <TrendingDown className="w-3.5 h-3.5" />
-                Maior Baixa do Período ({periodo})
-              </span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-bold">
-                Mais Pressionado
-              </span>
-            </div>
-
-            <div className="mt-4 flex items-end justify-between">
-              <div>
-                <h4 className="text-2xl font-black text-slate-100 font-mono group-hover:text-rose-400 transition">
-                  {ranking.destaqueBaixa.ticker}
-                </h4>
-                <p className="text-xs text-slate-400 line-clamp-1">{ranking.destaqueBaixa.nome}</p>
-              </div>
-
-              <div className="text-right">
-                <span className="text-xl font-black text-rose-400 font-mono block">
-                  {ranking.destaqueBaixa.variacaoPercentual.toFixed(2)}%
-                </span>
-                <span className="text-xs font-semibold text-slate-400 font-mono">
-                  {ranking.destaqueBaixa.variacaoReais.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Média Consolidada */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Info className="w-3.5 h-3.5 text-cyan-400" />
-              Média dos Ativos no Período
-            </span>
-            <span className="text-xs text-slate-500 font-mono">{periodo}</span>
-          </div>
-
-          <div className="mt-4 flex items-center justify-between">
-            <div>
-              <span className="text-2xl font-black text-slate-100 font-mono block">
-                {ranking.mediaVariacao >= 0 ? '+' : ''}
-                {ranking.mediaVariacao.toFixed(2)}%
-              </span>
-              <p className="text-xs text-slate-400">Rendimento médio dos 30 ativos</p>
-            </div>
-            <div
-              className={`p-2.5 rounded-xl ${
-                ranking.mediaVariacao >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
-              }`}
-            >
-              {ranking.mediaVariacao >= 0 ? (
-                <TrendingUp className="w-5 h-5" />
-              ) : (
-                <TrendingDown className="w-5 h-5" />
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Grade Principal: Duas Colunas com Top 7 Altas e Top 7 Baixas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -599,7 +491,17 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
               return (
                 <div
                   key={`alta-${item.ticker}`}
-                  className="bg-slate-950/70 border border-slate-800/80 hover:border-emerald-500/40 rounded-2xl p-3.5 transition group flex flex-col gap-2"
+                  onClick={() => onSelectAtivo(item.ativo)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSelectAtivo(item.ativo);
+                    }
+                  }}
+                  className="cursor-pointer bg-slate-950/70 border border-slate-800/80 hover:border-emerald-500/60 hover:bg-slate-900/80 hover:shadow-lg hover:shadow-emerald-950/20 active:scale-[0.99] rounded-2xl p-3.5 transition-all group flex flex-col gap-2"
+                  title={`Clique para abrir informações completas e fundamentos de ${item.ticker}`}
                 >
                   <div className="flex items-center justify-between">
                     {/* Posição + Ticker + Detalhes */}
@@ -615,14 +517,10 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
 
                       <div>
                         <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => onSelectAtivo(item.ativo)}
-                            className="font-extrabold text-sm sm:text-base text-slate-100 font-mono hover:text-emerald-400 transition flex items-center gap-1 text-left"
-                            title="Clique para abrir histórico de 5 anos com gráfico"
-                          >
+                          <span className="font-extrabold text-sm sm:text-base text-slate-100 font-mono group-hover:text-emerald-400 transition flex items-center gap-1 text-left">
                             <span>{item.ticker}</span>
                             <LineChart className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-400 opacity-0 group-hover:opacity-100 transition" />
-                          </button>
+                          </span>
 
                           <span
                             className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
@@ -711,7 +609,17 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
               return (
                 <div
                   key={`baixa-${item.ticker}`}
-                  className="bg-slate-950/70 border border-slate-800/80 hover:border-rose-500/40 rounded-2xl p-3.5 transition group flex flex-col gap-2"
+                  onClick={() => onSelectAtivo(item.ativo)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSelectAtivo(item.ativo);
+                    }
+                  }}
+                  className="cursor-pointer bg-slate-950/70 border border-slate-800/80 hover:border-rose-500/60 hover:bg-slate-900/80 hover:shadow-lg hover:shadow-rose-950/20 active:scale-[0.99] rounded-2xl p-3.5 transition-all group flex flex-col gap-2"
+                  title={`Clique para abrir informações completas e fundamentos de ${item.ticker}`}
                 >
                   <div className="flex items-center justify-between">
                     {/* Posição + Ticker + Detalhes */}
@@ -727,14 +635,10 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
 
                       <div>
                         <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => onSelectAtivo(item.ativo)}
-                            className="font-extrabold text-sm sm:text-base text-slate-100 font-mono hover:text-rose-400 transition flex items-center gap-1 text-left"
-                            title="Clique para abrir histórico de 5 anos com gráfico"
-                          >
+                          <span className="font-extrabold text-sm sm:text-base text-slate-100 font-mono group-hover:text-rose-400 transition flex items-center gap-1 text-left">
                             <span>{item.ticker}</span>
                             <LineChart className="w-3.5 h-3.5 text-slate-500 group-hover:text-rose-400 opacity-0 group-hover:opacity-100 transition" />
-                          </button>
+                          </span>
 
                           <span
                             className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PosicaoCarteira } from '../types';
-import { Plus, Minus, Coins, Search, LineChart, ArrowDownUp, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { Plus, Minus, Coins, Search, LineChart, ArrowDownUp, TrendingUp, TrendingDown, DollarSign, Eye, EyeOff } from 'lucide-react';
+import { usePrivacy } from '../context/PrivacyContext';
 
 interface CarteiraTabProps {
   posicoes: PosicaoCarteira[];
@@ -17,6 +18,7 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
   onOpenNovoProvento,
   onSelectTicker,
 }) => {
+  const { esconderValores, toggleEsconderValores, formatarValor } = usePrivacy();
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroTipo, setFiltroTipo] = useState<'TODOS' | 'Acao' | 'FII'>('TODOS');
   const [ordenacao, setOrdenacao] = useState<'saldo' | 'rentabilidade' | 'ticker'>('saldo');
@@ -104,24 +106,32 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
       {/* Resumo da Tabela Filtrada */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         <div className="p-4 rounded-2xl bg-[#090d18]/90 border border-white/[0.06] shadow-sm">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block font-semibold">Total Investido (Custo)</span>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block font-semibold">Total Investido (Custo)</span>
+            <button
+              onClick={toggleEsconderValores}
+              className="p-1 rounded text-slate-500 hover:text-slate-200 transition"
+              title={esconderValores ? 'Mostrar valores' : 'Ocultar valores'}
+            >
+              {esconderValores ? <EyeOff className="w-3.5 h-3.5 text-amber-400" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
+          </div>
           <span className="font-bold text-slate-100 text-base sm:text-lg font-mono tabular-nums mt-1 block">
-            {totalInvestido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            {formatarValor(totalInvestido)}
           </span>
         </div>
 
         <div className="p-4 rounded-2xl bg-[#090d18]/90 border border-white/[0.06] shadow-sm">
           <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block font-semibold">Saldo Atual a Mercado</span>
           <span className="font-bold text-slate-100 text-base sm:text-lg font-mono tabular-nums mt-1 block">
-            {totalSaldoAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            {formatarValor(totalSaldoAtual)}
           </span>
         </div>
 
         <div className="p-4 rounded-2xl bg-[#090d18]/90 border border-white/[0.06] shadow-sm">
           <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block font-semibold">Oscilação Patrimonial</span>
           <span className={`font-bold text-base sm:text-lg font-mono tabular-nums mt-1 block ${totalVariacao >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-            {totalVariacao >= 0 ? '+' : ''}
-            {totalVariacao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            {esconderValores ? '••••••••' : `${totalVariacao >= 0 ? '+' : ''}${totalVariacao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`}
             <span className="text-xs ml-1 font-semibold opacity-85">({totalRentabilidade.toFixed(2)}%)</span>
           </span>
         </div>
@@ -129,7 +139,7 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
         <div className="p-4 rounded-2xl bg-[#090d18]/90 border border-white/[0.06] shadow-sm">
           <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block font-semibold">Proventos Creditados</span>
           <span className="font-bold text-amber-400 text-base sm:text-lg font-mono tabular-nums mt-1 block">
-            {totalProventos.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            {formatarValor(totalProventos)}
           </span>
         </div>
       </div>
@@ -209,19 +219,18 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
 
                       {/* Total Investido */}
                       <td className="py-3.5 px-3 text-right font-mono text-slate-400 tabular-nums">
-                        {pos.totalInvestido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        {formatarValor(pos.totalInvestido)}
                       </td>
 
                       {/* Saldo Atual */}
                       <td className="py-3.5 px-3 text-right font-mono font-bold text-white tabular-nums">
-                        {pos.saldoAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        {formatarValor(pos.saldoAtual)}
                       </td>
 
                       {/* Lucro / Prejuízo */}
                       <td className="py-3.5 px-3 text-right font-mono">
                         <span className={`font-bold block tabular-nums ${isPosLucro ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {isPosLucro ? '+' : ''}
-                          {pos.variacaoReais.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          {esconderValores ? '••••••••' : `${isPosLucro ? '+' : ''}${pos.variacaoReais.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`}
                         </span>
                         <span className={`text-[10px] tabular-nums font-semibold ${isPosLucro ? 'text-emerald-400/80' : 'text-rose-400/80'}`}>
                           {isPosLucro ? '+' : ''}{pos.rentabilidadePercentual.toFixed(2)}%
@@ -231,7 +240,7 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
                       {/* Proventos */}
                       <td className="py-3.5 px-3 text-right font-mono font-bold text-amber-400 tabular-nums">
                         {pos.totalProventosRecebidos > 0 ? (
-                          pos.totalProventosRecebidos.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                          formatarValor(pos.totalProventosRecebidos)
                         ) : (
                           <span className="text-slate-600">-</span>
                         )}

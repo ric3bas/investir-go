@@ -18,10 +18,15 @@ import {
   Clock,
   ArrowUpRight,
   ArrowDownRight,
-  ArrowDownUp
+  ArrowDownUp,
+  Eye,
+  EyeOff,
+  DollarSign
 } from 'lucide-react';
 import { ResumoCarteira } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { usePrivacy } from '../context/PrivacyContext';
+import { useCotacaoDolar } from '../hooks/useCotacaoDolar';
 
 export interface NavigationProps {
   activeTab: string;
@@ -73,6 +78,8 @@ export const Sidebar: React.FC<NavigationProps> = ({
     setSecurityModalOpen,
     logout,
   } = useAuth();
+  const { esconderValores, toggleEsconderValores, formatarValor } = usePrivacy();
+  const dolar = useCotacaoDolar();
 
   const [menuAberto, setMenuAberto] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -119,23 +126,59 @@ export const Sidebar: React.FC<NavigationProps> = ({
           </div>
         </div>
 
+        {/* Cotação do Dólar Comercial Sempre Visível */}
+        <div
+          className="p-2.5 rounded-2xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between text-xs font-mono shadow-sm"
+          title={`Dólar Comercial (USD/BRL): R$ ${dolar.cotacao.toFixed(2)} (${dolar.variacao >= 0 ? '+' : ''}${dolar.variacao.toFixed(2)}%) • Mín: R$ ${dolar.minima.toFixed(2)} | Máx: R$ ${dolar.maxima.toFixed(2)}`}
+        >
+          <div className="flex items-center gap-1.5 text-slate-300">
+            <div className="w-5 h-5 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold text-[11px]">
+              $
+            </div>
+            <span className="font-semibold text-slate-300 text-[11px]">Dólar USD</span>
+          </div>
+          <div className="flex items-center gap-1.5 font-bold">
+            <span className="text-white font-extrabold font-mono">
+              R$ {dolar.cotacao.toFixed(2)}
+            </span>
+            <span
+              className={`text-[10px] ${
+                dolar.variacao >= 0 ? 'text-emerald-400' : 'text-rose-400'
+              }`}
+            >
+              {dolar.variacao >= 0 ? '+' : ''}
+              {dolar.variacao.toFixed(2)}%
+            </span>
+          </div>
+        </div>
+
         {/* Mini Card de Resumo de Patrimônio */}
         {resumo && (
           <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
             <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-slate-400">
-              <span>Patrimônio</span>
+              <div className="flex items-center gap-1.5">
+                <span>Patrimônio</span>
+                <button
+                  type="button"
+                  onClick={toggleEsconderValores}
+                  className="p-0.5 rounded text-slate-500 hover:text-slate-200 transition cursor-pointer"
+                  title={esconderValores ? 'Mostrar valores' : 'Ocultar valores'}
+                >
+                  {esconderValores ? <EyeOff className="w-3.5 h-3.5 text-amber-400" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              </div>
               <span className={`font-bold flex items-center gap-0.5 ${isLucro ? 'text-emerald-400' : 'text-rose-400'}`}>
                 {isLucro ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
                 {resumo.rentabilidadePercentual.toFixed(1)}%
               </span>
             </div>
             <div className="font-mono font-bold text-lg text-slate-100 tabular-nums">
-              {resumo.saldoAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              {formatarValor(resumo.saldoAtual)}
             </div>
             <div className="text-[11px] text-slate-400 font-mono flex items-center justify-between pt-1 border-t border-white/[0.04]">
               <span>Proventos:</span>
               <span className="text-amber-400 font-bold">
-                {resumo.totalProventos.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                {formatarValor(resumo.totalProventos)}
               </span>
             </div>
           </div>
@@ -330,6 +373,8 @@ export const TopHeader: React.FC<NavigationProps> = ({
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
+  const { esconderValores, toggleEsconderValores } = usePrivacy();
+  const dolar = useCotacaoDolar();
 
   const allItems = navigationGroups.flatMap(g => g.items);
   const currentLabel = allItems.find(i => i.id === activeTab)?.label || (activeTab === 'admin' ? 'Governança & Segurança' : 'Dashboard');
@@ -355,18 +400,67 @@ export const TopHeader: React.FC<NavigationProps> = ({
           </div>
         </div>
 
-        {/* Lado Direito: Live B3 Status & Quick Shortcuts */}
-        <div className="flex items-center gap-3">
+        {/* Lado Direito: Live B3 Status, Cotação Dólar Sempre Visível & Ações */}
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Cotação do Dólar Comercial Sempre Visível */}
+          <div
+            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] text-xs font-mono transition shadow-sm cursor-help"
+            title={`Dólar Comercial (USD/BRL): R$ ${dolar.cotacao.toFixed(2)} (${dolar.variacao >= 0 ? '+' : ''}${dolar.variacao.toFixed(2)}%) • Mín: R$ ${dolar.minima.toFixed(2)} | Máx: R$ ${dolar.maxima.toFixed(2)} • Atualizado às ${dolar.dataHora}`}
+          >
+            <div className="w-5 h-5 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold text-[11px] shrink-0">
+              $
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-400 font-semibold text-[11px] hidden md:inline">USD:</span>
+              <span className="font-extrabold text-white font-mono">
+                R$ {dolar.cotacao.toFixed(2)}
+              </span>
+              <span
+                className={`text-[10px] font-bold ${
+                  dolar.variacao >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                }`}
+              >
+                {dolar.variacao >= 0 ? '+' : ''}
+                {dolar.variacao.toFixed(2)}%
+              </span>
+            </div>
+          </div>
+
           {/* Live Market Badge */}
-          <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-xl bg-white/[0.02] border border-white/[0.04] text-xs font-mono text-slate-400">
+          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.02] border border-white/[0.04] text-xs font-mono text-slate-400">
             <Clock className="w-3.5 h-3.5 text-emerald-400" />
             <span>Pregão B3: 10h às 17h</span>
           </div>
 
+          {/* Botão de Privacidade: Olho para Mostrar / Esconder Valores */}
+          <button
+            type="button"
+            onClick={toggleEsconderValores}
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+              esconderValores
+                ? 'bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
+                : 'bg-white/[0.02] hover:bg-white/[0.06] text-slate-300 hover:text-white border-white/[0.06]'
+            }`}
+            title={esconderValores ? 'Clique para mostrar todos os valores monetários' : 'Clique para ocultar valores monetários (Modo Privacidade)'}
+            aria-label={esconderValores ? 'Mostrar valores' : 'Ocultar valores'}
+          >
+            {esconderValores ? (
+              <>
+                <EyeOff className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="hidden xl:inline text-[11px]">Valores Ocultos</span>
+              </>
+            ) : (
+              <>
+                <Eye className="w-4 h-4 text-slate-400 shrink-0" />
+                <span className="hidden xl:inline text-[11px]">Ocultar Valores</span>
+              </>
+            )}
+          </button>
+
           {/* Quick Favoritos */}
           <button
             onClick={() => setActiveTab('noticias')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition ${
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold border transition ${
               activeTab === 'noticias'
                 ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
                 : 'bg-white/[0.02] hover:bg-white/[0.05] text-slate-300 border-white/[0.06]'
