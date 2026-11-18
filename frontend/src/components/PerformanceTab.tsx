@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Ativo, PeriodoPerformance } from '../types';
 import { getPerformanceRanking, buscarAtivosMercado, AtivoPesquisaResultado } from '../utils/marketData';
 import {
+import {
   TrendingUp,
   TrendingDown,
   Award,
@@ -15,7 +16,8 @@ import {
   Plus,
   CheckCircle2,
   X,
-  Edit2
+  Edit2,
+  RefreshCw
 } from 'lucide-react';
 
 interface PerformanceTabProps {
@@ -23,6 +25,8 @@ interface PerformanceTabProps {
   favoritos: string[];
   onToggleFavorito: (ticker: string) => void;
   onSelectAtivo: (ativo: Ativo) => void;
+  onAtualizarPrecos?: () => void; // Adicionado
+  carregandoPrecos?: boolean; // Adicionado
   onCadastrarAtivo?: (dados?: {
     ticker?: string;
     nome?: string;
@@ -46,6 +50,8 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
   favoritos,
   onToggleFavorito,
   onSelectAtivo,
+  onAtualizarPrecos, // Adicionado
+  carregandoPrecos, // Adicionado
   onCadastrarAtivo,
   onSalvarAtivoRapido,
 }) => {
@@ -127,6 +133,15 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
             <h2 className="text-xl sm:text-2xl font-black text-slate-100 tracking-tight">
               Top 7 Maiores Altas & Baixas
             </h2>
+            {onAtualizarPrecos && (
+              <button
+                onClick={onAtualizarPrecos}
+                className={`p-2 rounded-xl text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 transition ${carregandoPrecos ? 'animate-spin' : ''}`}
+                title="Atualizar cotações em tempo real"
+              >
+                <RefreshCw className="w-5 h-5" />
+              </button>
+            )}
           </div>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Acompanhe em tempo real os 7 ativos que mais renderam e os 7 que menos performaram na bolsa brasileira (B3).

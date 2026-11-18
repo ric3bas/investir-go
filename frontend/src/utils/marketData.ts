@@ -31,7 +31,7 @@ export const TOP_30_ATIVOS: Ativo[] = [
   { id: 22, ticker: 'VISC11', nome: 'Vinci Shopping Centers FII', tipo: 'FII', setor: 'Shopping Centers', precoAtual: 114.80, variacaoDia: 0.15, dividendYield: 8.95, dataAtualizacao: new Date().toISOString() },
   { id: 23, ticker: 'HGRU11', nome: 'CSHG Renda Urbana FII', tipo: 'FII', setor: 'Renda Urbana / Educacional', precoAtual: 124.60, variacaoDia: 0.25, dividendYield: 9.20, dataAtualizacao: new Date().toISOString() },
   { id: 24, ticker: 'CPTS11', nome: 'Capitânia Securities II FII', tipo: 'FII', setor: 'Papel / CRI', precoAtual: 7.95, variacaoDia: -0.25, dividendYield: 11.90, dataAtualizacao: new Date().toISOString() },
-  { id: 25, ticker: 'VGHF11', nome: 'Valora Hedge Fund FII', tipo: 'FII', setor: 'Hedge Fund Imobiliário', precoAtual: 8.45, variacaoDia: 0.00, dividendYield: 12.80, dataAtualizacao: new Date().toISOString() },
+  { id: 25, ticker: 'VGHF11', nome: 'Valora Hedge Fund FII', tipo: 'FII', setor: 'Hedge Fund Imobiliário', precoAtual: 3.00, variacaoDia: 0.00, dividendYield: 12.80, dataAtualizacao: new Date().toISOString() },
   { id: 26, ticker: 'TGAR11', nome: 'TG Ativo Real FII', tipo: 'FII', setor: 'Desenvolvimento / Loteamentos', precoAtual: 118.50, variacaoDia: 0.30, dividendYield: 13.50, dataAtualizacao: new Date().toISOString() },
   { id: 27, ticker: 'KNHY11', nome: 'Kinea High Yield FII', tipo: 'FII', setor: 'Papel / High Yield', precoAtual: 99.20, variacaoDia: 0.10, dividendYield: 12.10, dataAtualizacao: new Date().toISOString() },
   { id: 28, ticker: 'XPLG11', nome: 'XP Log FII', tipo: 'FII', setor: 'Logística / Galpões', precoAtual: 102.10, variacaoDia: 0.18, dividendYield: 8.70, dataAtualizacao: new Date().toISOString() },

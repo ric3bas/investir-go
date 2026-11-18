@@ -39,7 +39,7 @@ public class AtivoRepository : IAtivoRepository
         new Ativo { Id = 22, Ticker = "VISC11", Nome = "Vinci Shopping Centers FII", Tipo = "FII", Setor = "Shopping Centers", PrecoAtual = 114.80m, VariacaoDia = 0.15m, DividendYield = 8.95m },
         new Ativo { Id = 23, Ticker = "HGRU11", Nome = "CSHG Renda Urbana FII", Tipo = "FII", Setor = "Renda Urbana / Educacional", PrecoAtual = 124.60m, VariacaoDia = 0.25m, DividendYield = 9.20m },
         new Ativo { Id = 24, Ticker = "CPTS11", Nome = "Capitânia Securities II FII", Tipo = "FII", Setor = "Papel / CRI", PrecoAtual = 7.95m, VariacaoDia = -0.25m, DividendYield = 11.90m },
-        new Ativo { Id = 25, Ticker = "VGHF11", Nome = "Valora Hedge Fund FII", Tipo = "FII", Setor = "Hedge Fund Imobiliário", PrecoAtual = 8.45m, VariacaoDia = 0.00m, DividendYield = 12.80m },
+        new Ativo { Id = 25, Ticker = "VGHF11", Nome = "Valora Hedge Fund FII", Tipo = "FII", Setor = "Hedge Fund Imobiliário", PrecoAtual = 3.00m, VariacaoDia = 0.00m, DividendYield = 12.80m },
         new Ativo { Id = 26, Ticker = "TGAR11", Nome = "TG Ativo Real FII", Tipo = "FII", Setor = "Desenvolvimento / Loteamentos", PrecoAtual = 118.50m, VariacaoDia = 0.30m, DividendYield = 13.50m },
         new Ativo { Id = 27, Ticker = "KNHY11", Nome = "Kinea High Yield FII", Tipo = "FII", Setor = "Papel / High Yield", PrecoAtual = 99.20m, VariacaoDia = 0.10m, DividendYield = 12.10m },
         new Ativo { Id = 28, Ticker = "XPLG11", Nome = "XP Log FII", Tipo = "FII", Setor = "Logística / Galpões", PrecoAtual = 102.10m, VariacaoDia = 0.18m, DividendYield = 8.70m },

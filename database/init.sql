@@ -94,7 +94,7 @@ VALUES
     ('VISC11', 'Vinci Shopping Centers FII', 'FII', 'Shopping Centers', 114.80, 0.15, 8.95),
     ('HGRU11', 'CSHG Renda Urbana FII', 'FII', 'Renda Urbana / Educacional', 124.60, 0.25, 9.20),
     ('CPTS11', 'Capitânia Securities II FII', 'FII', 'Papel / CRI', 7.95, -0.25, 11.90),
-    ('VGHF11', 'Valora Hedge Fund FII', 'FII', 'Hedge Fund Imobiliário', 8.45, 0.00, 12.80),
+    ('VGHF11', 'Valora Hedge Fund FII', 'FII', 'Hedge Fund Imobiliário', 3.00, 0.00, 12.80),
     ('TGAR11', 'TG Ativo Real FII', 'FII', 'Desenvolvimento / Loteamentos', 118.50, 0.30, 13.50),
     ('KNHY11', 'Kinea High Yield FII', 'FII', 'Papel / High Yield', 99.20, 0.10, 12.10),
     ('XPLG11', 'XP Log FII', 'FII', 'Logística / Galpões', 102.10, 0.18, 8.70),

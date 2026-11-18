@@ -273,26 +273,6 @@ export const Sidebar: React.FC<NavigationProps> = ({
             <Coins className="w-3.5 h-3.5 text-amber-400" />
             <span>+ Declarar Provento</span>
           </button>
-
-          {onOpenLancamentos && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onOpenLancamentos();
-              }}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 text-cyan-300 hover:text-cyan-200 border border-cyan-500/30 hover:border-cyan-400/50 font-semibold text-xs shadow-sm transition active:scale-[0.98] cursor-pointer"
-            >
-              <ArrowDownUp className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Extrato de Lançamentos</span>
-              {totalOperacoes !== undefined && totalOperacoes > 0 && (
-                <span className="ml-1 px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-mono font-bold">
-                  {totalOperacoes}
-                </span>
-              )}
-            </button>
-          )}
         </div>
       </div>
 
@@ -482,27 +462,6 @@ export const TopHeader: React.FC<NavigationProps> = ({
             </span>
           </button>
 
-          {/* Extrato de Lançamentos Rápido */}
-          {onOpenLancamentos && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onOpenLancamentos();
-              }}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.02] hover:bg-white/[0.05] text-cyan-300 border border-cyan-500/20 transition shadow-sm cursor-pointer"
-            >
-              <ArrowDownUp className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Lançamentos</span>
-              {totalOperacoes !== undefined && totalOperacoes > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 font-mono text-[10px]">
-                  {totalOperacoes}
-                </span>
-              )}
-            </button>
-          )}
-
           {/* Nova Operação Rápida */}
           <button
             type="button"
@@ -591,18 +550,6 @@ export const TopHeader: React.FC<NavigationProps> = ({
                     >
                       <Coins className="w-3.5 h-3.5 text-amber-400" />
                       <span>+ Declarar Provento</span>
-                    </button>
-                  )}
-                  {onOpenLancamentos && (
-                    <button
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        onOpenLancamentos();
-                      }}
-                      className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 font-semibold text-xs transition"
-                    >
-                      <ArrowDownUp className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>Extrato de Lançamentos</span>
                     </button>
                   )}
                 </div>

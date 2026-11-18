@@ -33,6 +33,7 @@ export const App: React.FC = () => {
   const [ativos, setAtivos] = useState<Ativo[]>(TOP_30_ATIVOS);
   const [favoritos, setFavoritos] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [carregandoPrecos, setCarregandoPrecos] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Modais de Transação & Cadastro
@@ -78,6 +79,9 @@ export const App: React.FC = () => {
       setOperacoes(operacoesData);
       setProventos(proventosData);
       setAtivos(ativosData);
+      
+      // Garante que os preços estejam atualizados ao carregar a carteira no login
+      await handleAtualizarPrecos();
     } catch (err: any) {
       console.error('Erro ao carregar dados:', err);
       // O InvestirApi já implementa fallback resiliente, mas caso haja erro imprevisto
@@ -97,6 +101,15 @@ export const App: React.FC = () => {
       setProventos([]);
       setLoading(false);
     }
+  }, [isAuthenticated]);
+
+  // Periodic update of prices every 5 minutes
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const interval = setInterval(() => {
+      handleAtualizarPrecos();
+    }, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, [isAuthenticated]);
 
   // Handlers de Favorito
@@ -145,6 +158,22 @@ export const App: React.FC = () => {
   const handleAtualizarCotacao = async (id: number, novoPreco: number) => {
     await InvestirApi.atualizarCotacao(id, novoPreco);
     await carregarDados();
+  };
+
+  const handleAtualizarPrecos = async () => {
+    setCarregandoPrecos(true);
+    try {
+      const [posicoesData, ativosData] = await Promise.all([
+        InvestirApi.getPosicoes(),
+        InvestirApi.getAtivos(),
+      ]);
+      setPosicoes(posicoesData);
+      setAtivos(ativosData);
+    } catch (err) {
+      console.error('Erro ao atualizar preços:', err);
+    } finally {
+      setCarregandoPrecos(false);
+    }
   };
 
   const handleCadastrarAtivo = async (data: any) => {
@@ -272,6 +301,8 @@ export const App: React.FC = () => {
                   const at = ativos.find((a) => a.ticker.toUpperCase() === ticker.toUpperCase());
                   if (at) handleSelectAtivo(at);
                 }}
+                onAtualizarPrecos={handleAtualizarPrecos}
+                carregandoPrecos={carregandoPrecos}
               />
             )}
 
@@ -284,6 +315,8 @@ export const App: React.FC = () => {
                 onSelectAtivo={handleSelectAtivo}
                 onCadastrarAtivo={handleOpenCadastrarAtivo}
                 onSalvarAtivoRapido={handleCadastrarAtivo}
+                onAtualizarPrecos={handleAtualizarPrecos}
+                carregandoPrecos={carregandoPrecos}
               />
             )}
 

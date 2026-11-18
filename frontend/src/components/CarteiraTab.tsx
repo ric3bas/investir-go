@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PosicaoCarteira } from '../types';
-import { Plus, Minus, Coins, Search, LineChart, ArrowDownUp, TrendingUp, TrendingDown, DollarSign, Eye, EyeOff } from 'lucide-react';
+import { Plus, Minus, Coins, Search, LineChart, ArrowDownUp, TrendingUp, TrendingDown, DollarSign, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { usePrivacy } from '../context/PrivacyContext';
 
 interface CarteiraTabProps {
@@ -10,6 +10,8 @@ interface CarteiraTabProps {
   onOpenNovoProvento: (defaultTicker?: string) => void;
   onOpenLancamentos?: () => void;
   onSelectTicker?: (ticker: string) => void;
+  onAtualizarPrecos?: () => void; // Adicionado
+  carregandoPrecos?: boolean; // Adicionado
 }
 
 export const CarteiraTab: React.FC<CarteiraTabProps> = ({
@@ -17,6 +19,8 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
   onOpenNovaOperacao,
   onOpenNovoProvento,
   onSelectTicker,
+  onAtualizarPrecos, // Adicionado
+  carregandoPrecos, // Adicionado
 }) => {
   const { esconderValores, toggleEsconderValores, formatarValor } = usePrivacy();
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,6 +58,15 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
             <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               {filtered.length} ativos
             </span>
+            {onAtualizarPrecos && (
+              <button
+                onClick={onAtualizarPrecos}
+                className={`p-1.5 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 transition ${carregandoPrecos ? 'animate-spin' : ''}`}
+                title="Atualizar cotações em tempo real"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            )}
           </div>
           <p className="text-xs text-slate-400 mt-1">
             Controle de preço médio fiscal ponderado, cotações a mercado e fluxo de rendimentos.
