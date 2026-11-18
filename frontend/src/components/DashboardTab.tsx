@@ -1,5 +1,20 @@
 import React from 'react';
-import { DollarSign, TrendingUp, TrendingDown, Coins, PieChart as PieChartIcon, Building2, Briefcase, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import {
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  Coins,
+  PieChart as PieChartIcon,
+  Building2,
+  Briefcase,
+  ArrowUpRight,
+  ArrowDownRight,
+  Plus,
+  ArrowRight,
+  ShieldCheck,
+  Percent,
+  Wallet
+} from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { PosicaoCarteira, ResumoCarteira } from '../types';
 
@@ -10,16 +25,16 @@ interface DashboardTabProps {
   onOpenNovaOperacao: (defaultTicker?: string) => void;
 }
 
-// Curated institutional color palette for financial visual balance
-const COLORS = [
+// Paleta institucional nórdica de alta fidelidade
+const PALETTE = [
   '#10b981', // Emerald
   '#06b6d4', // Cyan
   '#6366f1', // Indigo
   '#f59e0b', // Amber
-  '#8b5cf6', // Purple
+  '#8b5cf6', // Violet
   '#ec4899', // Pink
   '#14b8a6', // Teal
-  '#3b82f6', // Blue
+  '#3b82f6', // Cobalt Blue
   '#84cc16', // Lime
 ];
 
@@ -27,15 +42,18 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
   resumo,
   posicoes,
   onNavigateTab,
+  onOpenNovaOperacao,
 }) => {
   if (!resumo) {
     return (
-      <div className="flex flex-col items-center justify-center p-16 text-slate-400 space-y-2">
-        <div className="w-8 h-8 rounded-full border-2 border-emerald-500/20 border-t-emerald-500 animate-spin" />
-        <span className="text-xs font-medium tracking-wide">Carregando métricas da carteira...</span>
+      <div className="flex flex-col items-center justify-center p-20 text-slate-400 space-y-3">
+        <div className="w-9 h-9 rounded-full border-2 border-emerald-500/20 border-t-emerald-500 animate-spin" />
+        <span className="text-xs font-mono tracking-wider uppercase text-slate-400">Sincronizando custódia B3...</span>
       </div>
     );
   }
+
+  const isLucro = resumo.lucroPrejuizoNaoRealizado >= 0;
 
   // Dados para o gráfico de pizza por ativo
   const dataAtivos = posicoes.map((p, idx) => ({
@@ -44,32 +62,8 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
     tipo: p.tipo,
     percentual: p.percentualCarteira,
     nome: p.nome,
-    color: COLORS[idx % COLORS.length],
+    color: PALETTE[idx % PALETTE.length],
   }));
-
-  const renderCustomizedLabel = (props: any) => {
-    const { cx, x, y, name, index, percent } = props;
-    if (posicoes.length > 8 && (percent ?? 0) < 0.035) {
-      return null;
-    }
-
-    return (
-      <text
-        x={x}
-        y={y}
-        textAnchor={props.textAnchor || (x > cx ? 'start' : 'end')}
-        dominantBaseline="central"
-        className="text-[11px] font-mono font-medium select-none"
-      >
-        <tspan fill={COLORS[index % COLORS.length]} fontWeight="600">
-          {name}
-        </tspan>
-        <tspan fill="#94a3b8" fontSize="10">
-          {` ${((percent ?? 0) * 100).toFixed(0)}%`}
-        </tspan>
-      </text>
-    );
-  };
 
   const CustomPieTooltip = ({ active, payload }: any) => {
     if (!active || !payload || !payload.length) return null;
@@ -81,18 +75,18 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
       : rawVal;
     const percentual = item.payload?.percentual ?? 0;
     const nome = item.payload?.nome;
-    const cor = item.payload?.color || COLORS[item.payload?.index % COLORS.length] || '#10b981';
+    const cor = item.payload?.color || PALETTE[0];
 
     return (
-      <div className="bg-slate-900/95 backdrop-blur-xl border border-white/[0.08] px-3.5 py-2.5 rounded-xl shadow-2xl text-xs space-y-1.5 z-50 min-w-[170px]">
+      <div className="bg-[#0b0f1a]/95 backdrop-blur-2xl border border-white/[0.1] px-4 py-3 rounded-2xl shadow-2xl text-xs space-y-1.5 z-50 min-w-[190px]">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: cor }} />
-          <span className="font-bold text-slate-100 text-sm tracking-tight font-mono">{ticker}</span>
+          <span className="font-bold text-white text-sm font-mono tracking-tight">{ticker}</span>
           {nome && <span className="text-slate-400 text-[11px] truncate max-w-[120px]">{nome}</span>}
         </div>
-        <div className="flex items-center justify-between gap-4 pt-1.5 border-t border-white/[0.06] text-slate-200">
+        <div className="flex items-center justify-between gap-4 pt-2 border-t border-white/[0.06] text-slate-200">
           <span className="font-bold text-emerald-400 font-mono tabular-nums text-sm">{valor}</span>
-          <span className="text-slate-300 font-mono font-semibold bg-white/[0.06] px-1.5 py-0.5 rounded text-[10px]">
+          <span className="text-slate-300 font-mono font-semibold bg-white/[0.06] px-2 py-0.5 rounded-md text-[10px]">
             {percentual}%
           </span>
         </div>
@@ -100,147 +94,145 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
     );
   };
 
-  const isLucro = resumo.lucroPrejuizoNaoRealizado >= 0;
-
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Cards de Métricas Principais (Bento Grid) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Investido */}
-        <div className="fintech-card rounded-2xl p-5 relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Investido</span>
-            <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-slate-300 group-hover:scale-105 transition-transform">
-              <DollarSign className="w-4 h-4 text-slate-300" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <h3 className="text-2xl lg:text-[26px] font-bold font-mono text-slate-100 tabular-nums tracking-tight">
-              {resumo.totalInvestido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            </h3>
-            <p className="text-[11px] text-slate-500 mt-1 font-medium">Custo de aquisição (Preço Médio)</p>
-          </div>
-        </div>
+      
+      {/* ===================================================================== */}
+      {/* 1. PORTFOLIO COMMAND CENTER (HERO MASTER CARD)                        */}
+      {/* ===================================================================== */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0c1220] via-[#090d18] to-[#070a12] border border-white/[0.08] shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset,0_20px_40px_-15px_rgba(0,0,0,0.8)] p-6 sm:p-8">
+        
+        {/* Glow de ambientação financeira */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/[0.06] rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-teal-500/[0.04] rounded-full blur-3xl pointer-events-none" />
 
-        {/* Saldo Atual / Patrimônio */}
-        <div className="fintech-card rounded-2xl p-5 relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Patrimônio Atual</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
-              <TrendingUp className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <h3 className="text-2xl lg:text-[26px] font-bold font-mono text-slate-100 tabular-nums tracking-tight">
-              {resumo.saldoAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            </h3>
-            <p className="text-[11px] text-slate-500 mt-1 font-medium">Cotação a mercado x custódia</p>
-          </div>
-        </div>
-
-        {/* Lucro / Prejuízo Não Realizado */}
-        <div className="fintech-card rounded-2xl p-5 relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Resultado da Carteira</span>
-            <div
-              className={`w-8 h-8 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 ${
-                isLucro
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                  : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-              }`}
-            >
-              {isLucro ? <ArrowUpRight className="w-4 h-4 stroke-[2.5]" /> : <ArrowDownRight className="w-4 h-4 stroke-[2.5]" />}
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="flex items-baseline gap-2">
-              <h3
-                className={`text-2xl lg:text-[26px] font-bold font-mono tabular-nums tracking-tight ${
-                  isLucro ? 'text-emerald-400' : 'text-rose-400'
-                }`}
-              >
-                {isLucro ? '+' : ''}
-                {resumo.lucroPrejuizoNaoRealizado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-              </h3>
-              <span
-                className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                  isLucro
-                    ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25'
-                    : 'bg-rose-500/15 text-rose-300 border border-rose-500/25'
-                }`}
-              >
-                {isLucro ? '+' : ''}{resumo.rentabilidadePercentual.toFixed(2)}%
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          
+          {/* Lado Esquerdo: Grande Métrica de Patrimônio */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-mono uppercase tracking-widest text-slate-400 font-semibold">
+                Patrimônio Consolidado • Mercado B3
               </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             </div>
-            <p className="text-[11px] text-slate-500 mt-1 font-medium">Oscilação de mercado vs PM</p>
-          </div>
-        </div>
 
-        {/* Total de Proventos */}
-        <div className="fintech-card rounded-2xl p-5 relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Proventos Recebidos</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
-              <Coins className="w-4 h-4" />
+            <div className="flex flex-wrap items-baseline gap-4">
+              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black font-mono tracking-tight text-white tabular-nums">
+                {resumo.saldoAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </h2>
+
+              {/* Badge de Lucro / Prejuízo em Destaque */}
+              <div
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-mono font-bold border transition ${
+                  isLucro
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25 shadow-sm'
+                    : 'bg-rose-500/10 text-rose-400 border-rose-500/25 shadow-sm'
+                }`}
+              >
+                {isLucro ? <ArrowUpRight className="w-4 h-4 stroke-[2.5]" /> : <ArrowDownRight className="w-4 h-4 stroke-[2.5]" />}
+                <span>
+                  {isLucro ? '+' : ''}
+                  {resumo.lucroPrejuizoNaoRealizado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </span>
+                <span className="opacity-80">
+                  ({isLucro ? '+' : ''}{resumo.rentabilidadePercentual.toFixed(2)}%)
+                </span>
+              </div>
             </div>
-          </div>
-          <div className="mt-3">
-            <h3 className="text-2xl lg:text-[26px] font-bold font-mono text-amber-400 tabular-nums tracking-tight">
-              {resumo.totalProventos.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            </h3>
-            <p className="text-[11px] text-slate-500 mt-1 font-medium">Dividendos, JCP e Rendimentos</p>
-          </div>
-        </div>
-      </div>
 
-      {/* Destaque: Retorno Total Geral (Variação + Proventos) */}
-      <div className="fintech-card rounded-2xl p-5 border border-emerald-500/20 bg-gradient-to-r from-slate-900/90 via-slate-900/60 to-emerald-950/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400 shadow-sm">
-            <Briefcase className="w-5 h-5" />
+            <p className="text-xs text-slate-400">
+              Valorização de mercado baseada nas últimas cotações oficiais dos ativos em custódia.
+            </p>
           </div>
-          <div>
-            <h4 className="font-semibold text-slate-100 text-sm tracking-tight">Retorno Total com Proventos Reinvestidos</h4>
-            <p className="text-xs text-slate-400">Lucro de capital somado a todo fluxo de proventos creditados na carteira</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Retorno Líquido Total</span>
-            <span
-              className={`text-xl font-bold font-mono tabular-nums tracking-tight ${
-                resumo.retornoTotalGeral >= 0 ? 'text-emerald-400' : 'text-rose-400'
-              }`}
+
+          {/* Lado Direito: Ações Diretas no Portfólio */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <button
+              onClick={() => onOpenNovaOperacao()}
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider transition shadow-[0_1px_0_0_rgba(255,255,255,0.2)_inset,0_4px_16px_rgba(16,185,129,0.35)]"
             >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>Lançar Operação</span>
+            </button>
+
+            <button
+              onClick={() => onNavigateTab('carteira')}
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border border-white/[0.08] font-semibold text-xs transition"
+            >
+              <span>Ver Minha Carteira</span>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+            </button>
+          </div>
+        </div>
+
+        {/* Régua de Métricas Secundárias (Ledger de 3 Colunas) */}
+        <div className="mt-8 pt-6 border-t border-white/[0.06] grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {/* Custo Total Investido */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 text-slate-400 text-xs">
+              <DollarSign className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-[11px] uppercase tracking-wider font-semibold">Total Investido (Custo PM)</span>
+            </div>
+            <div className="text-xl sm:text-2xl font-bold font-mono text-slate-200 tabular-nums">
+              {resumo.totalInvestido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            </div>
+            <span className="text-[10px] text-slate-500 block">Preço médio ponderado de aquisição</span>
+          </div>
+
+          {/* Proventos Acumulados */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 text-slate-400 text-xs">
+              <Coins className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-[11px] uppercase tracking-wider font-semibold">Proventos & Dividendos</span>
+            </div>
+            <div className="text-xl sm:text-2xl font-bold font-mono text-amber-400 tabular-nums">
+              {resumo.totalProventos.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            </div>
+            <span className="text-[10px] text-slate-500 block">Fluxo de caixa de dividendos e JCP</span>
+          </div>
+
+          {/* Retorno Total Geral */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 text-slate-400 text-xs">
+              <Briefcase className="w-3.5 h-3.5 text-teal-400" />
+              <span className="text-[11px] uppercase tracking-wider font-semibold">Retorno Total Geral</span>
+            </div>
+            <div className={`text-xl sm:text-2xl font-bold font-mono tabular-nums ${resumo.retornoTotalGeral >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               {resumo.retornoTotalGeral >= 0 ? '+' : ''}
               {resumo.retornoTotalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            </span>
+            </div>
+            <span className="text-[10px] text-slate-500 block">Oscilação de mercado + Proventos creditados</span>
           </div>
-          <button
-            onClick={() => onNavigateTab('carteira')}
-            className="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-white/[0.05] hover:bg-white/[0.09] text-slate-200 border border-white/[0.08] transition shadow-sm"
-          >
-            Ver Detalhes
-          </button>
         </div>
       </div>
 
-      {/* Gráficos e Distribuição */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Gráfico Alocação por Ativo */}
-        <div className="fintech-card rounded-2xl p-5 lg:col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <PieChartIcon className="w-4 h-4 text-emerald-400" />
-              <h3 className="font-semibold text-slate-100 text-sm tracking-tight">Alocação de Patrimônio por Ativo</h3>
+      {/* ===================================================================== */}
+      {/* 2. BENTO GRID DE INTELIGÊNCIA E ALOCAÇÃO                             */}
+      {/* ===================================================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Card 1 (Span 8): Alocação de Patrimônio por Ativo */}
+        <div className="lg:col-span-8 rounded-3xl bg-[#090d18]/90 border border-white/[0.08] p-6 shadow-xl backdrop-blur-xl space-y-6">
+          <div className="flex items-center justify-between border-b border-white/[0.06] pb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                <PieChartIcon className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white tracking-tight">Alocação e Pesos de Custódia</h3>
+                <p className="text-[11px] text-slate-400">Distribuição patrimonial por ativo individual</p>
+              </div>
             </div>
-            <span className="text-xs text-slate-400 font-mono bg-white/[0.04] px-2 py-0.5 rounded-full border border-white/[0.04]">
-              {posicoes.length} ativos
+
+            <span className="text-xs font-mono font-semibold text-slate-400 bg-white/[0.03] px-3 py-1 rounded-xl border border-white/[0.06]">
+              {posicoes.length} Ativos
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-4">
-            <div className="h-64">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+            {/* Gráfico Donut */}
+            <div className="md:col-span-6 h-64 relative flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -249,38 +241,60 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    innerRadius={52}
-                    outerRadius={78}
+                    innerRadius={64}
+                    outerRadius={92}
                     paddingAngle={3}
-                    label={renderCustomizedLabel}
-                    labelLine={{ strokeWidth: 1.2, stroke: '#475569' }}
                   >
                     {dataAtivos.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={PALETTE[index % PALETTE.length]} stroke="rgba(0,0,0,0.4)" strokeWidth={2} />
                     ))}
                   </Pie>
                   <Tooltip content={<CustomPieTooltip />} />
                 </PieChart>
               </ResponsiveContainer>
+
+              {/* Indicador central do Donut */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-[10px] uppercase font-mono tracking-widest text-slate-400 font-bold">Total</span>
+                <span className="text-lg font-bold font-mono text-white tabular-nums">
+                  {posicoes.length}
+                </span>
+                <span className="text-[9px] text-emerald-400 font-mono">Posições</span>
+              </div>
             </div>
 
-            {/* Lista dos maiores pesos */}
-            <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+            {/* Lista dos Maiores Pesos da Carteira com Mini Barras */}
+            <div className="md:col-span-6 space-y-2 max-h-64 overflow-y-auto pr-1">
               {posicoes.map((pos, idx) => (
                 <div
                   key={pos.ativoId}
-                  className="flex items-center justify-between text-xs p-2 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.1] hover:bg-white/[0.05] transition"
+                  className="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.05] hover:border-white/[0.08] transition space-y-1.5"
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                    <span className="font-bold font-mono text-slate-200">{pos.ticker}</span>
-                    <span className="text-slate-400 text-[11px] truncate max-w-[110px]">{pos.nome}</span>
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: PALETTE[idx % PALETTE.length] }} />
+                      <span className="font-bold font-mono text-slate-100">{pos.ticker}</span>
+                      <span className="text-slate-400 text-[11px] truncate max-w-[100px]">{pos.nome}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-mono font-bold text-slate-200 tabular-nums">
+                        {pos.saldoAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono ml-2">
+                        {pos.percentualCarteira}%
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className="font-mono font-semibold text-slate-200 block tabular-nums text-[11px]">
-                      {pos.saldoAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-mono">{pos.percentualCarteira}%</span>
+
+                  {/* Barra de progresso visual */}
+                  <div className="w-full bg-white/[0.04] rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.min(pos.percentualCarteira, 100)}%`,
+                        backgroundColor: PALETTE[idx % PALETTE.length],
+                      }}
+                    />
                   </div>
                 </div>
               ))}
@@ -288,61 +302,75 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
           </div>
         </div>
 
-        {/* Classes de Ativos (Ações vs FIIs) */}
-        <div className="fintech-card rounded-2xl p-5 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <Building2 className="w-4 h-4 text-cyan-400" />
-              <h3 className="font-semibold text-slate-100 text-sm tracking-tight">Classes de Ativos</h3>
+        {/* Card 2 (Span 4): Classes de Ativos & Rebalanceamento */}
+        <div className="lg:col-span-4 rounded-3xl bg-[#090d18]/90 border border-white/[0.08] p-6 shadow-xl backdrop-blur-xl flex flex-col justify-between space-y-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2.5 border-b border-white/[0.06] pb-4">
+              <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                <Building2 className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white tracking-tight">Classes de Ativos</h3>
+                <p className="text-[11px] text-slate-400">Diversificação setorial B3</p>
+              </div>
             </div>
 
-            <div className="space-y-4 mt-6">
-              {/* Ações */}
-              <div>
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="font-medium text-slate-300">Ações Brasileiras</span>
-                  <span className="font-bold font-mono text-emerald-400 tabular-nums">{resumo.percentualAcoes.toFixed(1)}%</span>
-                </div>
-                <div className="w-full bg-slate-950/80 rounded-full h-2 overflow-hidden p-0.5 border border-white/[0.04]">
-                  <div
-                    className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500"
-                    style={{ width: `${resumo.percentualAcoes}%` }}
-                  />
-                </div>
-                <span className="text-[11px] font-mono text-slate-400 mt-1 block tabular-nums">
+            {/* Ações */}
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.04] space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-slate-200">Ações Brasileiras</span>
+                <span className="font-mono font-bold text-emerald-400 text-sm tabular-nums">
+                  {resumo.percentualAcoes.toFixed(1)}%
+                </span>
+              </div>
+              <div className="w-full bg-white/[0.06] rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${resumo.percentualAcoes}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[11px] font-mono text-slate-400 pt-0.5">
+                <span>Total em Ações:</span>
+                <span className="text-slate-200 font-semibold">
                   {resumo.totalAcoes.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </span>
               </div>
+            </div>
 
-              {/* FIIs */}
-              <div>
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="font-medium text-slate-300">Fundos Imobiliários (FIIs)</span>
-                  <span className="font-bold font-mono text-cyan-400 tabular-nums">{resumo.percentualFIIs.toFixed(1)}%</span>
-                </div>
-                <div className="w-full bg-slate-950/80 rounded-full h-2 overflow-hidden p-0.5 border border-white/[0.04]">
-                  <div
-                    className="bg-gradient-to-r from-cyan-500 to-blue-500 h-full rounded-full transition-all duration-500"
-                    style={{ width: `${resumo.percentualFIIs}%` }}
-                  />
-                </div>
-                <span className="text-[11px] font-mono text-slate-400 mt-1 block tabular-nums">
+            {/* FIIs */}
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.04] space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-slate-200">Fundos Imobiliários (FIIs)</span>
+                <span className="font-mono font-bold text-cyan-400 text-sm tabular-nums">
+                  {resumo.percentualFIIs.toFixed(1)}%
+                </span>
+              </div>
+              <div className="w-full bg-white/[0.06] rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-cyan-500 to-blue-500 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${resumo.percentualFIIs}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[11px] font-mono text-slate-400 pt-0.5">
+                <span>Total em FIIs:</span>
+                <span className="text-slate-200 font-semibold">
                   {resumo.totalFIIs.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-white/[0.06] text-xs text-slate-400 flex items-center justify-between">
-            <span className="text-[11px]">Análise de mercado</span>
+          <div className="pt-4 border-t border-white/[0.06]">
             <button
               onClick={() => onNavigateTab('performance')}
-              className="text-emerald-400 hover:text-emerald-300 font-semibold text-[11px] transition"
+              className="w-full flex items-center justify-between p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] text-xs font-semibold text-emerald-400 transition"
             >
-              Altas & Baixas (Top 7) →
+              <span>Ver Melhores Oportunidades (Top 7)</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
+
       </div>
     </div>
   );

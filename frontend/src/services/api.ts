@@ -30,7 +30,7 @@ const isSpreadsheetUser = (): boolean => {
   const user = AuthService.getUser();
   const storedEmail = typeof localStorage !== 'undefined' ? localStorage.getItem('investir_user_email') : null;
   const email = (user?.email || storedEmail || '').toLowerCase().trim();
-  return email === 'usuario@investirgo.com';
+  return email === 'usuario@investirgo.com' || email === 'admin@investirgo.com';
 };
 
 export const InvestirApi = {

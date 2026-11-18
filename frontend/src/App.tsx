@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Navbar } from './components/Navbar';
+import { Sidebar, TopHeader } from './components/Navbar';
 import { DashboardTab } from './components/DashboardTab';
 import { CarteiraTab } from './components/CarteiraTab';
 import { ProventosTab } from './components/ProventosTab';
@@ -202,9 +202,9 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
-      {/* Navbar Superior */}
-      <Navbar
+    <div className="min-h-screen bg-[#05070d] text-slate-100 flex font-sans selection:bg-emerald-500/20 selection:text-emerald-300">
+      {/* Sidebar Lateral Fixa (Desktop) */}
+      <Sidebar
         activeTab={activeTab}
         setActiveTab={handleTabChange}
         resumo={resumo}
@@ -214,10 +214,23 @@ export const App: React.FC = () => {
         onOpenLancamentos={() => setModalLancamentosOpen(true)}
       />
 
-      {/* Conteúdo Principal */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {error && (
-          <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-sm flex items-center justify-between">
+      {/* Viewport Principal de Conteúdo */}
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+        {/* Top Header Bar */}
+        <TopHeader
+          activeTab={activeTab}
+          setActiveTab={handleTabChange}
+          resumo={resumo}
+          favoritosCount={favoritos.length}
+          onOpenNovaOperacao={handleOpenNovaOperacao}
+          onOpenNovoProvento={handleOpenNovoProvento}
+          onOpenLancamentos={() => setModalLancamentosOpen(true)}
+        />
+
+        {/* Conteúdo Principal */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] w-full mx-auto">
+          {error && (
+            <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-sm flex items-center justify-between">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <span>{error}</span>
@@ -306,10 +319,11 @@ export const App: React.FC = () => {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500">
-        <p>InvestirGo • Plataforma de Gestão de Investimentos, Preço Médio, Proventos e Cotações (B3 & FIIs)</p>
-      </footer>
+        {/* Footer */}
+        <footer className="border-t border-white/[0.04] bg-[#070a12]/80 backdrop-blur py-5 text-center text-xs text-slate-500 font-mono">
+          <p>InvestirGo • Plataforma Institucional de Gestão de Investimentos, Preço Médio e Proventos (B3 & FIIs)</p>
+        </footer>
+      </div>
 
       {/* Modal Interativo de Análise do Ativo (Até 5 Anos com Gráfico) */}
       <AtivoDetalhesModal
