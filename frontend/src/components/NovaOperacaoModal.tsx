@@ -3,6 +3,7 @@ import { X, ArrowDownRight, ArrowUpRight, DollarSign, Calendar, Hash, Tag, Calcu
 import { Ativo } from '../types';
 import { TOP_30_ATIVOS } from '../utils/marketData';
 import { AtivoCombobox } from './AtivoCombobox';
+import { formatarDinheiro, aplicarMascaraDinheiro } from '../utils/formatters';
 
 interface NovaOperacaoModalProps {
   isOpen: boolean;
@@ -53,7 +54,7 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
           (a) => (a?.ticker || '').toUpperCase() === initialTicker.toUpperCase()
         );
         if (ativo && typeof ativo.precoAtual === 'number' && ativo.precoAtual > 0) {
-          setPrecoUnitario(ativo.precoAtual.toString());
+          setPrecoUnitario(aplicarMascaraDinheiro((ativo.precoAtual * 100).toString()));
         } else {
           setPrecoUnitario('');
         }
@@ -80,15 +81,15 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
     const t = (ativo?.ticker || '').toUpperCase();
     setTicker(t);
     if (ativo && typeof ativo.precoAtual === 'number' && ativo.precoAtual > 0) {
-      setPrecoUnitario(ativo.precoAtual.toString());
+      setPrecoUnitario(aplicarMascaraDinheiro((ativo.precoAtual * 100).toString()));
     } else if (!t) {
       setPrecoUnitario('');
     }
   };
 
   const qtdNum = parseFloat(quantidade.replace(',', '.')) || 0;
-  const precoNum = parseFloat(precoUnitario.replace(',', '.')) || 0;
-  const taxasNum = parseFloat(taxas.replace(',', '.')) || 0;
+  const precoNum = parseFloat(precoUnitario.replace(/\./g, '').replace(',', '.')) || 0;
+  const taxasNum = parseFloat(taxas.replace(/\./g, '').replace(',', '.')) || 0;
   const subtotal = qtdNum * precoNum;
   const totalCalculado = subtotal + (tipoOperacao === 'COMPRA' ? taxasNum : -taxasNum);
 
@@ -143,8 +144,8 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
         <div className="flex items-center gap-3 mb-5">
           <div
             className={`w-10 h-10 rounded-2xl flex items-center justify-center ${tipoOperacao === 'COMPRA'
-                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+              : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
               }`}
           >
             {tipoOperacao === 'COMPRA' ? (
@@ -170,8 +171,8 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
               type="button"
               onClick={() => setTipoOperacao('COMPRA')}
               className={`py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all ${tipoOperacao === 'COMPRA'
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-                  : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                : 'text-slate-400 hover:text-slate-200'
                 }`}
             >
               <ArrowDownRight className="w-4 h-4" />
@@ -181,8 +182,8 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
               type="button"
               onClick={() => setTipoOperacao('VENDA')}
               className={`py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all ${tipoOperacao === 'VENDA'
-                  ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30'
-                  : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30'
+                : 'text-slate-400 hover:text-slate-200'
                 }`}
             >
               <ArrowUpRight className="w-4 h-4" />
@@ -210,10 +211,10 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
                   placeholder="Ex: 100"
                   value={quantidade}
                   onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9,]/g, '');
-                      setQuantidade(val);
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    setQuantidade(val);
                   }}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-950 border border-slate-800 text-slate-100 font-mono focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-950 border border-slate-800 text-slate-400 font-mono focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                   required
                 />
               </div>
@@ -230,10 +231,10 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
                   placeholder="0,00"
                   value={precoUnitario}
                   onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9,]/g, '');
-                      setPrecoUnitario(val);
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    setPrecoUnitario(aplicarMascaraDinheiro(val));
                   }}
-                  className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-xl bg-slate-950 border border-slate-800 text-slate-100 font-mono focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-xl bg-slate-950 border border-slate-800 text-slate-400 font-mono focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                   required
                 />
               </div>
@@ -266,10 +267,10 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
                   placeholder="0,00"
                   value={taxas}
                   onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9,]/g, '');
-                      setTaxas(val);
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    setTaxas(aplicarMascaraDinheiro(val));
                   }}
-                  className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-xl bg-slate-950 border border-slate-800 text-slate-100 font-mono focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-xl bg-slate-950 border border-slate-800 text-slate-400 font-mono focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                 />
               </div>
             </div>
@@ -324,8 +325,8 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
               type="submit"
               disabled={salvando}
               className={`px-6 py-2.5 text-xs font-bold rounded-xl text-white shadow-xl transition ${tipoOperacao === 'COMPRA'
-                  ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/30'
-                  : 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/30'
+                ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/30'
+                : 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/30'
                 }`}
             >
               {salvando ? 'Salvando...' : `Confirmar ${tipoOperacao}`}
