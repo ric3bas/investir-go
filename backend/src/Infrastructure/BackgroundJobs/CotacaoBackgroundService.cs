@@ -5,7 +5,6 @@ namespace InvestirGo.API.Infrastructure.BackgroundJobs;
 
 public sealed class CotacaoBackgroundService : BackgroundService
 {
-    private static readonly TimeZoneInfo SaoPauloTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<CotacaoBackgroundService> _logger;
 
@@ -17,14 +16,27 @@ public sealed class CotacaoBackgroundService : BackgroundService
         var primeiraExecucao = true;
         while (!stoppingToken.IsCancellationRequested)
         {
-            var agora = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, SaoPauloTimeZone);
+            var agora = BrazilMarketClock.Now;
             if (!primeiraExecucao && !MercadoEmHorarioDeAtualizacao(agora))
             {
                 await Task.Delay(TimeSpan.FromMinutes(30), stoppingToken);
                 continue;
             }
             primeiraExecucao = false;
-            await AtualizarTodosAsync(stoppingToken);
+            try
+            {
+                await AtualizarTodosAsync(stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                // Uma indisponibilidade transitória do banco ou da rede não deve
+                // encerrar o host inteiro. A próxima rodada tentará novamente.
+                _logger.LogError(ex, "Falha geral na atualização de cotações; nova tentativa em 30 minutos.");
+            }
             await Task.Delay(TimeSpan.FromMinutes(30), stoppingToken);
         }
     }

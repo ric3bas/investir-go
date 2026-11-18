@@ -17,14 +17,6 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuração de portas: Escuta simultaneamente nas portas 8080 e 5050
-builder.WebHost.UseUrls("http://0.0.0.0:8080", "http://0.0.0.0:5050");
-builder.WebHost.ConfigureKestrel(serverOptions =>
-{
-    serverOptions.ListenAnyIP(8080);
-    serverOptions.ListenAnyIP(5050);
-});
-
 // ----------------------------------------------------------------------------
 // 1. Configuração do Serilog com Redação de Dados Sensíveis
 // ----------------------------------------------------------------------------
@@ -47,20 +39,22 @@ builder.Host.UseSerilog();
 builder.Services.Configure<SecurityOptions>(builder.Configuration.GetSection(SecurityOptions.SectionName));
 var securityOptions = builder.Configuration.GetSection(SecurityOptions.SectionName).Get<SecurityOptions>() ?? new SecurityOptions();
 
-// Regra de Segurança: Garante chaves criptográficas válidas sem abortar o container em produção
+// Em produção, segredos ausentes devem interromper a inicialização. Gerar uma
+// chave fixa dentro do código faria todas as instalações compartilharem o mesmo segredo.
 if (builder.Environment.IsProduction())
 {
     if (string.IsNullOrWhiteSpace(securityOptions.Jwt.SecretKey) ||
         securityOptions.Jwt.SecretKey.Contains("DevSecretKey", StringComparison.OrdinalIgnoreCase) ||
         Encoding.UTF8.GetByteCount(securityOptions.Jwt.SecretKey) < 32)
     {
-        securityOptions.Jwt.SecretKey = "InvestirGo_ProdSecretKey_Enterprise_B3_Security_2026_AtLeast64BytesLong_StrictCryptoKey_InvestirGoPlatform!";
-        Log.Information("Chave JWT de produção segura de 512 bits inicializada automaticamente.");
+        throw new InvalidOperationException(
+            "Security__Jwt__SecretKey é obrigatório em produção e deve ter pelo menos 32 bytes.");
     }
 
     if (string.IsNullOrWhiteSpace(securityOptions.Totp.EncryptionKeyBase64))
     {
-        securityOptions.Totp.EncryptionKeyBase64 = "O2AR6J+sBkhf7RxUg4tf0HR4G5HbTcRr5IUl8KtFPX0=";
+        throw new InvalidOperationException(
+            "Security__Totp__EncryptionKeyBase64 é obrigatório em produção.");
     }
 }
 
@@ -223,7 +217,13 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        Log.Warning(ex, "Não foi possível validar a estrutura aditiva do banco de dados.");
+        Log.Error(ex, "Falha ao conectar ao PostgreSQL durante a validação inicial.");
+        if (builder.Environment.IsProduction())
+        {
+            throw new InvalidOperationException(
+                "Não foi possível conectar ao PostgreSQL. Confira POSTGRES_USER e POSTGRES_PASSWORD; " +
+                "em volumes já existentes, alterar a variável não altera a senha gravada no banco.", ex);
+        }
     }
 }
 

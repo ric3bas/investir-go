@@ -6,7 +6,6 @@ namespace InvestirGo.API.Infrastructure.Services;
 
 public sealed class MarketDataService
 {
-    private static readonly TimeZoneInfo SaoPauloTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
     private readonly HttpClient _httpClient;
     private readonly string _apiKey;
 
@@ -82,8 +81,8 @@ public sealed class MarketDataService
         if (r.RegularMarketOpen <= 0 || r.RegularMarketPrice <= 0)
             throw new MarketDataException("A fonte não informou abertura e preço atual para o pregão.");
         var data = r.RegularMarketTime.HasValue
-            ? TimeZoneInfo.ConvertTime(r.RegularMarketTime.Value, SaoPauloTimeZone)
-            : TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, SaoPauloTimeZone);
+            ? BrazilMarketClock.Convert(r.RegularMarketTime.Value)
+            : BrazilMarketClock.Now;
         var variacao = (r.RegularMarketPrice - r.RegularMarketOpen) / r.RegularMarketOpen * 100m;
         return
         [
@@ -105,7 +104,7 @@ public sealed class MarketDataService
         var inicial = dados[0].Close;
         return dados.Select(x =>
         {
-            var data = TimeZoneInfo.ConvertTime(DateTimeOffset.FromUnixTimeSeconds(x.Date), SaoPauloTimeZone);
+            var data = BrazilMarketClock.Convert(DateTimeOffset.FromUnixTimeSeconds(x.Date));
             var variacao = inicial == 0 ? 0 : (x.Close - inicial) / inicial * 100m;
             return new HistoricoPontoDto(data.ToString("dd/MM"), Math.Round(x.Close, 2), Math.Round(variacao, 2), data.ToString("dd/MM/yyyy"));
         }).ToList();

@@ -14,7 +14,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-investir_db}
       POSTGRES_USER: ${POSTGRES_USER:-investir_app}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no .env}
     volumes:
       - postgres_prod_data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -24,7 +24,7 @@ services:
     expose:
       - "5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-investir_app} -d ${POSTGRES_DB:-investir_db}"]
+      test: ["CMD-SHELL", "PGPASSWORD=\"$${POSTGRES_PASSWORD}\" psql -h 127.0.0.1 -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\" -c 'SELECT 1' >/dev/null"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -44,15 +44,18 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:5050
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-investir_db};Username=${POSTGRES_USER:-investir_app};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-investir_db};Username=${POSTGRES_USER:-investir_app};Password=${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no .env}
       Security__EnforceHttps: "true"
       Security__AppUrl: ${APP_URL:-https://investirgo.com}
-      Security__Jwt__SecretKey: ${JWT_SECRET_KEY}
+      Security__Jwt__SecretKey: ${SECURITY__JWT__SECRETKEY:?Defina SECURITY__JWT__SECRETKEY no .env}
       Security__Jwt__Issuer: InvestirGo
       Security__Jwt__Audience: InvestirGoClient
       Security__Jwt__AccessTokenLifetimeMinutes: "10"
-      Security__Totp__EncryptionKeyBase64: ${TOTP_ENCRYPTION_KEY}
+      Security__Totp__EncryptionKeyBase64: ${SECURITY__TOTP__ENCRYPTIONKEYBASE64:?Defina SECURITY__TOTP__ENCRYPTIONKEYBASE64 no .env}
       Security__AllowedOrigins__0: ${APP_URL:-https://investirgo.com}
+      MarketData__BrapiKey: ${BRAPI_KEY:?Defina BRAPI_KEY no .env}
+    volumes:
+      - data_protection_keys:/home/app/.aspnet/DataProtection-Keys
     networks:
       - backend-network
       - frontend-network
@@ -86,5 +89,6 @@ networks:
 
 volumes:
   postgres_prod_data:
+  data_protection_keys:
   certs_data:
   certbot_data:
