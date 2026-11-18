@@ -996,8 +996,8 @@ public static class AuthEndpoints
         context.Response.Cookies.Append(cookieName, refreshToken, new CookieOptions
         {
             HttpOnly = true, // Inacessível via JavaScript (mitigação de XSS)
-            Secure = isHttps, // Enviado exclusivamente em conexões HTTPS
-            SameSite = SameSiteMode.Lax, // Permitir envio em requisições cross-site (cross-port no dev)
+            Secure = true, // Enviado exclusivamente em conexões HTTPS
+            SameSite = SameSiteMode.None, // Permitir envio em requisições cross-site
             Path = "/api/auth", // Restrito estritamente aos endpoints de autenticação
             Expires = expiresAt
         });

@@ -206,12 +206,13 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
               </label>
               <div className="relative flex items-center">
                 <input
-                  type="number"
-                  step="any"
-                  min="0.0001"
+                  type="text"
                   placeholder="Ex: 100"
                   value={quantidade}
-                  onChange={(e) => setQuantidade(e.target.value)}
+                  onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9,]/g, '');
+                      setQuantidade(val);
+                  }}
                   className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-950 border border-slate-800 text-slate-100 font-mono focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                   required
                 />
@@ -225,12 +226,13 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
               <div className="relative flex items-center">
                 <span className="absolute left-3 text-xs text-slate-400 font-mono">R$</span>
                 <input
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  placeholder="0.00"
+                  type="text"
+                  placeholder="0,00"
                   value={precoUnitario}
-                  onChange={(e) => setPrecoUnitario(e.target.value)}
+                  onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9,]/g, '');
+                      setPrecoUnitario(val);
+                  }}
                   className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-xl bg-slate-950 border border-slate-800 text-slate-100 font-mono focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                   required
                 />
@@ -260,12 +262,13 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
               <div className="relative flex items-center">
                 <span className="absolute left-3 text-xs text-slate-400 font-mono">R$</span>
                 <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0.00"
+                  type="text"
+                  placeholder="0,00"
                   value={taxas}
-                  onChange={(e) => setTaxas(e.target.value)}
+                  onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9,]/g, '');
+                      setTaxas(val);
+                  }}
                   className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-xl bg-slate-950 border border-slate-800 text-slate-100 font-mono focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                 />
               </div>
