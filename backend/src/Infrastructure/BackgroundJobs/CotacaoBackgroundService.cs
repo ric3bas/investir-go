@@ -29,10 +29,23 @@ public class CotacaoBackgroundService : BackgroundService
                 
                 foreach (var ativo in ativos)
                 {
-                    var novoPreco = await marketDataService.ObterCotacaoAtual(ativo.Ticker);
-                    if (novoPreco > 0)
+                    // Busca dados completos para garantir precisão
+                    var response = await marketDataService.ObterDadosCompletos(ativo.Ticker);
+                    if (response != null && response.RegularMarketPrice > 0)
                     {
-                        await ativoRepo.AtualizarCotacaoAsync(ativo.Id, novoPreco, 0, ativo.DividendYield);
+                        // Atualiza com o preço real e verifica a variação com base na abertura
+                        var variacaoPercentual = 0m;
+                        if (response.RegularMarketMarketOpen != 0)
+                        {
+                            variacaoPercentual = ((response.RegularMarketPrice - response.RegularMarketMarketOpen) / response.RegularMarketMarketOpen) * 100;
+                        }
+                        
+                        await ativoRepo.AtualizarCotacaoAsync(
+                            ativo.Id, 
+                            response.RegularMarketPrice, 
+                            variacaoPercentual, 
+                            ativo.DividendYield
+                        );
                     }
                 }
             }

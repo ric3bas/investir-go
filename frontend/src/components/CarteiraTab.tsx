@@ -8,7 +8,7 @@ interface CarteiraTabProps {
   totalLancamentos?: number;
   onOpenNovaOperacao: (defaultTicker?: string, defaultTipo?: 'COMPRA' | 'VENDA') => void;
   onOpenNovoProvento: (defaultTicker?: string) => void;
-  onOpenLancamentos?: () => void;
+  onOpenLancamentos: () => void;
   onSelectTicker?: (ticker: string) => void;
   onAtualizarPrecos?: () => void; // Adicionado
   carregandoPrecos?: boolean; // Adicionado
@@ -18,6 +18,7 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
   posicoes,
   onOpenNovaOperacao,
   onOpenNovoProvento,
+  onOpenLancamentos,
   onSelectTicker,
   onAtualizarPrecos, // Adicionado
   carregandoPrecos, // Adicionado
@@ -49,7 +50,7 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
 
   return (
     <div className="space-y-6">
-      
+
       {/* Header & Controles de Filtro */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -80,6 +81,15 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
             <Coins className="w-3.5 h-3.5" />
             Declarar Provento
           </button>
+          {onOpenLancamentos && (
+            <button
+              onClick={onOpenLancamentos}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-700 hover:bg-slate-600 text-white shadow-md transition"
+            >
+              <ArrowDownUp className="w-3.5 h-3.5" />
+              Ver Lançamentos
+            </button>
+          )}
 
           {/* Refresh */}
           {onAtualizarPrecos && (
@@ -110,11 +120,10 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
               <button
                 key={tipo}
                 onClick={() => setFiltroTipo(tipo)}
-                className={`px-3 py-1 rounded-lg transition font-semibold text-xs ${
-                  filtroTipo === tipo
+                className={`px-3 py-1 rounded-lg transition font-semibold text-xs ${filtroTipo === tipo
                     ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
                     : 'text-slate-400 hover:text-slate-200'
-                }`}
+                  }`}
               >
                 {tipo === 'TODOS' ? 'Todos' : tipo === 'Acao' ? 'Ações' : 'FIIs'}
               </button>
@@ -208,11 +217,10 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
                       {/* Ativo */}
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2.5">
-                          <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-mono font-bold ${
-                            pos.tipo === 'FII'
+                          <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-mono font-bold ${pos.tipo === 'FII'
                               ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
                               : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                          }`}>
+                            }`}>
                             {pos.tipo}
                           </span>
                           <div>

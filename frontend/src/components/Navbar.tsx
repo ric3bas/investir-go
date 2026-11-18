@@ -197,7 +197,10 @@ export const Sidebar: React.FC<NavigationProps> = ({
                   const Icon = tab.icon;
                   const isActive = activeTab === tab.id;
                   const badge = tab.id === 'noticias' && favoritosCount > 0 ? favoritosCount : undefined;
-                  return (
+                  const allItems = navigationGroups.flatMap(g => g.items);
+  const currentLabel = allItems.find(i => i.id === activeTab)?.label || (activeTab === 'admin' ? 'Governança & Segurança' : 'Dashboard');
+
+  return (
                     <button
                       key={tab.id}
                       type="button"
@@ -246,35 +249,9 @@ export const Sidebar: React.FC<NavigationProps> = ({
           )}
         </nav>
 
-        {/* Ações Rápidas de Lançamento */}
-        <div className="space-y-2 pt-2 border-t border-white/[0.04]">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onOpenNovaOperacao();
-            }}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-[0_1px_0_0_rgba(255,255,255,0.2)_inset,0_4px_12px_rgba(16,185,129,0.3)] transition cursor-pointer"
-          >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Nova Operação</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onOpenNovoProvento();
-            }}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/25 font-semibold text-xs shadow-sm transition cursor-pointer"
-          >
-            <Coins className="w-3.5 h-3.5 text-amber-400" />
-            <span>+ Declarar Provento</span>
-          </button>
-        </div>
+        {/* Ações Rápidas de Lançamento - Removidas */}
       </div>
+
 
       {/* Perfil do Usuário na Base do Sidebar */}
       {isAuthenticated && user && (
@@ -353,9 +330,15 @@ export const TopHeader: React.FC<NavigationProps> = ({
   onOpenLancamentos,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, isAuthenticated, logout } = useAuth();
-  const { esconderValores, toggleEsconderValores } = usePrivacy();
+  const [isRotating, setIsRotating] = useState(false);
   const dolar = useCotacaoDolar();
+  const { toggleEsconderValores, esconderValores } = usePrivacy();
+
+  const handleAtualizarDolar = () => {
+    setIsRotating(true);
+    dolar.atualizar();
+    setTimeout(() => setIsRotating(false), 1000);
+  };
 
   const allItems = navigationGroups.flatMap(g => g.items);
   const currentLabel = allItems.find(i => i.id === activeTab)?.label || (activeTab === 'admin' ? 'Governança & Segurança' : 'Dashboard');
@@ -385,20 +368,20 @@ export const TopHeader: React.FC<NavigationProps> = ({
         <div className="flex items-center gap-2 sm:gap-2.5">
           {/* Cotação do Dólar Comercial Sempre Visível */}
           <div
-            className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-[10px] font-mono transition shadow-sm"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs font-mono transition shadow-sm"
           >
-            <div className="w-4 h-4 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold text-[9px] shrink-0">
+            <div className="w-5 h-5 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">
               $
             </div>
             <div
-              className="flex items-center gap-1 cursor-help"
+              className="flex items-center gap-1.5 cursor-help"
               title={`Dólar Comercial (USD/BRL): R$ ${dolar.cotacao.toFixed(2)} (${dolar.variacao >= 0 ? '+' : ''}${dolar.variacao.toFixed(2)}%) • Mín: R$ ${dolar.minima.toFixed(2)} | Máx: R$ ${dolar.maxima.toFixed(2)} • Atualizado às ${dolar.dataHora}`}
             >
-              <span className="font-extrabold text-white font-mono">
+              <span className="font-extrabold text-white font-mono text-sm">
                 {dolar.cotacao.toFixed(2)}
               </span>
               <span
-                className={`font-bold ${
+                className={`font-bold text-sm ${
                   dolar.variacao >= 0 ? 'text-emerald-400' : 'text-rose-400'
                 }`}
               >
@@ -407,17 +390,17 @@ export const TopHeader: React.FC<NavigationProps> = ({
               </span>
             </div>
             <button
-              onClick={dolar.atualizar}
-              className={`p-0.5 rounded-lg text-slate-500 hover:text-emerald-400 transition ${dolar.carregando ? 'animate-spin' : ''}`}
+              onClick={handleAtualizarDolar}
+              className={`p-1 rounded-lg text-slate-500 hover:text-emerald-400 transition ${dolar.carregando || isRotating ? 'animate-spin' : ''}`}
               title="Atualizar cotação do dólar"
             >
-              <RefreshCw className="w-2.5 h-2.5" />
+              <RefreshCw className="w-3.5 h-3.5" />
             </button>
           </div>
 
           {/* Live Market Badge */}
-          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.02] border border-white/[0.04] text-xs font-mono text-slate-400">
-            <Clock className="w-3.5 h-3.5 text-emerald-400" />
+          <div className="hidden lg:flex items-center gap-2.5 px-4 py-2 rounded-xl bg-white/[0.02] border border-white/[0.04] text-sm font-mono text-slate-400">
+            <Clock className="w-4 h-4 text-emerald-400" />
             <span>Pregão B3: 10h às 17h</span>
           </div>
 
@@ -425,7 +408,7 @@ export const TopHeader: React.FC<NavigationProps> = ({
           <button
             type="button"
             onClick={toggleEsconderValores}
-            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition cursor-pointer ${
               esconderValores
                 ? 'bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
                 : 'bg-white/[0.02] hover:bg-white/[0.06] text-slate-300 hover:text-white border-white/[0.06]'
@@ -435,13 +418,13 @@ export const TopHeader: React.FC<NavigationProps> = ({
           >
             {esconderValores ? (
               <>
-                <EyeOff className="w-4 h-4 text-amber-400 shrink-0" />
-                <span className="hidden xl:inline text-[11px]">Valores Ocultos</span>
+                <EyeOff className="w-4.5 h-4.5 text-amber-400 shrink-0" />
+                <span className="hidden xl:inline text-sm">Valores Ocultos</span>
               </>
             ) : (
               <>
-                <Eye className="w-4 h-4 text-slate-400 shrink-0" />
-                <span className="hidden xl:inline text-[11px]">Ocultar Valores</span>
+                <Eye className="w-4.5 h-4.5 text-slate-400 shrink-0" />
+                <span className="hidden xl:inline text-sm">Ocultar Valores</span>
               </>
             )}
           </button>
@@ -449,15 +432,15 @@ export const TopHeader: React.FC<NavigationProps> = ({
           {/* Quick Favoritos */}
           <button
             onClick={() => setActiveTab('noticias')}
-            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold border transition ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition ${
               activeTab === 'noticias'
                 ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
                 : 'bg-white/[0.02] hover:bg-white/[0.05] text-slate-300 border-white/[0.06]'
             }`}
           >
-            <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+            <Star className="w-4.5 h-4.5 text-amber-400 fill-amber-400" />
             <span className="hidden sm:inline">Favoritos</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 font-mono text-[10px]">
+            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono text-xs">
               {favoritosCount}
             </span>
           </button>

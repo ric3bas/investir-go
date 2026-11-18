@@ -297,6 +297,7 @@ export const App: React.FC = () => {
                 posicoes={posicoes}
                 onOpenNovaOperacao={handleOpenNovaOperacao}
                 onOpenNovoProvento={handleOpenNovoProvento}
+                onOpenLancamentos={() => setModalLancamentosOpen(true)}
                 onSelectTicker={(ticker) => {
                   const at = ativos.find((a) => a.ticker.toUpperCase() === ticker.toUpperCase());
                   if (at) handleSelectAtivo(at);
