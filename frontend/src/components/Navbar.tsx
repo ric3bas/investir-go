@@ -461,34 +461,6 @@ export const TopHeader: React.FC<NavigationProps> = ({
               {favoritosCount}
             </span>
           </button>
-
-          {/* Nova Operação Rápida */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onOpenNovaOperacao();
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span className="hidden sm:inline">Nova Operação</span>
-          </button>
-          
-          {/* Declarar Provento Rápido */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onOpenNovoProvento();
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white shadow-sm transition cursor-pointer"
-          >
-            <Coins className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Declarar Provento</span>
-          </button>
         </div>
       </header>
 
@@ -542,31 +514,7 @@ export const TopHeader: React.FC<NavigationProps> = ({
                   </div>
                 ))}
 
-                {/* Ações Móveis */}
-                <div className="space-y-2 pt-3 border-t border-white/[0.06]">
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      onOpenNovaOperacao();
-                    }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition shadow-sm"
-                  >
-                    <Plus className="w-4 h-4 stroke-[2.5]" />
-                    <span>Nova Operação</span>
-                  </button>
-                  {onOpenNovoProvento && (
-                    <button
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        onOpenNovoProvento();
-                      }}
-                      className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/25 font-semibold text-xs transition"
-                    >
-                      <Coins className="w-3.5 h-3.5 text-amber-400" />
-                      <span>+ Declarar Provento</span>
-                    </button>
-                  )}
-                </div>
+                {/* Ações Móveis - Removidas */}
               </div>
             </div>
 
