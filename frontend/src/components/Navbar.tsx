@@ -29,9 +29,11 @@ import { useAuth } from '../context/AuthContext';
 import { usePrivacy } from '../context/PrivacyContext';
 import { useCotacaoDolar } from '../hooks/useCotacaoDolar';
 
+import { Route } from '../context/router/RouterContext';
+
 export interface NavigationProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+  activeTab: Route;
+  setActiveTab: (tab: Route) => void;
   resumo: ResumoCarteira | null;
   favoritosCount: number;
   totalOperacoes?: number;

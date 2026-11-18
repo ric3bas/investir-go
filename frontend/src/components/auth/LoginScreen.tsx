@@ -105,46 +105,8 @@ export const LoginScreen: React.FC = () => {
             </div>
 
             {/* Mock do Terminal de Investimentos */}
-            <div className="p-5 rounded-2xl bg-[#090d18]/90 border border-white/[0.08] shadow-[0_1px_0_0_rgba(255,255,255,0.05)_inset,0_20px_40px_-15px_rgba(0,0,0,0.7)] backdrop-blur-xl space-y-4 max-w-lg">
-              <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-xs font-mono font-semibold text-slate-300">Portfólio em Tempo Real</span>
-                </div>
-                <span className="text-[11px] font-mono text-slate-400">B3 • Cotações Oficiais</span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Patrimônio</span>
-                  <span className="text-sm font-bold font-mono text-slate-100 tabular-nums">R$ 142.850,20</span>
-                </div>
-                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Rentabilidade</span>
-                  <span className="text-sm font-bold font-mono text-emerald-400 tabular-nums">+14,82%</span>
-                </div>
-                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Proventos</span>
-                  <span className="text-sm font-bold font-mono text-amber-400 tabular-nums">R$ 1.480,00</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 pt-1 text-xs text-slate-400">
-                <span className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3]" />
-                  Ações (Lote & Fracionário)
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-cyan-400 stroke-[3]" />
-                  Fundos Imobiliários (FIIs)
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-amber-400 stroke-[3]" />
-                  Yield on Cost
-                </span>
-              </div>
-            </div>
-
+            {/* Removido a pedido do usuário */}
+            
             <div className="flex items-center gap-6 text-xs text-slate-500 pt-2 border-t border-white/[0.04]">
               <span className="flex items-center gap-1.5 font-medium">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
