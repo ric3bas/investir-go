@@ -10,7 +10,7 @@ public class AtivoRepository : IAtivoRepository
     private readonly DbConnectionFactory _dbFactory;
 
     // Base local em memória como fallback caso PostgreSQL esteja offline
-    private static readonly List<Ativo> _ativosFallback = new()
+    internal static readonly List<Ativo> _ativosFallback = new()
     {
         // 15 Ações
         new Ativo { Id = 1, Ticker = "BBAS3", Nome = "Banco do Brasil S.A.", Tipo = "Acao", Setor = "Financeiro / Bancos", PrecoAtual = 14.62m, VariacaoDia = 0.45m, DividendYield = 9.85m },

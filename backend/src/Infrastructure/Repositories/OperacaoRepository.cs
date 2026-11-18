@@ -132,14 +132,30 @@ public class OperacaoRepository : IOperacaoRepository
                 VALUES (@AtivoId, @UserId, @UserId, UPPER(@TipoOperacao), @DataOperacao, @Quantidade, @PrecoUnitario, @ValorTotal, @Taxas, @Observacoes)
                 RETURNING id;
             """;
-            return await conn.ExecuteScalarAsync<int>(sql, operacao);
+            var id = await conn.ExecuteScalarAsync<int>(sql, operacao);
+            var ativo = await new AtivoRepository(_dbFactory).ObterPorIdAsync(operacao.AtivoId);
+            if (ativo != null)
+            {
+                operacao.Ticker = ativo.Ticker;
+                operacao.NomeAtivo = ativo.Nome;
+                operacao.TipoAtivo = ativo.Tipo;
+            }
+            return id;
         }
         catch
         {
+            var ativo = AtivoRepository._ativosFallback.FirstOrDefault(a => a.Id == operacao.AtivoId);
+            if (ativo != null)
+            {
+                operacao.Ticker = ativo.Ticker;
+                operacao.NomeAtivo = ativo.Nome;
+                operacao.TipoAtivo = ativo.Tipo;
+            }
             operacao.Id = _operacoesFallback.Any() ? _operacoesFallback.Max(o => o.Id) + 1 : 1;
             _operacoesFallback.Add(operacao);
             return operacao.Id;
         }
+
     }
 
     public async Task<bool> AtualizarAsync(Operacao operacao)

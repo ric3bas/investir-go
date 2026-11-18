@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Operacao } from '../types';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 import {
   X,
   ArrowDownUp,
@@ -33,6 +34,7 @@ export const LancamentosModal: React.FC<LancamentosModalProps> = ({
   const { esconderValores, toggleEsconderValores, formatarValor } = usePrivacy();
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroTipo, setFiltroTipo] = useState<'TODOS' | 'COMPRA' | 'VENDA'>('TODOS');
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   // Fecha o modal ao pressionar ESC
   useEffect(() => {
@@ -134,15 +136,14 @@ export const LancamentosModal: React.FC<LancamentosModalProps> = ({
                 <button
                   key={tipo}
                   onClick={() => setFiltroTipo(tipo)}
-                  className={`px-3 py-1 rounded-lg transition font-semibold ${
-                    filtroTipo === tipo
+                  className={`px-3 py-1 rounded-lg transition font-semibold ${filtroTipo === tipo
                       ? tipo === 'COMPRA'
                         ? 'bg-emerald-500/20 text-emerald-400 font-bold'
                         : tipo === 'VENDA'
-                        ? 'bg-rose-500/20 text-rose-400 font-bold'
-                        : 'bg-slate-800 text-slate-200 font-bold'
+                          ? 'bg-rose-500/20 text-rose-400 font-bold'
+                          : 'bg-slate-800 text-slate-200 font-bold'
                       : 'text-slate-400 hover:text-slate-200'
-                  }`}
+                    }`}
                 >
                   {tipo === 'TODOS' ? 'Todas' : tipo === 'COMPRA' ? 'Compras' : 'Vendas'}
                 </button>
@@ -243,11 +244,10 @@ export const LancamentosModal: React.FC<LancamentosModalProps> = ({
                       {/* Tipo Operação (COMPRA / VENDA) */}
                       <td className="py-3 px-3 text-center whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                            isCompra
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${isCompra
                               ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                               : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                          }`}
+                            }`}
                         >
                           {isCompra ? <ArrowDownRight className="w-3 h-3" /> : <ArrowUpRight className="w-3 h-3" />}
                           {op.tipoOperacao}
@@ -281,9 +281,8 @@ export const LancamentosModal: React.FC<LancamentosModalProps> = ({
                         </span>
                         {isCompra && (
                           <span
-                            className={`text-[10px] block ${
-                              diferencaValor >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                            }`}
+                            className={`text-[10px] block ${diferencaValor >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                              }`}
                           >
                             {esconderValores ? '••••••••' : `${diferencaValor >= 0 ? '+' : ''}${diferencaValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`}
                           </span>
@@ -294,15 +293,7 @@ export const LancamentosModal: React.FC<LancamentosModalProps> = ({
                       <td className="py-3 px-4 text-center">
                         <button
                           title="Excluir operação"
-                          onClick={() => {
-                            if (
-                              confirm(
-                                `Deseja realmente excluir a ${op.tipoOperacao} de ${op.quantidade} ${op.ticker}?`
-                              )
-                            ) {
-                              onExcluirOperacao(op.id);
-                            }
-                          }}
+                          onClick={() => setDeleteId(op.id)}
                           className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -315,6 +306,17 @@ export const LancamentosModal: React.FC<LancamentosModalProps> = ({
             </tbody>
           </table>
         </div>
+
+        <ConfirmDialog
+          isOpen={deleteId !== null}
+          title="investir.cloud says"
+          message={`Deseja realmente excluir esta operação?`}
+          onConfirm={() => {
+            if (deleteId) onExcluirOperacao(deleteId);
+            setDeleteId(null);
+          }}
+          onCancel={() => setDeleteId(null)}
+        />
 
         {/* Rodapé do Modal */}
         <div className="p-4 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between text-xs text-slate-400">
