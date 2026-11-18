@@ -7,6 +7,7 @@ using InvestirGo.API.Application.Interfaces;
 using InvestirGo.API.Application.Security.Options;
 using InvestirGo.API.Application.Security.Services;
 using InvestirGo.API.Domain.Entities;
+using InvestirGo.API.Infrastructure.BackgroundJobs;
 using InvestirGo.API.Infrastructure.Data;
 using InvestirGo.API.Infrastructure.Repositories;
 using InvestirGo.API.Infrastructure.Services;
@@ -124,6 +125,10 @@ builder.Services.AddScoped<IAtivoRepository, AtivoRepository>();
 builder.Services.AddScoped<IOperacaoRepository, OperacaoRepository>();
 builder.Services.AddScoped<IProventoRepository, ProventoRepository>();
 builder.Services.AddScoped<ICarteiraService, CarteiraService>();
+
+// Serviços de Mercado Real
+builder.Services.AddHttpClient<MarketDataService>();
+builder.Services.AddHostedService<CotacaoBackgroundService>();
 
 // ----------------------------------------------------------------------------
 // 5. Autenticação JWT com Validação de Tempo Real (Token Version & Active Check)
