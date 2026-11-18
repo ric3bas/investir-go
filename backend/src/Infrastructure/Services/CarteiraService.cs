@@ -21,25 +21,35 @@ public class CarteiraService : ICarteiraService
 
     public async Task<IEnumerable<PosicaoCarteira>> ObterPosicoesAsync()
     {
-        var ativos = (await _ativoRepository.ObterTodosAsync()).ToDictionary(a => a.Id);
+        var todosAtivos = (await _ativoRepository.ObterTodosAsync()).ToList();
+        var ativosPorTicker = todosAtivos
+            .Where(a => !string.IsNullOrWhiteSpace(a.Ticker))
+            .GroupBy(a => a.Ticker.Trim().ToUpper())
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
         var operacoes = (await _operacaoRepository.ObterTodasAsync())
             .OrderBy(o => o.DataOperacao)
             .ThenBy(o => o.Id)
             .ToList();
 
-        var proventos = (await _proventoRepository.ObterTodosAsync())
-            .GroupBy(p => p.AtivoId)
-            .ToDictionary(g => g.Key, g => g.Sum(p => p.ValorTotal));
+        var todosProventos = (await _proventoRepository.ObterTodosAsync()).ToList();
+        var proventosPorTicker = todosProventos
+            .Where(p => !string.IsNullOrWhiteSpace(p.Ticker))
+            .GroupBy(p => p.Ticker.Trim().ToUpper())
+            .ToDictionary(g => g.Key, g => g.Sum(p => p.ValorTotal), StringComparer.OrdinalIgnoreCase);
 
-        // Agrupar e calcular preco medio e custodia por ativo
-        var posicoesMap = new Dictionary<int, PosicaoCalculo>();
+        // Agrupar e calcular preco medio e custodia por TICKER (garante fidelidade absoluta à planilha)
+        var posicoesMap = new Dictionary<string, PosicaoCalculo>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var op in operacoes)
         {
-            if (!posicoesMap.TryGetValue(op.AtivoId, out var pos))
+            var ticker = op.Ticker?.Trim().ToUpper();
+            if (string.IsNullOrWhiteSpace(ticker)) continue;
+
+            if (!posicoesMap.TryGetValue(ticker, out var pos))
             {
                 pos = new PosicaoCalculo();
-                posicoesMap[op.AtivoId] = pos;
+                posicoesMap[ticker] = pos;
             }
 
             if (op.TipoOperacao.Equals("COMPRA", StringComparison.OrdinalIgnoreCase))
@@ -63,32 +73,32 @@ public class CarteiraService : ICarteiraService
                 if (pos.Quantidade <= 0)
                 {
                     pos.Quantidade = 0;
-                    // Se zerou posicao, mantem ou zera preco medio
                 }
             }
         }
 
         var resultado = new List<PosicaoCarteira>();
 
-        foreach (var (ativoId, calc) in posicoesMap)
+        foreach (var (ticker, calc) in posicoesMap)
         {
-            if (!ativos.TryGetValue(ativoId, out var ativo)) continue;
-            
-            // Só exibe na carteira posições com custódia > 0 ou com proventos/lucro realizado relevante
+            // Só exibe na carteira posições com custódia > 0 ou com lucro realizado
             if (calc.Quantidade <= 0 && calc.LucroRealizado == 0) continue;
 
-            proventos.TryGetValue(ativoId, out var totalProventos);
+            ativosPorTicker.TryGetValue(ticker, out var ativo);
+            proventosPorTicker.TryGetValue(ticker, out var totalProventos);
+
+            var precoAtual = (ativo?.PrecoAtual > 0) ? ativo.PrecoAtual : (calc.PrecoMedio > 0 ? calc.PrecoMedio : 10.00m);
 
             resultado.Add(new PosicaoCarteira
             {
-                AtivoId = ativo.Id,
-                Ticker = ativo.Ticker,
-                Nome = ativo.Nome,
-                Tipo = ativo.Tipo,
-                Setor = ativo.Setor,
+                AtivoId = ativo?.Id ?? 0,
+                Ticker = ticker,
+                Nome = ativo?.Nome ?? ticker,
+                Tipo = ativo?.Tipo ?? (ticker.EndsWith("11") ? "FII" : "Acao"),
+                Setor = ativo?.Setor ?? "Outros",
                 QuantidadeCustodia = calc.Quantidade,
                 PrecoMedio = Math.Round(calc.PrecoMedio, 4),
-                PrecoAtual = ativo.PrecoAtual,
+                PrecoAtual = precoAtual,
                 TotalProventosRecebidos = totalProventos,
                 LucroRealizadoVendas = Math.Round(calc.LucroRealizado, 2)
             });
