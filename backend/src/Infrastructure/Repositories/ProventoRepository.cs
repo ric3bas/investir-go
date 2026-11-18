@@ -9,11 +9,13 @@ public class ProventoRepository : IProventoRepository
 {
     private readonly DbConnectionFactory _dbFactory;
 
+    private static readonly Guid _defaultUserId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+
     private static readonly List<Provento> _proventosFallback = new()
     {
-        new Provento { Id = 1, AtivoId = 1, Ticker = "BBAS3", NomeAtivo = "Banco do Brasil S.A.", TipoProvento = "Dividendo", DataCom = new DateTime(2026, 10, 31), DataPagamento = new DateTime(2026, 11, 10), ValorPorCota = 0.425000m, QuantidadeCotas = 2200, ValorTotal = 935.00m, Observacoes = "Dividendo 3T26" },
-        new Provento { Id = 2, AtivoId = 2, Ticker = "TAEE4", NomeAtivo = "Transmissora Aliança de Energia Elétrica S.A.", TipoProvento = "JCP", DataCom = new DateTime(2026, 11, 01), DataPagamento = new DateTime(2026, 11, 14), ValorPorCota = 0.284000m, QuantidadeCotas = 1400, ValorTotal = 397.60m, Observacoes = "JCP Intermediário" },
-        new Provento { Id = 3, AtivoId = 3, Ticker = "ITSA4", NomeAtivo = "Itaúsa S.A.", TipoProvento = "Dividendo", DataCom = new DateTime(2026, 11, 02), DataPagamento = new DateTime(2026, 11, 15), ValorPorCota = 0.152000m, QuantidadeCotas = 1600, ValorTotal = 243.20m, Observacoes = "Dividendo Mensal" },
+        new Provento { Id = 1, AtivoId = 1, Ticker = "BBAS3", NomeAtivo = "Banco do Brasil S.A.", TipoProvento = "Dividendo", DataCom = new DateTime(2026, 10, 31), DataPagamento = new DateTime(2026, 11, 10), ValorPorCota = 0.425000m, QuantidadeCotas = 2200, ValorTotal = 935.00m, Observacoes = "Dividendo 3T26", UserId = _defaultUserId },
+        new Provento { Id = 2, AtivoId = 2, Ticker = "TAEE4", NomeAtivo = "Transmissora Aliança de Energia Elétrica S.A.", TipoProvento = "JCP", DataCom = new DateTime(2026, 11, 01), DataPagamento = new DateTime(2026, 11, 14), ValorPorCota = 0.284000m, QuantidadeCotas = 1400, ValorTotal = 397.60m, Observacoes = "JCP Intermediário", UserId = _defaultUserId },
+        new Provento { Id = 3, AtivoId = 3, Ticker = "ITSA4", NomeAtivo = "Itaúsa S.A.", TipoProvento = "Dividendo", DataCom = new DateTime(2026, 11, 02), DataPagamento = new DateTime(2026, 11, 15), ValorPorCota = 0.152000m, QuantidadeCotas = 1600, ValorTotal = 243.20m, Observacoes = "Dividendo Mensal", UserId = _defaultUserId },
     };
 
     public ProventoRepository(DbConnectionFactory dbFactory)

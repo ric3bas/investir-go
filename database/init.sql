@@ -1,6 +1,19 @@
 -- Database Initialization for Investir-Go
 CREATE SCHEMA IF NOT EXISTS inv;
 
+-- Table: Usuarios no schema inv
+CREATE TABLE IF NOT EXISTS inv.usuarios (
+    id UUID PRIMARY KEY DEFAULT '22222222-2222-2222-2222-222222222222'::UUID,
+    nome VARCHAR(120) NOT NULL DEFAULT 'Investidor',
+    email VARCHAR(255) NOT NULL UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Inserção do usuário padrão no schema inv
+INSERT INTO inv.usuarios (id, nome, email)
+VALUES ('22222222-2222-2222-2222-222222222222'::UUID, 'Investidor', 'usuario@investirgo.com')
+ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, nome = EXCLUDED.nome;
+
 -- Table: Ativos (Acoes e Fundos Imobiliarios)
 CREATE TABLE IF NOT EXISTS inv.ativos (
     id SERIAL PRIMARY KEY,
@@ -19,6 +32,8 @@ CREATE TABLE IF NOT EXISTS inv.ativos (
 CREATE TABLE IF NOT EXISTS inv.operacoes (
     id SERIAL PRIMARY KEY,
     ativo_id INT NOT NULL REFERENCES inv.ativos(id) ON DELETE RESTRICT,
+    usuario_id UUID REFERENCES inv.usuarios(id) ON DELETE CASCADE,
+    user_id UUID,
     tipo_operacao VARCHAR(10) NOT NULL CHECK (tipo_operacao IN ('COMPRA', 'VENDA')),
     data_operacao DATE NOT NULL,
     quantidade NUMERIC(15, 4) NOT NULL CHECK (quantidade > 0),
@@ -33,6 +48,8 @@ CREATE TABLE IF NOT EXISTS inv.operacoes (
 CREATE TABLE IF NOT EXISTS inv.proventos (
     id SERIAL PRIMARY KEY,
     ativo_id INT NOT NULL REFERENCES inv.ativos(id) ON DELETE RESTRICT,
+    usuario_id UUID REFERENCES inv.usuarios(id) ON DELETE CASCADE,
+    user_id UUID,
     tipo_provento VARCHAR(30) NOT NULL CHECK (tipo_provento IN ('Dividendo', 'JCP', 'Rendimento', 'Amortizacao')),
     data_com DATE,
     data_pagamento DATE NOT NULL,

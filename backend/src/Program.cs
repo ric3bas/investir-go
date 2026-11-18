@@ -220,7 +220,8 @@ using (var scope = app.Services.CreateScope())
 
     async Task SeedDefaultUsersAsync(IAuthRepository repo)
     {
-        // Usuário único padrão: usuario@investirgo.com (sem MFA, login direto)
+        // Usuário único padrão: usuario@investirgo.com (senha: Admin@InvestirGo2026!, login direto sem MFA)
+        var passwordHash = hasher.HashPassword("Admin@InvestirGo2026!");
         var regularUser = await repo.GetUserByEmailNormalizedAsync("usuario@investirgo.com");
         if (regularUser == null)
         {
@@ -230,7 +231,7 @@ using (var scope = app.Services.CreateScope())
                 Nome = "Investidor",
                 Email = "usuario@investirgo.com",
                 EmailNormalized = "usuario@investirgo.com",
-                PasswordHash = hasher.HashPassword("User@InvestirGo2026!"),
+                PasswordHash = passwordHash,
                 Role = "User",
                 IsActive = true,
                 EmailVerified = true,
@@ -240,9 +241,12 @@ using (var scope = app.Services.CreateScope())
             };
             await repo.CreateUserAsync(newUser);
         }
-        else if (regularUser.TotpEnabled)
+        else
         {
+            regularUser.PasswordHash = passwordHash;
             regularUser.TotpEnabled = false;
+            regularUser.Role = "User";
+            regularUser.IsActive = true;
             await repo.UpdateUserAsync(regularUser);
         }
     }
@@ -255,25 +259,50 @@ using (var scope = app.Services.CreateScope())
             await SeedDefaultUsersAsync(authRepo);
         }
 
-        // Sincronização automática do PostgreSQL com as 18 operações da planilha
+        // Sincronização automática do PostgreSQL: Schema INV Usuarios e 18 operações da planilha
         var dbFactory = scope.ServiceProvider.GetService<DbConnectionFactory>();
         if (dbFactory != null)
         {
             using var conn = dbFactory.CreateConnection();
-            // 1. Remove qualquer outro usuário de teste (mantendo apenas usuario@investirgo.com)
-            await conn.ExecuteAsync(@"
-                DELETE FROM auth.users WHERE email_normalized <> 'usuario@investirgo.com';
-                UPDATE auth.users SET totp_enabled = FALSE, role = 'User' WHERE email_normalized = 'usuario@investirgo.com';
-            ");
+            var userUuid = Guid.Parse("22222222-2222-2222-2222-222222222222");
+            var adminPasswordHash = hasher.HashPassword("Admin@InvestirGo2026!");
 
-            // 2. Verifica se a tabela inv.operacoes contém exatamente e apenas as 18 operações da planilha
+            // 1. Cria tabela inv.usuarios e adiciona colunas de vinculação em inv.operacoes e inv.proventos
+            await conn.ExecuteAsync(@"
+                CREATE TABLE IF NOT EXISTS inv.usuarios (
+                    id UUID PRIMARY KEY DEFAULT '22222222-2222-2222-2222-222222222222'::UUID,
+                    nome VARCHAR(120) NOT NULL DEFAULT 'Investidor',
+                    email VARCHAR(255) NOT NULL UNIQUE,
+                    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+
+                ALTER TABLE inv.operacoes ADD COLUMN IF NOT EXISTS user_id UUID;
+                ALTER TABLE inv.operacoes ADD COLUMN IF NOT EXISTS usuario_id UUID;
+                ALTER TABLE inv.proventos ADD COLUMN IF NOT EXISTS user_id UUID;
+                ALTER TABLE inv.proventos ADD COLUMN IF NOT EXISTS usuario_id UUID;
+
+                -- Remove qualquer outro usuário, deixando exclusivamente usuario@investirgo.com
+                DELETE FROM auth.users WHERE email_normalized <> 'usuario@investirgo.com';
+                DELETE FROM inv.usuarios WHERE LOWER(email) <> 'usuario@investirgo.com';
+
+                INSERT INTO auth.users (id, nome, email, email_normalized, password_hash, role, is_active, email_verified, totp_enabled, token_version)
+                VALUES (@UserId, 'Investidor', 'usuario@investirgo.com', 'usuario@investirgo.com', @PasswordHash, 'User', TRUE, TRUE, FALSE, 1)
+                ON CONFLICT (email_normalized) DO UPDATE 
+                SET password_hash = @PasswordHash, totp_enabled = FALSE, role = 'User', is_active = TRUE;
+
+                INSERT INTO inv.usuarios (id, nome, email)
+                VALUES (@UserId, 'Investidor', 'usuario@investirgo.com')
+                ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, nome = EXCLUDED.nome;
+            ", new { UserId = userUuid, PasswordHash = adminPasswordHash });
+
+            // 2. Verifica se a tabela inv.operacoes contém exatamente e apenas as 18 operações da planilha vinculadas ao usuário
             var countTotalOps = await conn.ExecuteScalarAsync<int>("SELECT COUNT(1) FROM inv.operacoes;");
             var countBbas3 = await conn.ExecuteScalarAsync<int>("SELECT COUNT(1) FROM inv.operacoes o JOIN inv.ativos a ON a.id = o.ativo_id WHERE a.ticker = 'BBAS3';");
             var hasPetr4 = await conn.ExecuteScalarAsync<int>("SELECT COUNT(1) FROM inv.operacoes o JOIN inv.ativos a ON a.id = o.ativo_id WHERE a.ticker = 'PETR4';");
 
             if (countTotalOps != 18 || countBbas3 < 6 || hasPetr4 > 0)
             {
-                Log.Information("Atualizando banco de dados com os ativos da planilha do usuário (BBAS3, TAEE4, ITSA4, etc)...");
+                Log.Information("Atualizando banco de dados com os ativos da planilha do usuário (BBAS3, TAEE4, ITSA4, etc) vinculados a inv.usuarios...");
                 await conn.ExecuteAsync(@"
                     TRUNCATE TABLE inv.operacoes, inv.proventos RESTART IDENTITY CASCADE;
 
@@ -293,8 +322,17 @@ using (var scope = app.Services.CreateScope())
                         preco_atual = EXCLUDED.preco_atual,
                         dividend_yield = EXCLUDED.dividend_yield;
 
-                    INSERT INTO inv.operacoes (ativo_id, tipo_operacao, data_operacao, quantidade, preco_unitario, valor_total, observacoes)
-                    SELECT a.id, op.tipo_operacao, op.data_operacao::DATE, op.quantidade, op.preco_unitario, (op.quantidade * op.preco_unitario), 'Lançamento planilha'
+                    INSERT INTO inv.operacoes (ativo_id, user_id, usuario_id, tipo_operacao, data_operacao, quantidade, preco_unitario, valor_total, observacoes)
+                    SELECT 
+                        a.id, 
+                        @UserId,
+                        @UserId,
+                        op.tipo_operacao, 
+                        op.data_operacao::DATE, 
+                        op.quantidade, 
+                        op.preco_unitario, 
+                        (op.quantidade * op.preco_unitario), 
+                        'Lançamento planilha'
                     FROM (VALUES
                         ('BBAS3', 'COMPRA', '2026-10-26', 1500, 17.94),
                         ('TAEE4', 'COMPRA', '2026-10-26', 1000, 14.08),
@@ -317,16 +355,34 @@ using (var scope = app.Services.CreateScope())
                     ) AS op(ticker, tipo_operacao, data_operacao, quantidade, preco_unitario)
                     JOIN inv.ativos a ON a.ticker = op.ticker;
 
-                    INSERT INTO inv.proventos (ativo_id, tipo_provento, data_com, data_pagamento, valor_por_cota, quantidade_cotas, valor_total, observacoes)
-                    SELECT a.id, prov.tipo_provento, prov.data_com::DATE, prov.data_pagamento::DATE, prov.valor_por_cota, prov.quantidade_cotas, prov.valor_total, prov.observacoes
+                    INSERT INTO inv.proventos (ativo_id, user_id, usuario_id, tipo_provento, data_com, data_pagamento, valor_por_cota, quantidade_cotas, valor_total, observacoes)
+                    SELECT 
+                        a.id, 
+                        @UserId,
+                        @UserId,
+                        prov.tipo_provento, 
+                        prov.data_com::DATE, 
+                        prov.data_pagamento::DATE, 
+                        prov.valor_por_cota, 
+                        prov.quantidade_cotas, 
+                        prov.valor_total, 
+                        prov.observacoes
                     FROM (VALUES
                         ('BBAS3', 'Dividendo', '2026-10-31', '2026-11-10', 0.425000, 2200, 935.00, 'Dividendo 3T26'),
                         ('TAEE4', 'JCP', '2026-11-01', '2026-11-14', 0.284000, 1400, 397.60, 'JCP Intermediário'),
                         ('ITSA4', 'Dividendo', '2026-11-02', '2026-11-15', 0.152000, 1600, 243.20, 'Dividendo Mensal')
                     ) AS prov(ticker, tipo_provento, data_com, data_pagamento, valor_por_cota, quantidade_cotas, valor_total, observacoes)
                     JOIN inv.ativos a ON a.ticker = prov.ticker;
-                ");
-                Log.Information("Banco de dados sincronizado com sucesso com as 18 operações da planilha.");
+                ", new { UserId = userUuid });
+                Log.Information("Banco de dados sincronizado com sucesso com as 18 operações da planilha vinculadas ao usuário.");
+            }
+            else
+            {
+                // Garante que todas as operações e proventos existentes apontem para o usuário
+                await conn.ExecuteAsync(@"
+                    UPDATE inv.operacoes SET user_id = @UserId, usuario_id = @UserId WHERE user_id IS NULL OR usuario_id IS NULL;
+                    UPDATE inv.proventos SET user_id = @UserId, usuario_id = @UserId WHERE user_id IS NULL OR usuario_id IS NULL;
+                ", new { UserId = userUuid });
             }
         }
     }

@@ -102,16 +102,43 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_user_action ON auth.audit_logs(user_id
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON auth.audit_logs(created_at);
 
 -- ----------------------------------------------------------------------------
--- 6. Adição de user_id nas tabelas existentes para controle de acesso por recurso (IDOR)
+-- 6. Adição de usuario_id e user_id no schema inv para controle de acesso (IDOR)
 -- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS inv.usuarios (
+    id UUID PRIMARY KEY DEFAULT '22222222-2222-2222-2222-222222222222'::UUID,
+    nome VARCHAR(120) NOT NULL DEFAULT 'Investidor',
+    email VARCHAR(255) NOT NULL UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO inv.usuarios (id, nome, email)
+VALUES ('22222222-2222-2222-2222-222222222222'::UUID, 'Investidor', 'usuario@investirgo.com')
+ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, nome = EXCLUDED.nome;
+
 DO $$
 BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'inv' AND table_name = 'operacoes' AND column_name = 'usuario_id'
+    ) THEN
+        ALTER TABLE inv.operacoes ADD COLUMN usuario_id UUID REFERENCES inv.usuarios(id) ON DELETE CASCADE;
+        CREATE INDEX IF NOT EXISTS idx_operacoes_usuario_id ON inv.operacoes(usuario_id);
+    END IF;
+
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns 
         WHERE table_schema = 'inv' AND table_name = 'operacoes' AND column_name = 'user_id'
     ) THEN
         ALTER TABLE inv.operacoes ADD COLUMN user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
         CREATE INDEX IF NOT EXISTS idx_operacoes_user_id ON inv.operacoes(user_id);
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'inv' AND table_name = 'proventos' AND column_name = 'usuario_id'
+    ) THEN
+        ALTER TABLE inv.proventos ADD COLUMN usuario_id UUID REFERENCES inv.usuarios(id) ON DELETE CASCADE;
+        CREATE INDEX IF NOT EXISTS idx_proventos_usuario_id ON inv.proventos(usuario_id);
     END IF;
 
     IF NOT EXISTS (
