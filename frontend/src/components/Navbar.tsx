@@ -205,7 +205,7 @@ export const Sidebar: React.FC<NavigationProps> = ({
                     <button
                       key={tab.id}
                       type="button"
-                      onClick={() => setActiveTab(tab.id)}
+                      onClick={() => setActiveTab(tab.id as Route)}
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold border ${isActive
                           ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-[0_1px_0_0_rgba(255,255,255,0.05)_inset]'
                           : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03] border-transparent'
@@ -476,7 +476,7 @@ export const TopHeader: React.FC<NavigationProps> = ({
                         key={tab.id}
                         type="button"
                         onClick={() => {
-                          setActiveTab(tab.id);
+                          setActiveTab(tab.id as Route);
                           setMobileMenuOpen(false);
                         }}
                         className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold border ${activeTab === tab.id
