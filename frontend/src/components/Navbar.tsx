@@ -143,9 +143,8 @@ export const Sidebar: React.FC<NavigationProps> = ({
               R$ {dolar.cotacao.toFixed(2)}
             </span>
             <span
-              className={`text-[10px] ${
-                dolar.variacao >= 0 ? 'text-emerald-400' : 'text-rose-400'
-              }`}
+              className={`text-[10px] ${dolar.variacao >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                }`}
             >
               {dolar.variacao >= 0 ? '+' : ''}
               {dolar.variacao.toFixed(2)}%
@@ -198,18 +197,17 @@ export const Sidebar: React.FC<NavigationProps> = ({
                   const isActive = activeTab === tab.id;
                   const badge = tab.id === 'noticias' && favoritosCount > 0 ? favoritosCount : undefined;
                   const allItems = navigationGroups.flatMap(g => g.items);
-  const currentLabel = allItems.find(i => i.id === activeTab)?.label || (activeTab === 'admin' ? 'Governança & Segurança' : 'Dashboard');
+                  const currentLabel = allItems.find(i => i.id === activeTab)?.label || (activeTab === 'admin' ? 'Governança & Segurança' : 'Dashboard');
 
-  return (
+                  return (
                     <button
                       key={tab.id}
                       type="button"
                       onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold border ${
-                        isActive
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold border ${isActive
                           ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-[0_1px_0_0_rgba(255,255,255,0.05)_inset]'
                           : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03] border-transparent'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-2.5">
                         <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-400' : 'text-slate-400'}`} />
@@ -236,11 +234,10 @@ export const Sidebar: React.FC<NavigationProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab('admin')}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold border ${
-                  activeTab === 'admin'
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold border ${activeTab === 'admin'
                     ? 'bg-purple-500/15 text-purple-300 border-purple-500/30'
                     : 'text-purple-400/80 hover:text-purple-300 hover:bg-purple-950/20 border-transparent'
-                }`}
+                  }`}
               >
                 <ShieldCheck className="w-4 h-4 text-purple-400" />
                 <span>Painel Admin</span>
@@ -333,6 +330,7 @@ export const TopHeader: React.FC<NavigationProps> = ({
   const [isRotating, setIsRotating] = useState(false);
   const dolar = useCotacaoDolar();
   const { toggleEsconderValores, esconderValores } = usePrivacy();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const handleAtualizarDolar = () => {
     setIsRotating(true);
@@ -381,9 +379,8 @@ export const TopHeader: React.FC<NavigationProps> = ({
                 {dolar.cotacao.toFixed(2)}
               </span>
               <span
-                className={`font-bold text-sm ${
-                  dolar.variacao >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                }`}
+                className={`font-bold text-sm ${dolar.variacao >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                  }`}
               >
                 {dolar.variacao >= 0 ? '+' : ''}
                 {dolar.variacao.toFixed(1)}%
@@ -408,11 +405,10 @@ export const TopHeader: React.FC<NavigationProps> = ({
           <button
             type="button"
             onClick={toggleEsconderValores}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition cursor-pointer ${
-              esconderValores
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition cursor-pointer ${esconderValores
                 ? 'bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
                 : 'bg-white/[0.02] hover:bg-white/[0.06] text-slate-300 hover:text-white border-white/[0.06]'
-            }`}
+              }`}
             title={esconderValores ? 'Clique para mostrar todos os valores monetários' : 'Clique para ocultar valores monetários (Modo Privacidade)'}
             aria-label={esconderValores ? 'Mostrar valores' : 'Ocultar valores'}
           >
@@ -432,11 +428,10 @@ export const TopHeader: React.FC<NavigationProps> = ({
           {/* Quick Favoritos */}
           <button
             onClick={() => setActiveTab('noticias')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition ${
-              activeTab === 'noticias'
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition ${activeTab === 'noticias'
                 ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
                 : 'bg-white/[0.02] hover:bg-white/[0.05] text-slate-300 border-white/[0.06]'
-            }`}
+              }`}
           >
             <Star className="w-4.5 h-4.5 text-amber-400 fill-amber-400" />
             <span className="hidden sm:inline">Favoritos</span>
@@ -482,11 +477,10 @@ export const TopHeader: React.FC<NavigationProps> = ({
                           setActiveTab(tab.id);
                           setMobileMenuOpen(false);
                         }}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold border ${
-                          activeTab === tab.id
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold border ${activeTab === tab.id
                             ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                             : 'text-slate-400 hover:text-white border-transparent'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-2">
                           <tab.icon className="w-4 h-4" />
@@ -496,8 +490,6 @@ export const TopHeader: React.FC<NavigationProps> = ({
                     ))}
                   </div>
                 ))}
-
-                {/* Ações Móveis - Removidas */}
               </div>
             </div>
 
