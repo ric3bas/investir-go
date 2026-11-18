@@ -59,10 +59,10 @@ export const AtivoDetalhesModal: React.FC<AtivoDetalhesModalProps> = ({
   const [abaAtiva, setAbaAtiva] = useState<'empresa' | 'grafico' | 'noticias'>('empresa');
   const [periodo, setPeriodo] = useState<PeriodoHistorico>('1D');
 
-  // Abre sempre na aba de informações da empresa por padrão e período 1D
+  // Abre sempre na aba de gráfico por padrão e período 1D
   useEffect(() => {
     if (isOpen) {
-      setAbaAtiva('empresa');
+      setAbaAtiva('grafico');
       setPeriodo('1D');
     }
   }, [isOpen, ativo?.ticker]);

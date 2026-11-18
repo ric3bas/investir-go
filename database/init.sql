@@ -1,6 +1,5 @@
 -- Database Initialization for Investir-Go
-CREATE SCHEMA IF NOT EXISTS inv;
-
+CREATE SCHEMA IF NOT EXISTS inv; 
 -- Table: Usuarios no schema inv
 CREATE TABLE IF NOT EXISTS inv.usuarios (
     id UUID PRIMARY KEY DEFAULT '22222222-2222-2222-2222-222222222222'::UUID,

@@ -62,7 +62,7 @@ export const useCotacaoDolar = (): CotacaoDolar => {
 
   useEffect(() => {
     buscarCotacao();
-    const interval = setInterval(buscarCotacao, 60000); // Atualiza a cada 1 minuto
+    const interval = setInterval(buscarCotacao, 5 * 60 * 1000); // Atualiza a cada 5 minutos
     return () => clearInterval(interval);
   }, [buscarCotacao]);
 

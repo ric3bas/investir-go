@@ -21,7 +21,8 @@ import {
   ArrowDownUp,
   Eye,
   EyeOff,
-  DollarSign
+  DollarSign,
+  RefreshCw
 } from 'lucide-react';
 import { ResumoCarteira } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -404,26 +405,34 @@ export const TopHeader: React.FC<NavigationProps> = ({
         <div className="flex items-center gap-2 sm:gap-2.5">
           {/* Cotação do Dólar Comercial Sempre Visível */}
           <div
-            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] text-xs font-mono transition shadow-sm cursor-help"
-            title={`Dólar Comercial (USD/BRL): R$ ${dolar.cotacao.toFixed(2)} (${dolar.variacao >= 0 ? '+' : ''}${dolar.variacao.toFixed(2)}%) • Mín: R$ ${dolar.minima.toFixed(2)} | Máx: R$ ${dolar.maxima.toFixed(2)} • Atualizado às ${dolar.dataHora}`}
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-[10px] font-mono transition shadow-sm"
           >
-            <div className="w-5 h-5 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold text-[11px] shrink-0">
+            <div className="w-4 h-4 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold text-[9px] shrink-0">
               $
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-400 font-semibold text-[11px] hidden md:inline">USD:</span>
+            <div
+              className="flex items-center gap-1 cursor-help"
+              title={`Dólar Comercial (USD/BRL): R$ ${dolar.cotacao.toFixed(2)} (${dolar.variacao >= 0 ? '+' : ''}${dolar.variacao.toFixed(2)}%) • Mín: R$ ${dolar.minima.toFixed(2)} | Máx: R$ ${dolar.maxima.toFixed(2)} • Atualizado às ${dolar.dataHora}`}
+            >
               <span className="font-extrabold text-white font-mono">
-                R$ {dolar.cotacao.toFixed(2)}
+                {dolar.cotacao.toFixed(2)}
               </span>
               <span
-                className={`text-[10px] font-bold ${
+                className={`font-bold ${
                   dolar.variacao >= 0 ? 'text-emerald-400' : 'text-rose-400'
                 }`}
               >
                 {dolar.variacao >= 0 ? '+' : ''}
-                {dolar.variacao.toFixed(2)}%
+                {dolar.variacao.toFixed(1)}%
               </span>
             </div>
+            <button
+              onClick={dolar.atualizar}
+              className={`p-0.5 rounded-lg text-slate-500 hover:text-emerald-400 transition ${dolar.carregando ? 'animate-spin' : ''}`}
+              title="Atualizar cotação do dólar"
+            >
+              <RefreshCw className="w-2.5 h-2.5" />
+            </button>
           </div>
 
           {/* Live Market Badge */}
