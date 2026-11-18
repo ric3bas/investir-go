@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS inv.usuarios (
 -- Inserção do usuário padrão no schema inv
 INSERT INTO inv.usuarios (id, nome, email)
 VALUES ('22222222-2222-2222-2222-222222222222'::UUID, 'Investidor', 'usuario@investirgo.com')
-ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, nome = EXCLUDED.nome;
+ON CONFLICT (id) DO NOTHING;
 
 -- Table: Ativos (Acoes e Fundos Imobiliarios)
 CREATE TABLE IF NOT EXISTS inv.ativos (
@@ -100,47 +100,7 @@ VALUES
     ('XPLG11', 'XP Log FII', 'FII', 'Logística / Galpões', 102.10, 0.18, 8.70),
     ('TRXF11', 'TRX Real Estate FII', 'FII', 'Renda Urbana / Imóveis Comerciais', 105.80, 0.45, 9.80),
     ('ALZR11', 'Alianza Trust Renda Imobiliária FII', 'FII', 'Híbrido / Renda Urbana', 103.50, 0.20, 8.85)
-ON CONFLICT (ticker) DO UPDATE 
-SET nome = EXCLUDED.nome,
-    tipo = EXCLUDED.tipo,
-    setor = EXCLUDED.setor,
-    preco_atual = EXCLUDED.preco_atual,
-    dividend_yield = EXCLUDED.dividend_yield;
-
--- SEED: Lançamentos da Planilha do Usuário
-INSERT INTO inv.operacoes (ativo_id, tipo_operacao, data_operacao, quantidade, preco_unitario, valor_total, observacoes)
-SELECT a.id, op.tipo_operacao, op.data_operacao::DATE, op.quantidade, op.preco_unitario, (op.quantidade * op.preco_unitario), 'Lançamento inicial da planilha'
-FROM (VALUES
-    ('BBAS3', 'COMPRA', '2026-10-26', 1500, 17.94),
-    ('TAEE4', 'COMPRA', '2026-10-26', 1000, 14.08),
-    ('ITSA4', 'COMPRA', '2026-10-26', 1000, 13.19),
-    ('BBDC4', 'COMPRA', '2026-10-26', 700, 15.55),
-    ('BBAS3', 'COMPRA', '2026-10-28', 400, 16.96),
-    ('TAEE4', 'COMPRA', '2026-10-28', 400, 13.30),
-    ('ITSA4', 'COMPRA', '2026-10-28', 400, 12.91),
-    ('SANB4', 'COMPRA', '2026-10-28', 400, 12.52),
-    ('POMO4', 'COMPRA', '2026-10-28', 1300, 3.82),
-    ('BBDC3', 'COMPRA', '2026-10-28', 400, 13.62),
-    ('BBDC4', 'COMPRA', '2026-10-30', 100, 14.04),
-    ('SANB4', 'COMPRA', '2026-10-30', 200, 12.07),
-    ('ITSA4', 'COMPRA', '2026-10-30', 200, 12.50),
-    ('BBDC4', 'COMPRA', '2026-11-03', 300, 13.54),
-    ('BBAS3', 'COMPRA', '2026-11-03', 300, 16.12),
-    ('BBAS3', 'COMPRA', '2026-11-12', 1000, 15.54),
-    ('BBAS3', 'COMPRA', '2026-11-13', 800, 15.14),
-    ('BBAS3', 'COMPRA', '2026-11-17', 700, 14.82)
-) AS op(ticker, tipo_operacao, data_operacao, quantidade, preco_unitario)
-JOIN inv.ativos a ON a.ticker = op.ticker;
-
--- SEED: Exemplos de Proventos Recebidos
-INSERT INTO inv.proventos (ativo_id, tipo_provento, data_com, data_pagamento, valor_por_cota, quantidade_cotas, valor_total, observacoes)
-SELECT a.id, prov.tipo_provento, prov.data_com::DATE, prov.data_pagamento::DATE, prov.valor_por_cota, prov.quantidade_cotas, prov.valor_total, prov.observacoes
-FROM (VALUES
-    ('BBAS3', 'Dividendo', '2026-10-31', '2026-11-10', 0.425000, 2200, 935.00, 'Dividendo 3T26'),
-    ('TAEE4', 'JCP', '2026-11-01', '2026-11-14', 0.284000, 1400, 397.60, 'JCP Intermediário'),
-    ('ITSA4', 'Dividendo', '2026-11-02', '2026-11-15', 0.152000, 1600, 243.20, 'Dividendo Mensal')
-) AS prov(ticker, tipo_provento, data_com, data_pagamento, valor_por_cota, quantidade_cotas, valor_total, observacoes)
-JOIN inv.ativos a ON a.ticker = prov.ticker;
+ON CONFLICT (ticker) DO NOTHING;
 -- ============================================================================
 -- InvestirGo - Módulo de Autenticação e Autorização Segura
 -- PostgreSQL Schema & Migrations

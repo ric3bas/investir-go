@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import { Ativo, PeriodoPerformance } from '../types';
-import { getPerformanceRanking, buscarAtivosMercado, AtivoPesquisaResultado } from '../utils/marketData';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Ativo, PerformanceAtivo, PeriodoPerformance } from '../types';
+import { buscarAtivosMercado, AtivoPesquisaResultado } from '../utils/marketData';
+import { InvestirApi } from '../services/api';
 import {
   TrendingUp,
   TrendingDown,
@@ -60,6 +61,13 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
   const [filtroTipoPesquisa, setFiltroTipoPesquisa] = useState<'TODOS' | 'Acao' | 'FII'>('TODOS');
   const [salvandoTicker, setSalvandoTicker] = useState<string | null>(null);
   const [sucessoMsg, setSucessoMsg] = useState<string | null>(null);
+  const [ranking, setRanking] = useState<{
+    top7Altas: PerformanceAtivo[];
+    top7Baixas: PerformanceAtivo[];
+    destaqueAlta: PerformanceAtivo | null;
+    destaqueBaixa: PerformanceAtivo | null;
+  }>({ top7Altas: [], top7Baixas: [], destaqueAlta: null, destaqueBaixa: null });
+  const [rankingErro, setRankingErro] = useState<string | null>(null);
 
   const resultadosBusca = useMemo(() => {
     return buscarAtivosMercado(termoPesquisa, filtroTipoPesquisa, ativos);
@@ -96,8 +104,39 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
     }
   };
 
-  const ranking = useMemo(() => {
-    return getPerformanceRanking(periodo, filtroTipo, ativos);
+  useEffect(() => {
+    let ativoNaTela = true;
+    setRankingErro(null);
+    InvestirApi.getPerformanceRanking(periodo, filtroTipo)
+      .then((dados) => {
+        if (!ativoNaTela) return;
+        const enriquecer = (item: Omit<PerformanceAtivo, 'ativo'>): PerformanceAtivo => ({
+          ...item,
+          ativo: ativos.find((a) => a.ticker.toUpperCase() === item.ticker.toUpperCase()) || {
+            id: 0,
+            ticker: item.ticker,
+            nome: item.nome,
+            tipo: item.tipo,
+            setor: item.setor,
+            precoAtual: item.precoAtual,
+            variacaoDia: item.variacaoPercentual,
+            dividendYield: 0,
+            dataAtualizacao: new Date().toISOString(),
+          },
+        });
+        const top7Altas = dados.top7Altas.map(enriquecer);
+        const top7Baixas = dados.top7Baixas.map(enriquecer);
+        setRanking({
+          top7Altas,
+          top7Baixas,
+          destaqueAlta: top7Altas[0] || null,
+          destaqueBaixa: top7Baixas[0] || null,
+        });
+      })
+      .catch(() => {
+        if (ativoNaTela) setRankingErro('Não foi possível consultar o ranking real agora.');
+      });
+    return () => { ativoNaTela = false; };
   }, [periodo, filtroTipo, ativos]);
 
   const periodosInfo: { id: PeriodoPerformance; label: string; descricao: string }[] = [
@@ -473,6 +512,12 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
         )}
       </div>
 
+
+      {rankingErro && (
+        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+          {rankingErro}
+        </div>
+      )}
 
       {/* Grade Principal: Duas Colunas com Top 7 Altas e Top 7 Baixas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

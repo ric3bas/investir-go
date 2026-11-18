@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, ArrowDownRight, ArrowUpRight, DollarSign, Calendar, Hash, Tag, Calculator } from 'lucide-react';
-import { Ativo } from '../types';
-import { TOP_30_ATIVOS } from '../utils/marketData';
+import { X, ArrowDownRight, ArrowUpRight, ArrowRight, Calculator, AlertTriangle } from 'lucide-react';
+import { Ativo, PosicaoCarteira } from '../types';
 import { AtivoCombobox } from './AtivoCombobox';
 import { formatarDinheiro, aplicarMascaraDinheiro } from '../utils/formatters';
 
@@ -9,6 +8,7 @@ interface NovaOperacaoModalProps {
   isOpen: boolean;
   onClose: () => void;
   ativos: Ativo[];
+  posicoes: PosicaoCarteira[];
   defaultTicker?: string;
   defaultTipo?: 'COMPRA' | 'VENDA';
   onSubmit: (data: {
@@ -27,11 +27,12 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
   isOpen,
   onClose,
   ativos,
+  posicoes,
   defaultTicker = '',
   defaultTipo = 'COMPRA',
   onSubmit,
 }) => {
-  const listaAtivos = Array.isArray(ativos) && ativos.length > 0 ? ativos : TOP_30_ATIVOS;
+  const listaAtivos = Array.isArray(ativos) ? ativos : [];
   const [ticker, setTicker] = useState(defaultTicker || '');
   const [tipoOperacao, setTipoOperacao] = useState<'COMPRA' | 'VENDA'>(defaultTipo || 'COMPRA');
   const [dataOperacao, setDataOperacao] = useState(new Date().toISOString().split('T')[0]);
@@ -92,6 +93,23 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
   const taxasNum = parseFloat(taxas.replace(/\./g, '').replace(',', '.')) || 0;
   const subtotal = qtdNum * precoNum;
   const totalCalculado = subtotal + (tipoOperacao === 'COMPRA' ? taxasNum : -taxasNum);
+  const tickerNormalizado = ticker.trim().toUpperCase();
+  const posicaoAtual = posicoes.find((posicao) => posicao.ticker.toUpperCase() === tickerNormalizado);
+  const quantidadeAtual = posicaoAtual?.quantidadeCustodia ?? 0;
+  const precoMedioAtual = posicaoAtual?.precoMedio ?? 0;
+  const vendaSemSaldo = tipoOperacao === 'VENDA' && quantidadeAtual <= 0;
+  const vendaAcimaDaCustodia = tipoOperacao === 'VENDA' && qtdNum > quantidadeAtual;
+  const vendaInvalida = vendaSemSaldo || vendaAcimaDaCustodia;
+  const quantidadeProjetada = tipoOperacao === 'COMPRA'
+    ? quantidadeAtual + qtdNum
+    : Math.max(quantidadeAtual - qtdNum, 0);
+  const custoAtual = quantidadeAtual * precoMedioAtual;
+  const precoMedioProjetado = tipoOperacao === 'COMPRA'
+    ? (quantidadeProjetada > 0 ? (custoAtual + subtotal + taxasNum) / quantidadeProjetada : precoMedioAtual)
+    : (quantidadeProjetada > 0 ? precoMedioAtual : 0);
+  const variacaoPrecoMedio = precoMedioProjetado - precoMedioAtual;
+  const resultadoVendaEstimado = ((precoNum - precoMedioAtual) * qtdNum) - taxasNum;
+  const simulacaoDisponivel = Boolean(tickerNormalizado) && qtdNum > 0 && precoNum > 0 && !vendaInvalida;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +119,14 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
     }
     if (qtdNum <= 0 || precoNum <= 0) {
       alert('Quantidade e Preço devem ser maiores que zero.');
+      return;
+    }
+    if (vendaSemSaldo) {
+      alert(`Você não possui ${tickerNormalizado} em custódia para realizar esta venda.`);
+      return;
+    }
+    if (vendaAcimaDaCustodia) {
+      alert(`A venda excede sua custódia atual de ${quantidadeAtual.toLocaleString('pt-BR')} cotas.`);
       return;
     }
 
@@ -140,7 +166,7 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-2xl relative"
+        className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto p-6 sm:p-7 shadow-2xl relative"
       >
         {/* Fechar */}
         <button
@@ -300,27 +326,93 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
             />
           </div>
 
-          {/* Resumo e Cálculo do Total */}
-          <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 flex items-center justify-between">
-            <div>
-              <span className="text-xs text-slate-400 block">Total da Operação</span>
-              <span className="text-[11px] text-slate-500 font-mono">
-                {qtdNum} cotas × R$ {precoNum.toFixed(2)}
-                {taxasNum > 0 ? ` (+ R$ ${taxasNum.toFixed(2)} taxas)` : ''}
-              </span>
-            </div>
-            <div className="text-right">
+          {/* Resumo financeiro e simulação do novo Preço Médio */}
+          <section className="rounded-2xl bg-slate-950 border border-slate-800/80 overflow-hidden" aria-live="polite">
+            <div className="p-4 flex items-center justify-between gap-4">
+              <div>
+                <span className="text-xs text-slate-400 block">Total da Operação</span>
+                <span className="text-[11px] text-slate-500 font-mono tabular-nums">
+                  {qtdNum} cotas × {formatarDinheiro(precoNum)}
+                  {taxasNum > 0 ? ` ${tipoOperacao === 'COMPRA' ? '+' : '−'} ${formatarDinheiro(taxasNum)} taxas` : ''}
+                </span>
+              </div>
               <span
-                className={`text-xl font-bold font-mono ${tipoOperacao === 'COMPRA' ? 'text-emerald-400' : 'text-rose-400'
-                  }`}
+                className={`text-xl font-bold font-mono tabular-nums ${tipoOperacao === 'COMPRA' ? 'text-emerald-400' : 'text-rose-400'}`}
               >
-                {totalCalculado.toLocaleString('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                })}
+                {formatarDinheiro(totalCalculado)}
               </span>
             </div>
-          </div>
+
+            <div className={`border-t px-4 py-3.5 ${tipoOperacao === 'COMPRA' ? 'border-emerald-500/15 bg-emerald-500/[0.035]' : 'border-rose-500/15 bg-rose-500/[0.035]'}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <Calculator className={`w-3.5 h-3.5 ${tipoOperacao === 'COMPRA' ? 'text-emerald-400' : 'text-rose-400'}`} />
+                <span className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-400">
+                  Simulação após confirmar
+                </span>
+                <span className="ml-auto text-[10px] text-slate-500 font-mono">{tickerNormalizado || 'Selecione um ativo'}</span>
+              </div>
+
+              {vendaInvalida ? (
+                <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-3 py-2.5 text-amber-200">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+                  <div>
+                    <p className="text-xs font-semibold">
+                      {vendaSemSaldo ? 'Ativo sem saldo em custódia' : 'Quantidade acima da custódia disponível'}
+                    </p>
+                    <p className="text-[10px] text-amber-200/65 mt-0.5">
+                      Você possui {quantidadeAtual.toLocaleString('pt-BR')} cotas de {tickerNormalizado || 'este ativo'}.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                    <div>
+                      <span className="block text-[10px] text-slate-500 mb-1">Preço médio atual</span>
+                      <strong className="block text-sm text-slate-300 font-mono tabular-nums">
+                        {formatarDinheiro(precoMedioAtual)}
+                      </strong>
+                      <span className="block text-[10px] text-slate-500 font-mono mt-1">
+                        {quantidadeAtual.toLocaleString('pt-BR')} cotas
+                      </span>
+                    </div>
+
+                    <div className={`w-8 h-8 rounded-full border flex items-center justify-center ${tipoOperacao === 'COMPRA' ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : 'border-rose-500/20 bg-rose-500/10 text-rose-400'}`}>
+                      <ArrowRight className="w-4 h-4" />
+                    </div>
+
+                    <div className="text-right">
+                      <span className="block text-[10px] text-slate-500 mb-1">Preço médio simulado</span>
+                      <strong className={`block text-base font-mono tabular-nums ${tipoOperacao === 'COMPRA' ? 'text-emerald-400' : 'text-rose-300'}`}>
+                        {simulacaoDisponivel ? formatarDinheiro(precoMedioProjetado) : '—'}
+                      </strong>
+                      <span className="block text-[10px] text-slate-400 font-mono mt-1">
+                        {simulacaoDisponivel ? `${quantidadeProjetada.toLocaleString('pt-BR')} cotas após operação` : 'Preencha os valores'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {simulacaoDisponivel && (
+                    <div className="mt-3 pt-2.5 border-t border-white/[0.05] flex items-center justify-between gap-3 text-[10px]">
+                      <span className="text-slate-500">
+                        {tipoOperacao === 'COMPRA'
+                          ? (quantidadeAtual > 0 ? 'Impacto no preço médio' : 'Abertura de nova posição')
+                          : (quantidadeProjetada > 0 ? 'Venda não altera o preço médio contábil' : 'A posição será encerrada')}
+                      </span>
+                      <span className={`font-mono font-semibold tabular-nums ${tipoOperacao === 'COMPRA'
+                        ? variacaoPrecoMedio >= 0 ? 'text-amber-300' : 'text-emerald-300'
+                        : resultadoVendaEstimado >= 0 ? 'text-emerald-300' : 'text-rose-300'
+                      }`}>
+                        {tipoOperacao === 'COMPRA'
+                          ? quantidadeAtual > 0 ? `${variacaoPrecoMedio >= 0 ? '+' : ''}${formatarDinheiro(variacaoPrecoMedio)}` : formatarDinheiro(precoMedioProjetado)
+                          : `Resultado estimado: ${resultadoVendaEstimado >= 0 ? '+' : ''}${formatarDinheiro(resultadoVendaEstimado)}`}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </section>
 
           {/* Ações */}
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800/60">
@@ -333,8 +425,8 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={salvando}
-              className={`px-6 py-2.5 text-xs font-bold rounded-xl text-white shadow-xl transition ${tipoOperacao === 'COMPRA'
+              disabled={salvando || vendaInvalida}
+              className={`px-6 py-2.5 text-xs font-bold rounded-xl text-white shadow-xl transition disabled:opacity-40 disabled:cursor-not-allowed ${tipoOperacao === 'COMPRA'
                 ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/30'
                 : 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/30'
                 }`}

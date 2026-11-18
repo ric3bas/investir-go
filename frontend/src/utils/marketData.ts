@@ -777,13 +777,13 @@ export function calcularResumoEPosicoesMock(
 
     if (op.tipoOperacao === 'COMPRA') {
       const custoAtual = pos.quantidade * pos.precoMedio;
-      const custoCompra = op.quantidade * op.precoUnitario;
+      const custoCompra = (op.quantidade * op.precoUnitario) + (op.taxas || 0);
       pos.quantidade += op.quantidade;
       if (pos.quantidade > 0) {
         pos.precoMedio = (custoAtual + custoCompra) / pos.quantidade;
       }
     } else if (op.tipoOperacao === 'VENDA') {
-      const lucro = (op.precoUnitario - pos.precoMedio) * op.quantidade;
+      const lucro = ((op.precoUnitario - pos.precoMedio) * op.quantidade) - (op.taxas || 0);
       pos.lucroRealizado += lucro;
       pos.quantidade -= op.quantidade;
       if (pos.quantidade <= 0) {

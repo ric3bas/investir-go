@@ -8,6 +8,7 @@ namespace InvestirGo.API.Infrastructure.Repositories;
 public class OperacaoRepository : IOperacaoRepository
 {
     private readonly DbConnectionFactory _dbFactory;
+    private readonly bool _allowInMemoryFallback;
 
     private static readonly Guid _defaultUserId = Guid.Parse("22222222-2222-2222-2222-222222222222");
 
@@ -33,9 +34,10 @@ public class OperacaoRepository : IOperacaoRepository
         new Operacao { Id = 18, AtivoId = 1, Ticker = "BBAS3", NomeAtivo = "Banco do Brasil S.A.", TipoAtivo = "Acao", TipoOperacao = "COMPRA", DataOperacao = new DateTime(2026, 11, 17), Quantidade = 700, PrecoUnitario = 14.82m, ValorTotal = 10374.00m, PrecoAtual = 14.62m, UserId = _defaultUserId },
     };
 
-    public OperacaoRepository(DbConnectionFactory dbFactory)
+    public OperacaoRepository(DbConnectionFactory dbFactory, IConfiguration configuration)
     {
         _dbFactory = dbFactory;
+        _allowInMemoryFallback = configuration.GetValue<bool>("UseInMemoryPortfolio", false);
     }
 
     public async Task<IEnumerable<Operacao>> ObterTodasAsync(string? ticker = null, string? tipoOperacao = null, Guid? userId = null)
@@ -48,7 +50,7 @@ public class OperacaoRepository : IOperacaoRepository
                        o.tipo_operacao AS TipoOperacao, o.data_operacao AS DataOperacao, 
                        o.quantidade AS Quantidade, o.preco_unitario AS PrecoUnitario, 
                        o.valor_total AS ValorTotal, o.taxas AS Taxas, o.observacoes AS Observacoes,
-                       a.preco_atual AS PrecoAtual, o.created_at AS CreatedAt
+                       a.preco_atual AS PrecoAtual, COALESCE(o.user_id, o.usuario_id) AS UserId, o.created_at AS CreatedAt
                 FROM inv.operacoes o
                 JOIN inv.ativos a ON a.id = o.ativo_id
                 WHERE 1=1
@@ -57,7 +59,7 @@ public class OperacaoRepository : IOperacaoRepository
             var parameters = new DynamicParameters();
             if (userId.HasValue)
             {
-                sql += " AND (o.usuario_id = @UserId OR o.user_id = @UserId)";
+                sql += " AND (o.user_id = @UserId OR (o.user_id IS NULL AND o.usuario_id = @UserId))";
                 parameters.Add("UserId", userId.Value);
             }
 
@@ -78,11 +80,11 @@ public class OperacaoRepository : IOperacaoRepository
             var result = (await conn.QueryAsync<Operacao>(sql, parameters)).ToList();
             return result;
         }
-        catch { }
+        catch when (_allowInMemoryFallback) { }
 
         // Fallback em memória para quando o banco estiver inacessível
         // Novos usuários (diferentes do usuário padrão da planilha) possuem carteira zerada
-        if (userId.HasValue && userId.Value != _defaultUserId)
+        if (!_allowInMemoryFallback || (userId.HasValue && userId.Value != _defaultUserId))
         {
             return Enumerable.Empty<Operacao>();
         }
@@ -109,7 +111,7 @@ public class OperacaoRepository : IOperacaoRepository
                        o.tipo_operacao AS TipoOperacao, o.data_operacao AS DataOperacao, 
                        o.quantidade AS Quantidade, o.preco_unitario AS PrecoUnitario, 
                        o.valor_total AS ValorTotal, o.taxas AS Taxas, o.observacoes AS Observacoes,
-                       a.preco_atual AS PrecoAtual, o.created_at AS CreatedAt
+                       a.preco_atual AS PrecoAtual, COALESCE(o.user_id, o.usuario_id) AS UserId, o.created_at AS CreatedAt
                 FROM inv.operacoes o
                 JOIN inv.ativos a ON a.id = o.ativo_id
                 WHERE o.id = @Id;
@@ -117,9 +119,9 @@ public class OperacaoRepository : IOperacaoRepository
             var result = await conn.QuerySingleOrDefaultAsync<Operacao>(sql, new { Id = id });
             if (result is not null) return result;
         }
-        catch { }
+        catch when (_allowInMemoryFallback) { }
 
-        return _operacoesFallback.FirstOrDefault(o => o.Id == id);
+        return _allowInMemoryFallback ? _operacoesFallback.FirstOrDefault(o => o.Id == id) : null;
     }
 
     public async Task<int> CriarAsync(Operacao operacao)
@@ -128,21 +130,14 @@ public class OperacaoRepository : IOperacaoRepository
         {
             using var conn = _dbFactory.CreateConnection();
             const string sql = """
-                INSERT INTO inv.operacoes (ativo_id, user_id, usuario_id, tipo_operacao, data_operacao, quantidade, preco_unitario, valor_total, taxas, observacoes)
-                VALUES (@AtivoId, @UserId, @UserId, UPPER(@TipoOperacao), @DataOperacao, @Quantidade, @PrecoUnitario, @ValorTotal, @Taxas, @Observacoes)
+                INSERT INTO inv.operacoes (ativo_id, user_id, tipo_operacao, data_operacao, quantidade, preco_unitario, valor_total, taxas, observacoes)
+                VALUES (@AtivoId, @UserId, UPPER(@TipoOperacao), @DataOperacao, @Quantidade, @PrecoUnitario, @ValorTotal, @Taxas, @Observacoes)
                 RETURNING id;
             """;
             var id = await conn.ExecuteScalarAsync<int>(sql, operacao);
-            var ativo = await new AtivoRepository(_dbFactory).ObterPorIdAsync(operacao.AtivoId);
-            if (ativo != null)
-            {
-                operacao.Ticker = ativo.Ticker;
-                operacao.NomeAtivo = ativo.Nome;
-                operacao.TipoAtivo = ativo.Tipo;
-            }
             return id;
         }
-        catch
+        catch when (_allowInMemoryFallback)
         {
             var ativo = AtivoRepository._ativosFallback.FirstOrDefault(a => a.Id == operacao.AtivoId);
             if (ativo != null)
@@ -178,9 +173,9 @@ public class OperacaoRepository : IOperacaoRepository
             var rows = await conn.ExecuteAsync(sql, operacao);
             if (rows > 0) return true;
         }
-        catch { }
+        catch when (_allowInMemoryFallback) { }
 
-        var item = _operacoesFallback.FirstOrDefault(o => o.Id == operacao.Id);
+        var item = _allowInMemoryFallback ? _operacoesFallback.FirstOrDefault(o => o.Id == operacao.Id) : null;
         if (item is not null)
         {
             item.Quantidade = operacao.Quantidade;
@@ -202,9 +197,9 @@ public class OperacaoRepository : IOperacaoRepository
             var rows = await conn.ExecuteAsync(sql, new { Id = id });
             if (rows > 0) return true;
         }
-        catch { }
+        catch when (_allowInMemoryFallback) { }
 
-        var item = _operacoesFallback.FirstOrDefault(o => o.Id == id);
+        var item = _allowInMemoryFallback ? _operacoesFallback.FirstOrDefault(o => o.Id == id) : null;
         if (item is not null)
         {
             _operacoesFallback.Remove(item);

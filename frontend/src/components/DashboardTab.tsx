@@ -41,6 +41,91 @@ const PALETTE = [
   '#84cc16', // Lime
 ];
 
+interface AllocationChartItem {
+  name: string;
+  value: number;
+  tipo: string;
+  percentual: number;
+  nome: string;
+  color: string;
+}
+
+interface OutsideLabelPosition {
+  side: 'left' | 'right';
+  y: number;
+}
+
+const RADIAN = Math.PI / 180;
+
+/**
+ * Espalha os rótulos de cada lado do donut para impedir sobreposição entre
+ * posições pequenas e próximas. Os ângulos seguem a orientação padrão do Pie.
+ */
+const getOutsideLabelPositions = (
+  data: AllocationChartItem[],
+  cy: number,
+  outerRadius: number,
+): OutsideLabelPosition[] => {
+  const total = data.reduce((sum, item) => sum + Math.max(item.value, 0), 0);
+  if (total <= 0) return data.map(() => ({ side: 'right', y: cy }));
+
+  let currentAngle = 90;
+  const positions = data.map((item, index) => {
+    const sliceAngle = (Math.max(item.value, 0) / total) * 360;
+    const midAngle = currentAngle - sliceAngle / 2;
+    currentAngle -= sliceAngle;
+
+    const cosine = Math.cos(-midAngle * RADIAN);
+    const desiredY = cy + (outerRadius + 34) * Math.sin(-midAngle * RADIAN);
+
+    return {
+      index,
+      side: cosine >= 0 ? 'right' as const : 'left' as const,
+      desiredY,
+      y: desiredY,
+    };
+  });
+
+  const top = 22;
+  const bottom = cy * 2 - 22;
+
+  (['left', 'right'] as const).forEach((side) => {
+    const sidePositions = positions
+      .filter((position) => position.side === side)
+      .sort((a, b) => a.desiredY - b.desiredY);
+
+    if (sidePositions.length === 0) return;
+
+    const availableHeight = Math.max(0, bottom - top);
+    const gap = sidePositions.length > 1
+      ? Math.min(38, availableHeight / (sidePositions.length - 1))
+      : 0;
+
+    sidePositions.forEach((position, index) => {
+      const previousY = index === 0 ? top - gap : sidePositions[index - 1].y;
+      position.y = Math.max(position.desiredY, previousY + gap, top);
+    });
+
+    const overflow = sidePositions[sidePositions.length - 1].y - bottom;
+    if (overflow > 0) {
+      sidePositions.forEach((position) => {
+        position.y -= overflow;
+      });
+    }
+
+    const topOverflow = top - sidePositions[0].y;
+    if (topOverflow > 0) {
+      sidePositions.forEach((position) => {
+        position.y += topOverflow;
+      });
+    }
+  });
+
+  return positions
+    .sort((a, b) => a.index - b.index)
+    .map(({ side, y }) => ({ side, y }));
+};
+
 export const DashboardTab: React.FC<DashboardTabProps> = ({
   resumo,
   posicoes,
@@ -61,7 +146,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
   const isLucro = resumo.lucroPrejuizoNaoRealizado >= 0;
 
   // Dados para o gráfico de pizza por ativo
-  const dataAtivos = posicoes.map((p, idx) => ({
+  const dataAtivos: AllocationChartItem[] = posicoes.map((p, idx) => ({
     name: p.ticker,
     value: p.saldoAtual,
     tipo: p.tipo,
@@ -96,6 +181,65 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
           </span>
         </div>
       </div>
+    );
+  };
+
+  const renderOutsideLabel = ({ cx, cy, midAngle, outerRadius, index }: any) => {
+    const item = dataAtivos[index];
+    if (!item) return null;
+
+    const positions = getOutsideLabelPositions(dataAtivos, Number(cy), Number(outerRadius));
+    const position = positions[index];
+    const isRight = position.side === 'right';
+    const direction = isRight ? 1 : -1;
+    const angle = -Number(midAngle) * RADIAN;
+    const startX = Number(cx) + (Number(outerRadius) + 3) * Math.cos(angle);
+    const startY = Number(cy) + (Number(outerRadius) + 3) * Math.sin(angle);
+    const elbowX = Number(cx) + (Number(outerRadius) + 17) * Math.cos(angle);
+    const elbowY = Number(cy) + (Number(outerRadius) + 17) * Math.sin(angle);
+    const isCompact = Number(cx) < 210;
+    const estimatedLabelWidth = isCompact ? 58 : 88;
+    const horizontalRoom = Number(cx) - Number(outerRadius);
+    const connectorLength = Math.max(10, Math.min(44, horizontalRoom - estimatedLabelWidth - 8));
+    const lineEndX = Number(cx) + direction * (Number(outerRadius) + connectorLength);
+    const textX = lineEndX + direction * 7;
+    const textAnchor = isRight ? 'start' : 'end';
+
+    return (
+      <g className="pointer-events-none">
+        <title>{`${item.name} — ${item.nome}: ${item.percentual.toFixed(1)}%, ${formatarValor(item.value)}`}</title>
+        <circle cx={startX} cy={startY} r={2.5} fill={item.color} />
+        <polyline
+          points={`${startX},${startY} ${elbowX},${elbowY} ${lineEndX},${position.y}`}
+          fill="none"
+          stroke={item.color}
+          strokeWidth={1.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity={0.9}
+        />
+        <text
+          x={textX}
+          y={position.y - 4}
+          textAnchor={textAnchor}
+          fill="#f8fafc"
+          className="font-mono font-bold"
+          fontSize={isCompact ? 9 : 11}
+        >
+          {item.name}
+          <tspan fill={item.color} dx={5}>{item.percentual.toFixed(1)}%</tspan>
+        </text>
+        <text
+          x={textX}
+          y={position.y + 11}
+          textAnchor={textAnchor}
+          fill="#94a3b8"
+          className="font-mono tabular-nums"
+          fontSize={isCompact ? 8 : 9}
+        >
+          {formatarValor(item.value)}
+        </text>
+      </g>
     );
   };
 
@@ -248,9 +392,13 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-            {/* Gráfico Donut */}
-            <div className="md:col-span-6 h-64 relative flex items-center justify-center">
+          <div className="space-y-5">
+            {/* Gráfico Donut com rótulos externos e linhas-guia por ativo */}
+            <div
+              className="h-[340px] sm:h-[390px] relative flex items-center justify-center"
+              role="img"
+              aria-label={`Gráfico de alocação da carteira com ${posicoes.length} ativos`}
+            >
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -259,9 +407,12 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    innerRadius={64}
-                    outerRadius={92}
+                    innerRadius="29%"
+                    outerRadius="45%"
                     paddingAngle={3}
+                    labelLine={false}
+                    label={renderOutsideLabel}
+                    isAnimationActive={false}
                   >
                     {dataAtivos.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={PALETTE[index % PALETTE.length]} stroke="rgba(0,0,0,0.4)" strokeWidth={2} />
@@ -281,8 +432,8 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
               </div>
             </div>
 
-            {/* Lista dos Maiores Pesos da Carteira com Mini Barras */}
-            <div className="md:col-span-6 space-y-2 max-h-64 overflow-y-auto pr-1">
+            {/* Detalhamento textual complementar */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
               {posicoes.map((pos, idx) => (
                 <div
                   key={pos.ativoId}

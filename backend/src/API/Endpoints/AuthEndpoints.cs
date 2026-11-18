@@ -176,39 +176,19 @@ public static class AuthEndpoints
             var ip = currentUser.IpAddress ?? "unknown";
             string emailNormalized = dto.Email?.Trim().ToLowerInvariant() ?? "";
 
-            // Alias: admin@investirgo.com aponta para a mesma conta do investidor
-            if (emailNormalized == "admin@investirgo.com")
-            {
-                emailNormalized = "usuario@investirgo.com";
-            }
-
             // Rate Limit por IP e por conta
             var rateCheckIp = rateLimiter.CheckRateLimit($"login:ip:{ip}", secOptions.Value.RateLimit.LoginMaxAttempts * 2, TimeSpan.FromMinutes(secOptions.Value.RateLimit.LoginWindowMinutes));
             var rateCheckAcc = rateLimiter.CheckRateLimit($"login:acc:{emailNormalized}", secOptions.Value.RateLimit.LoginMaxAttempts, TimeSpan.FromMinutes(secOptions.Value.RateLimit.LoginWindowMinutes));
 
             if (!rateCheckIp.IsAllowed || !rateCheckAcc.IsAllowed)
             {
-                // Se o usuário legítimo digitou a senha do investidor, reseta imediatamente o bloqueio
-                bool isMaster = (emailNormalized == "usuario@investirgo.com" || emailNormalized == "admin@investirgo.com") &&
-                                (dto.Password == "Admin@InvestirGo2026!" || dto.Password == "User@InvestirGo2026!");
-
-                if (isMaster)
-                {
-                    rateLimiter.ResetRateLimit($"login:ip:{ip}");
-                    rateLimiter.ResetRateLimit($"login:acc:{emailNormalized}");
-                    rateLimiter.ResetRateLimit("login:acc:usuario@investirgo.com");
-                    rateLimiter.ResetRateLimit("login:acc:admin@investirgo.com");
-                }
-                else
-                {
-                    var retryAfter = rateCheckAcc.RetryAfter > rateCheckIp.RetryAfter ? rateCheckAcc.RetryAfter : rateCheckIp.RetryAfter;
-                    context.Response.Headers.Append("Retry-After", ((int)retryAfter.TotalSeconds).ToString());
-                    await auditService.LogAsync("LOGIN_RATE_LIMITED", "SUSPICIOUS", details: $"IP={ip}, Email={emailNormalized}");
-                    return Results.Problem(
-                        detail: $"Muitas tentativas incorretas. Tente novamente em {(int)retryAfter.TotalMinutes} minutos.",
-                        statusCode: StatusCodes.Status429TooManyRequests
-                    );
-                }
+                var retryAfter = rateCheckAcc.RetryAfter > rateCheckIp.RetryAfter ? rateCheckAcc.RetryAfter : rateCheckIp.RetryAfter;
+                context.Response.Headers.Append("Retry-After", ((int)retryAfter.TotalSeconds).ToString());
+                await auditService.LogAsync("LOGIN_RATE_LIMITED", "SUSPICIOUS", details: $"IP={ip}, Email={emailNormalized}");
+                return Results.Problem(
+                    detail: $"Muitas tentativas incorretas. Tente novamente em {(int)retryAfter.TotalMinutes} minutos.",
+                    statusCode: StatusCodes.Status429TooManyRequests
+                );
             }
 
             var user = await authRepo.GetUserByEmailNormalizedAsync(emailNormalized);
@@ -227,14 +207,6 @@ public static class AuthEndpoints
             }
 
             bool passwordCorrect = passwordHasher.VerifyPassword(dto.Password, user.PasswordHash);
-            if (!passwordCorrect && (user.EmailNormalized == "usuario@investirgo.com" || user.EmailNormalized == "admin@investirgo.com"))
-            {
-                if (dto.Password == "Admin@InvestirGo2026!" || dto.Password == "User@InvestirGo2026!")
-                {
-                    passwordCorrect = true;
-                }
-            }
-
             if (!passwordCorrect)
             {
                 await auditService.LogAsync("LOGIN_FAILED_INVALID_PASSWORD", "FAILED", user.Id);
@@ -470,7 +442,10 @@ public static class AuthEndpoints
             // Rotação atômica do refresh token
             string newRefreshToken = tokenService.GenerateOpaqueToken();
             string newRefreshTokenHash = tokenService.ComputeSha256Hash(newRefreshToken);
-            var newIdleExpires = currentTime.AddHours(secOptions.Value.Session.InactivityLifetimeHours);
+            var newIdleExpires = MinDateTime(
+                currentTime.AddHours(GetInactivityLifetimeHours(secOptions.Value)),
+                session.ExpiresAt
+            );
 
             await authRepo.RotateSessionAsync(
                 session.Id,
@@ -939,12 +914,19 @@ public static class AuthEndpoints
         string rawRefreshToken = tokenService.GenerateOpaqueToken();
         string refreshTokenHash = tokenService.ComputeSha256Hash(rawRefreshToken);
 
-        var expiresAt = rememberMe
-            ? now.AddDays(secOptions.Session.AbsoluteLifetimeDays)
-            : now.AddHours(24);
-        var idleExpiresAt = rememberMe
-            ? now.AddHours(secOptions.Session.InactivityLifetimeHours)
-            : now.AddHours(12);
+        var minimumLifetime = TimeSpan.FromHours(Math.Max(1, secOptions.Session.MinimumLifetimeHours));
+        var requestedLifetime = rememberMe
+            ? TimeSpan.FromDays(Math.Max(1, secOptions.Session.AbsoluteLifetimeDays))
+            : minimumLifetime;
+        var sessionLifetime = requestedLifetime < minimumLifetime ? minimumLifetime : requestedLifetime;
+        var expiresAt = now.Add(sessionLifetime);
+
+        // A janela de inatividade tambem respeita o periodo minimo, sem ultrapassar
+        // a expiracao absoluta da sessao.
+        var idleExpiresAt = MinDateTime(
+            now.AddHours(GetInactivityLifetimeHours(secOptions)),
+            expiresAt
+        );
 
         var session = new UserSession
         {
@@ -993,13 +975,22 @@ public static class AuthEndpoints
         bool isHttps = context.Request.IsHttps || options.EnforceHttps;
         string cookieName = isHttps ? options.Session.CookieName : options.Session.FallbackCookieName;
 
+        // Cookies com prefixo __Host- sao rejeitados pelo navegador se Path nao for "/".
+        // No ambiente HTTP local usamos o nome alternativo e podemos restringir o path.
+        string cookiePath = cookieName.StartsWith("__Host-", StringComparison.Ordinal)
+            ? "/"
+            : "/api/auth";
+        var maxAge = expiresAt - DateTime.UtcNow;
+
         context.Response.Cookies.Append(cookieName, refreshToken, new CookieOptions
         {
             HttpOnly = true, // Inacessível via JavaScript (mitigação de XSS)
-            Secure = true, // Enviado exclusivamente em conexões HTTPS
-            SameSite = SameSiteMode.None, // Permitir envio em requisições cross-site
-            Path = "/api/auth", // Restrito estritamente aos endpoints de autenticação
-            Expires = expiresAt
+            Secure = isHttps,
+            SameSite = SameSiteMode.Strict,
+            Path = cookiePath,
+            Expires = expiresAt,
+            MaxAge = maxAge > TimeSpan.Zero ? maxAge : TimeSpan.Zero,
+            IsEssential = true
         });
     }
 
@@ -1014,7 +1005,7 @@ public static class AuthEndpoints
             HttpOnly = true,
             Secure = true,
             SameSite = SameSiteMode.Strict,
-            Path = "/api/auth"
+            Path = "/"
         };
 
         var deleteOptionsHttp = new CookieOptions
@@ -1027,5 +1018,18 @@ public static class AuthEndpoints
 
         context.Response.Cookies.Delete(hostName, deleteOptionsHttps);
         context.Response.Cookies.Delete(fallbackName, deleteOptionsHttp);
+    }
+
+    private static double GetInactivityLifetimeHours(SecurityOptions options)
+    {
+        return Math.Max(
+            Math.Max(1, options.Session.InactivityLifetimeHours),
+            Math.Max(1, options.Session.MinimumLifetimeHours)
+        );
+    }
+
+    private static DateTime MinDateTime(DateTime first, DateTime second)
+    {
+        return first <= second ? first : second;
     }
 }

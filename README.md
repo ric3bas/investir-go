@@ -100,7 +100,7 @@ flowchart TD
 investir-go/
 ├── database/
 │   ├── docker-compose.yml       # Configuração do PostgreSQL para Docker Desktop
-│   └── init.sql                 # DDL do schema 'inv' + Seed dos 30 ativos e 18 operações
+│   └── init.sql                 # DDL do schema 'inv' + catálogo inicial de ativos
 │
 ├── backend/                     # Backend .NET 10 (Clean Architecture padrão peca-aki)
 │   ├── InvestirGo.slnx          # Solução .NET 10

@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS inv.usuarios (
 
 INSERT INTO inv.usuarios (id, nome, email)
 VALUES ('22222222-2222-2222-2222-222222222222'::UUID, 'Investidor', 'usuario@investirgo.com')
-ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, nome = EXCLUDED.nome;
+ON CONFLICT (id) DO NOTHING;
 
 DO $$
 BEGIN

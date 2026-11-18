@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Coins, DollarSign, Calendar, Hash, Sparkles } from 'lucide-react';
 import { Ativo } from '../types';
-import { TOP_30_ATIVOS } from '../utils/marketData';
 import { AtivoCombobox } from './AtivoCombobox';
 
 interface NovoProventoModalProps {
@@ -29,7 +28,7 @@ export const NovoProventoModal: React.FC<NovoProventoModalProps> = ({
   defaultTicker = '',
   onSubmit,
 }) => {
-  const listaAtivos = Array.isArray(ativos) && ativos.length > 0 ? ativos : TOP_30_ATIVOS;
+  const listaAtivos = Array.isArray(ativos) ? ativos : [];
   const [ticker, setTicker] = useState(defaultTicker || '');
   const [tipoProvento, setTipoProvento] = useState('Dividendo');
   const [dataCom, setDataCom] = useState('');

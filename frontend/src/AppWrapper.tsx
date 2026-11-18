@@ -6,7 +6,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { useAuth } from './context/AuthContext';
 import { InvestirApi } from './services/api';
 import { Ativo, Operacao, Provento, PosicaoCarteira, ResumoCarteira } from './types';
-import { getFavoritos, toggleFavorito, isFavorito, TOP_30_ATIVOS } from './utils/marketData';
+import { getFavoritos, toggleFavorito, isFavorito } from './utils/marketData';
 import { RefreshCw } from 'lucide-react';
 import { LoginScreen } from './components/auth/LoginScreen';
 import { LoginModal } from './components/auth/LoginModal';
@@ -34,7 +34,7 @@ export const AppWrapper: React.FC = () => {
   const [posicoes, setPosicoes] = useState<PosicaoCarteira[]>([]);
   const [operacoes, setOperacoes] = useState<Operacao[]>([]);
   const [proventos, setProventos] = useState<Provento[]>([]);
-  const [ativos, setAtivos] = useState<Ativo[]>(TOP_30_ATIVOS);
+  const [ativos, setAtivos] = useState<Ativo[]>([]);
   const [favoritos, setFavoritos] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [carregandoPrecos, setCarregandoPrecos] = useState(false);
@@ -193,7 +193,7 @@ export const AppWrapper: React.FC = () => {
       {/* Modais */}
       <AtivoDetalhesModal isOpen={modalDetalhesOpen} onClose={() => setModalDetalhesOpen(false)} ativo={selectedAtivo} isFavorito={isFavorito(selectedAtivo?.ticker || '', favoritos)} onToggleFavorito={handleToggleFavorito} onOpenNovaOperacao={handleOpenNovaOperacao} onNavigateToNoticias={handleNavigateToNoticias} />
       <LancamentosModal isOpen={modalLancamentosOpen} onClose={() => setModalLancamentosOpen(false)} operacoes={operacoes} onOpenNovaOperacao={handleOpenNovaOperacao} onExcluirOperacao={handleExcluirOperacao} />
-      <NovaOperacaoModal isOpen={modalOperacaoOpen} onClose={() => setModalOperacaoOpen(false)} ativos={ativos} defaultTicker={modalTicker} defaultTipo={modalTipoOperacao} onSubmit={handleCriarOperacao} />
+      <NovaOperacaoModal isOpen={modalOperacaoOpen} onClose={() => setModalOperacaoOpen(false)} ativos={ativos} posicoes={posicoes} defaultTicker={modalTicker} defaultTipo={modalTipoOperacao} onSubmit={handleCriarOperacao} />
       <NovoProventoModal isOpen={modalProventoOpen} onClose={() => setModalProventoOpen(false)} ativos={ativos} defaultTicker={modalTicker} onSubmit={handleCriarProvento} />
       <NovoAtivoModal isOpen={modalAtivoOpen} onClose={() => { setModalAtivoOpen(false); setModalAtivoDados(undefined); }} defaultTicker={modalAtivoDados?.ticker} defaultNome={modalAtivoDados?.nome} defaultTipo={modalAtivoDados?.tipo} defaultSetor={modalAtivoDados?.setor} defaultPreco={modalAtivoDados?.precoAtual} defaultDividendYield={modalAtivoDados?.dividendYield} onSubmit={handleCadastrarAtivo} />
       <LoginModal />

@@ -2,6 +2,7 @@ using InvestirGo.API.Application.DTOs;
 using InvestirGo.API.Application.Interfaces;
 using InvestirGo.API.Application.Security.Services;
 using InvestirGo.API.Domain.Entities;
+using InvestirGo.API.Infrastructure.Services;
 
 namespace InvestirGo.API.API.Endpoints;
 
@@ -155,8 +156,12 @@ public static class ApiEndpoints
             return Results.Created($"/api/proventos/{id}", provento);
         }).WithTags("Proventos").RequireAuthorization();
 
-        group.MapDelete("/proventos/{id:int}", async (int id, IProventoRepository proventoRepo) =>
+        group.MapDelete("/proventos/{id:int}", async (int id, IProventoRepository proventoRepo, ICurrentUserService currentUser) =>
         {
+            var provento = await proventoRepo.ObterPorIdAsync(id);
+            if (provento is null) return Results.NotFound(new { message = "Provento não encontrado" });
+            if (provento.UserId.HasValue && provento.UserId != currentUser.UserId && !currentUser.IsAdmin)
+                return Results.Forbid();
             var deletado = await proventoRepo.ExcluirAsync(id);
             return deletado ? Results.NoContent() : Results.NotFound(new { message = "Provento não encontrado" });
         }).WithTags("Proventos").RequireAuthorization();
@@ -174,12 +179,27 @@ public static class ApiEndpoints
             return ativo is not null ? Results.Ok(ativo) : Results.NotFound(new { message = "Ativo não encontrado" });
         }).WithTags("Ativos");
 
-        group.MapPost("/ativos", async (CriarAtivoDto dto, IAtivoRepository ativoRepo) =>
+        group.MapPost("/ativos", async (
+            CriarAtivoDto dto,
+            IAtivoRepository ativoRepo,
+            MarketDataService marketData,
+            CancellationToken cancellationToken) =>
         {
             var existente = await ativoRepo.ObterPorTickerAsync(dto.Ticker);
             if (existente is not null)
             {
                 return Results.Conflict(new { message = $"Ativo com ticker {dto.Ticker} já cadastrado." });
+            }
+
+            BrapiResult cotacao;
+            try
+            {
+                cotacao = await marketData.ObterDadosCompletosAsync(dto.Ticker, cancellationToken);
+            }
+            catch (MarketDataException ex)
+            {
+                return Results.Problem(ex.Message, statusCode: StatusCodes.Status502BadGateway,
+                    title: "Cotação de mercado indisponível");
             }
 
             var ativo = new Ativo
@@ -188,8 +208,8 @@ public static class ApiEndpoints
                 Nome = dto.Nome,
                 Tipo = dto.Tipo,
                 Setor = dto.Setor,
-                PrecoAtual = dto.PrecoAtual,
-                VariacaoDia = dto.VariacaoDia,
+                PrecoAtual = cotacao.RegularMarketPrice,
+                VariacaoDia = cotacao.RegularMarketChangePercent,
                 DividendYield = dto.DividendYield
             };
 
@@ -197,76 +217,38 @@ public static class ApiEndpoints
             ativo.Id = id;
 
             return Results.Created($"/api/ativos/{ativo.Ticker}", ativo);
-        }).WithTags("Ativos");
+        }).WithTags("Ativos").RequireAuthorization();
 
-        group.MapPut("/ativos/{id:int}/cotacao", async (int id, AtualizarCotacaoDto dto, IAtivoRepository ativoRepo) =>
-        {
-            var atualizado = await ativoRepo.AtualizarCotacaoAsync(id, dto.PrecoAtual, dto.VariacaoDia, dto.DividendYield);
-            return atualizado ? Results.Ok(new { message = "Cotação atualizada com sucesso" }) : Results.NotFound(new { message = "Ativo não encontrado" });
-        }).WithTags("Ativos");
-
-        // ----------------- HISTÓRICO ATÉ 5 ANOS (COM GRÁFICO) -----------------
-        group.MapGet("/ativos/{ticker}/historico", async (string ticker, string? periodo, IAtivoRepository ativoRepo) =>
+        // ----------------- HISTÓRICO REAL DE MERCADO -----------------
+        group.MapGet("/ativos/{ticker}/historico", async (
+            string ticker,
+            string? periodo,
+            IAtivoRepository ativoRepo,
+            MarketDataService marketData,
+            CancellationToken cancellationToken) =>
         {
             var ativo = await ativoRepo.ObterPorTickerAsync(ticker);
-            var precoFinal = ativo?.PrecoAtual ?? 50.0m;
-            var p = string.IsNullOrWhiteSpace(periodo) ? "5A" : periodo.ToUpper();
-
-            decimal variacaoAlvo = p switch
+            if (ativo is null) return Results.NotFound(new { message = "Ativo não encontrado" });
+            try
             {
-                "1D" => ativo?.VariacaoDia ?? 0.5m,
-                "7D" => 3.2m,
-                "15D" => 5.8m,
-                "1M" => 7.5m,
-                "6M" => 14.2m,
-                "1A" => 22.4m,
-                "2A" => 38.6m,
-                _ => 52.8m // 5A
-            };
-
-            var precoInicial = Math.Round(precoFinal / (1 + (variacaoAlvo / 100m)), 2);
-            var variacaoReais = Math.Round(precoFinal - precoInicial, 2);
-
-            var pontos = new List<HistoricoPontoDto>();
-            int qtdPontos = p == "1D" ? 8 : (p == "7D" ? 7 : (p == "15D" ? 15 : 24));
-
-            for (int i = 0; i < qtdPontos; i++)
-            {
-                decimal progresso = (decimal)i / (qtdPontos - 1);
-                decimal basePreco = precoInicial + (precoFinal - precoInicial) * progresso;
-                decimal oscilacao = (decimal)Math.Sin(i * 0.9) * (precoFinal * 0.02m);
-                decimal preco = Math.Max(0.5m, Math.Round(basePreco + (i == 0 || i == qtdPontos - 1 ? 0 : oscilacao), 2));
-                decimal varPct = precoInicial > 0 ? Math.Round(((preco - precoInicial) / precoInicial) * 100m, 2) : 0;
-
-                pontos.Add(new HistoricoPontoDto(
-                    Data: $"P{i + 1}",
-                    Preco: preco,
-                    VariacaoPeriodo: varPct,
-                    DataCompleta: $"Ponto {i + 1}"
-                ));
+                var historico = await marketData.ObterHistoricoAsync(
+                    ativo.Ticker, periodo ?? "1D", ativo.Nome, cancellationToken);
+                return Results.Ok(historico);
             }
-
-            var precos = pontos.Select(x => x.Preco).ToList();
-
-            var historicoDto = new HistoricoAtivoDto(
-                Ticker: ticker.ToUpper(),
-                Nome: ativo?.Nome ?? ticker.ToUpper(),
-                Periodo: p,
-                PrecoInicial: precoInicial,
-                PrecoFinal: precoFinal,
-                VariacaoReais: variacaoReais,
-                VariacaoPercentual: variacaoAlvo,
-                Minima: precos.Min(),
-                Maxima: precos.Max(),
-                PrecoMedio: Math.Round(precos.Average(), 2),
-                Pontos: pontos
-            );
-
-            return Results.Ok(historicoDto);
+            catch (MarketDataException ex)
+            {
+                return Results.Problem(ex.Message, statusCode: StatusCodes.Status502BadGateway,
+                    title: "Histórico de mercado indisponível");
+            }
         }).WithTags("Ativos");
 
         // ----------------- PERFORMANCE & RANKING (TOP 7) -----------------
-        group.MapGet("/ativos/performance", async (string? periodo, string? filtroTipo, IAtivoRepository ativoRepo) =>
+        group.MapGet("/ativos/performance", async (
+            string? periodo,
+            string? filtroTipo,
+            IAtivoRepository ativoRepo,
+            MarketDataService marketData,
+            CancellationToken cancellationToken) =>
         {
             var p = string.IsNullOrWhiteSpace(periodo) ? "1D" : periodo.ToUpper();
             var ativos = await ativoRepo.ObterTodosAsync();
@@ -276,18 +258,31 @@ public static class ApiEndpoints
                 ativos = ativos.Where(a => a.Tipo.Equals(filtroTipo, StringComparison.OrdinalIgnoreCase));
             }
 
-            var ranking = ativos.Select(a =>
+            var ranking = new List<PerformanceAtivoDto>();
+            foreach (var a in ativos)
             {
-                decimal varPct = p switch
+                decimal varPct;
+                decimal pInicial;
+                if (p == "1D")
                 {
-                    "7D" => a.VariacaoDia * 2.8m,
-                    "15D" => a.VariacaoDia * 4.5m,
-                    _ => a.VariacaoDia
-                };
-                decimal pInicial = Math.Round(a.PrecoAtual / (1 + (varPct / 100m)), 2);
+                    varPct = a.VariacaoDia;
+                    pInicial = varPct == -100 ? a.PrecoAtual : Math.Round(a.PrecoAtual / (1 + varPct / 100m), 2);
+                }
+                else
+                {
+                    try
+                    {
+                        var historico = await marketData.ObterHistoricoAsync(a.Ticker, p, a.Nome, cancellationToken);
+                        varPct = historico.VariacaoPercentual;
+                        pInicial = historico.PrecoInicial;
+                    }
+                    catch (MarketDataException)
+                    {
+                        continue;
+                    }
+                }
                 decimal vReais = Math.Round(a.PrecoAtual - pInicial, 2);
-
-                return new PerformanceAtivoDto(
+                ranking.Add(new PerformanceAtivoDto(
                     Posicao: 0,
                     Ticker: a.Ticker,
                     Nome: a.Nome,
@@ -298,8 +293,8 @@ public static class ApiEndpoints
                     VariacaoPercentual: Math.Round(varPct, 2),
                     VariacaoReais: vReais,
                     IsAlta: varPct >= 0
-                );
-            }).ToList();
+                ));
+            }
 
             var top7Altas = ranking.OrderByDescending(r => r.VariacaoPercentual).Take(7).Select((r, idx) => r with { Posicao = idx + 1 }).ToList();
             var top7Baixas = ranking.OrderBy(r => r.VariacaoPercentual).Take(7).Select((r, idx) => r with { Posicao = idx + 1 }).ToList();

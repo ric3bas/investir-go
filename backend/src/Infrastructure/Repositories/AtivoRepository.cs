@@ -8,6 +8,7 @@ namespace InvestirGo.API.Infrastructure.Repositories;
 public class AtivoRepository : IAtivoRepository
 {
     private readonly DbConnectionFactory _dbFactory;
+    private readonly bool _allowInMemoryFallback;
 
     // Base local em memória como fallback caso PostgreSQL esteja offline
     internal static readonly List<Ativo> _ativosFallback = new()
@@ -47,9 +48,10 @@ public class AtivoRepository : IAtivoRepository
         new Ativo { Id = 30, Ticker = "ALZR11", Nome = "Alianza Trust Renda Imobiliária FII", Tipo = "FII", Setor = "Híbrido / Renda Urbana", PrecoAtual = 103.50m, VariacaoDia = 0.20m, DividendYield = 8.85m },
     };
 
-    public AtivoRepository(DbConnectionFactory dbFactory)
+    public AtivoRepository(DbConnectionFactory dbFactory, IConfiguration configuration)
     {
         _dbFactory = dbFactory;
+        _allowInMemoryFallback = configuration.GetValue<bool>("UseInMemoryPortfolio", false);
     }
 
     public async Task<IEnumerable<Ativo>> ObterTodosAsync()
@@ -67,12 +69,14 @@ public class AtivoRepository : IAtivoRepository
             var result = await conn.QueryAsync<Ativo>(sql);
             if (result.Any()) return result;
         }
-        catch
+        catch when (_allowInMemoryFallback)
         {
-            // Fallback resiliente
+            // Permitido apenas em testes explicitamente configurados.
         }
 
-        return _ativosFallback.OrderBy(a => a.Tipo).ThenBy(a => a.Ticker);
+        return _allowInMemoryFallback
+            ? _ativosFallback.OrderBy(a => a.Tipo).ThenBy(a => a.Ticker)
+            : Enumerable.Empty<Ativo>();
     }
 
     public async Task<Ativo?> ObterPorIdAsync(int id)
@@ -90,9 +94,9 @@ public class AtivoRepository : IAtivoRepository
             var result = await conn.QuerySingleOrDefaultAsync<Ativo>(sql, new { Id = id });
             if (result is not null) return result;
         }
-        catch { }
+        catch when (_allowInMemoryFallback) { }
 
-        return _ativosFallback.FirstOrDefault(a => a.Id == id);
+        return _allowInMemoryFallback ? _ativosFallback.FirstOrDefault(a => a.Id == id) : null;
     }
 
     public async Task<Ativo?> ObterPorTickerAsync(string ticker)
@@ -110,9 +114,11 @@ public class AtivoRepository : IAtivoRepository
             var result = await conn.QuerySingleOrDefaultAsync<Ativo>(sql, new { Ticker = ticker });
             if (result is not null) return result;
         }
-        catch { }
+        catch when (_allowInMemoryFallback) { }
 
-        return _ativosFallback.FirstOrDefault(a => a.Ticker.Equals(ticker, StringComparison.OrdinalIgnoreCase));
+        return _allowInMemoryFallback
+            ? _ativosFallback.FirstOrDefault(a => a.Ticker.Equals(ticker, StringComparison.OrdinalIgnoreCase))
+            : null;
     }
 
     public async Task<int> CriarAsync(Ativo ativo)
@@ -127,7 +133,7 @@ public class AtivoRepository : IAtivoRepository
             """;
             return await conn.ExecuteScalarAsync<int>(sql, ativo);
         }
-        catch
+        catch when (_allowInMemoryFallback)
         {
             ativo.Id = _ativosFallback.Max(a => a.Id) + 1;
             _ativosFallback.Add(ativo);
@@ -151,9 +157,9 @@ public class AtivoRepository : IAtivoRepository
             var rows = await conn.ExecuteAsync(sql, new { Id = id, PrecoAtual = precoAtual, VariacaoDia = variacaoDia, DividendYield = dividendYield });
             if (rows > 0) return true;
         }
-        catch { }
+        catch when (_allowInMemoryFallback) { }
 
-        var item = _ativosFallback.FirstOrDefault(a => a.Id == id);
+        var item = _allowInMemoryFallback ? _ativosFallback.FirstOrDefault(a => a.Id == id) : null;
         if (item is not null)
         {
             item.PrecoAtual = precoAtual;

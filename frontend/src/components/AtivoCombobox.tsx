@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Check, ChevronDown, Sparkles, X } from 'lucide-react';
 import { Ativo } from '../types';
-import { TOP_30_ATIVOS } from '../utils/marketData';
 
 interface AtivoComboboxProps {
   ativos: Ativo[];
@@ -30,7 +29,7 @@ export const AtivoCombobox: React.FC<AtivoComboboxProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const listaAtivos = Array.isArray(ativos) && ativos.length > 0 ? ativos : TOP_30_ATIVOS;
+  const listaAtivos = Array.isArray(ativos) ? ativos : [];
 
   useEffect(() => {
     setQuery(selectedTicker || '');

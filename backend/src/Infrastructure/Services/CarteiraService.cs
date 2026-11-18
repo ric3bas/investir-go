@@ -54,10 +54,10 @@ public class CarteiraService : ICarteiraService
 
             if (op.TipoOperacao.Equals("COMPRA", StringComparison.OrdinalIgnoreCase))
             {
-                // Regra de preco medio da B3:
-                // PrecoMedio = ( (QtdAtual * PrecoMedioAtual) + (QtdCompra * PrecoUnitario) ) / (QtdAtual + QtdCompra)
+                // Regra de preco medio: custos da compra, inclusive taxas, compoem
+                // o custo de aquisicao rateado pela nova quantidade em custodia.
                 var custoAtual = pos.Quantidade * pos.PrecoMedio;
-                var custoCompra = op.Quantidade * op.PrecoUnitario;
+                var custoCompra = (op.Quantidade * op.PrecoUnitario) + op.Taxas;
                 pos.Quantidade += op.Quantidade;
                 if (pos.Quantidade > 0)
                 {
@@ -66,8 +66,8 @@ public class CarteiraService : ICarteiraService
             }
             else if (op.TipoOperacao.Equals("VENDA", StringComparison.OrdinalIgnoreCase))
             {
-                // Venda realiza lucro ou prejuizo: (PrecoVenda - PrecoMedio) * QtdVenda
-                var lucro = (op.PrecoUnitario - pos.PrecoMedio) * op.Quantidade;
+                // Taxas de venda reduzem o resultado realizado da operacao.
+                var lucro = ((op.PrecoUnitario - pos.PrecoMedio) * op.Quantidade) - op.Taxas;
                 pos.LucroRealizado += lucro;
                 pos.Quantidade -= op.Quantidade;
                 if (pos.Quantidade <= 0)

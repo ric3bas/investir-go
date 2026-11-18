@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Ativo, PeriodoHistorico } from '../types';
-import { getHistoricoAtivo, NOTICIAS_MERCADO } from '../utils/marketData';
+import { Ativo, HistoricoAtivo, PeriodoHistorico } from '../types';
+import { NOTICIAS_MERCADO } from '../utils/marketData';
+import { InvestirApi } from '../services/api';
 import { getInformacoesEmpresa } from '../utils/empresaData';
 import {
   X,
@@ -58,6 +59,8 @@ export const AtivoDetalhesModal: React.FC<AtivoDetalhesModalProps> = ({
 }) => {
   const [abaAtiva, setAbaAtiva] = useState<'empresa' | 'grafico'>('grafico');
   const [periodo, setPeriodo] = useState<PeriodoHistorico>('1D');
+  const [historico, setHistorico] = useState<HistoricoAtivo | null>(null);
+  const [historicoErro, setHistoricoErro] = useState<string | null>(null);
 
   // Abre sempre na aba de gráfico por padrão e período 1D
   useEffect(() => {
@@ -89,10 +92,19 @@ export const AtivoDetalhesModal: React.FC<AtivoDetalhesModalProps> = ({
     { id: '5A', label: '5A', sub: '5 anos' },
   ];
 
-  const historico = useMemo(() => {
-    if (!ativo) return null;
-    return getHistoricoAtivo(ativo.ticker, periodo, ativo.precoAtual);
-  }, [ativo, periodo]);
+  useEffect(() => {
+    if (!isOpen || !ativo) return;
+    let ativoNaTela = true;
+    setHistorico(null);
+    setHistoricoErro(null);
+    InvestirApi.getHistoricoAtivo(ativo.ticker, periodo)
+      .then((dados) => { if (ativoNaTela) setHistorico(dados); })
+      .catch((erro) => {
+        if (!ativoNaTela) return;
+        setHistoricoErro(erro?.response?.data?.detail || 'Não foi possível carregar o histórico real deste ativo.');
+      });
+    return () => { ativoNaTela = false; };
+  }, [isOpen, ativo?.ticker, periodo]);
 
   const infoEmpresa = useMemo(() => {
     if (!ativo) return null;
@@ -107,7 +119,30 @@ export const AtivoDetalhesModal: React.FC<AtivoDetalhesModalProps> = ({
     );
   }, [ativo]);
 
-  if (!isOpen || !ativo || !historico || !infoEmpresa) return null;
+  if (!isOpen || !ativo || !infoEmpresa) return null;
+
+  if (!historico) {
+    return (
+      <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md">
+        <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-7 shadow-2xl">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-400">{ativo.ticker}</p>
+              <h3 className="mt-2 text-lg font-bold text-slate-100">
+                {historicoErro ? 'Histórico indisponível' : 'Consultando mercado…'}
+              </h3>
+            </div>
+            <button onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white" aria-label="Fechar">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <p className="mt-3 text-sm leading-relaxed text-slate-400">
+            {historicoErro || 'Carregando abertura, cotação e série histórica diretamente da fonte de mercado.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const isAlta = historico.variacaoPercentual >= 0;
   const isFII = ativo.tipo === 'FII';

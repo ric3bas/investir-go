@@ -17,6 +17,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["UseInMemoryAuth"] = "true",
+                ["UseInMemoryPortfolio"] = "true",
                 ["Security:EnforceHttps"] = "false", // Facilita execução em TestServer HTTP
                 ["Security:Jwt:SecretKey"] = "InvestirGo_DevSecretKey_AtLeast32Bytes_ChangeInProduction2026!",
                 ["Security:Jwt:AccessTokenLifetimeMinutes"] = "1",

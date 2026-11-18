@@ -8,6 +8,7 @@ namespace InvestirGo.API.Infrastructure.Repositories;
 public class ProventoRepository : IProventoRepository
 {
     private readonly DbConnectionFactory _dbFactory;
+    private readonly bool _allowInMemoryFallback;
 
     private static readonly Guid _defaultUserId = Guid.Parse("22222222-2222-2222-2222-222222222222");
 
@@ -18,9 +19,10 @@ public class ProventoRepository : IProventoRepository
         new Provento { Id = 3, AtivoId = 3, Ticker = "ITSA4", NomeAtivo = "Itaúsa S.A.", TipoProvento = "Dividendo", DataCom = new DateTime(2026, 11, 02), DataPagamento = new DateTime(2026, 11, 15), ValorPorCota = 0.152000m, QuantidadeCotas = 1600, ValorTotal = 243.20m, Observacoes = "Dividendo Mensal", UserId = _defaultUserId },
     };
 
-    public ProventoRepository(DbConnectionFactory dbFactory)
+    public ProventoRepository(DbConnectionFactory dbFactory, IConfiguration configuration)
     {
         _dbFactory = dbFactory;
+        _allowInMemoryFallback = configuration.GetValue<bool>("UseInMemoryPortfolio", false);
     }
 
     public async Task<IEnumerable<Provento>> ObterTodosAsync(string? ticker = null, int? ano = null, Guid? userId = null)
@@ -33,7 +35,7 @@ public class ProventoRepository : IProventoRepository
                        p.tipo_provento AS TipoProvento, p.data_com AS DataCom, 
                        p.data_pagamento AS DataPagamento, p.valor_por_cota AS ValorPorCota, 
                        p.quantidade_cotas AS QuantidadeCotas, p.valor_total AS ValorTotal, 
-                       p.observacoes AS Observacoes, p.created_at AS CreatedAt
+                       p.observacoes AS Observacoes, COALESCE(p.user_id, p.usuario_id) AS UserId, p.created_at AS CreatedAt
                 FROM inv.proventos p
                 JOIN inv.ativos a ON a.id = p.ativo_id
                 WHERE 1=1
@@ -42,7 +44,7 @@ public class ProventoRepository : IProventoRepository
             var parameters = new DynamicParameters();
             if (userId.HasValue)
             {
-                sql += " AND (p.usuario_id = @UserId OR p.user_id = @UserId)";
+                sql += " AND (p.user_id = @UserId OR (p.user_id IS NULL AND p.usuario_id = @UserId))";
                 parameters.Add("UserId", userId.Value);
             }
 
@@ -63,11 +65,11 @@ public class ProventoRepository : IProventoRepository
             var result = (await conn.QueryAsync<Provento>(sql, parameters)).ToList();
             return result;
         }
-        catch { }
+        catch when (_allowInMemoryFallback) { }
 
         // Fallback em memória para quando o banco estiver inacessível
         // Novos usuários (diferentes do usuário padrão da planilha) possuem carteira zerada
-        if (userId.HasValue && userId.Value != _defaultUserId)
+        if (!_allowInMemoryFallback || (userId.HasValue && userId.Value != _defaultUserId))
         {
             return Enumerable.Empty<Provento>();
         }
@@ -94,7 +96,7 @@ public class ProventoRepository : IProventoRepository
                        p.tipo_provento AS TipoProvento, p.data_com AS DataCom, 
                        p.data_pagamento AS DataPagamento, p.valor_por_cota AS ValorPorCota, 
                        p.quantidade_cotas AS QuantidadeCotas, p.valor_total AS ValorTotal, 
-                       p.observacoes AS Observacoes, p.created_at AS CreatedAt
+                       p.observacoes AS Observacoes, COALESCE(p.user_id, p.usuario_id) AS UserId, p.created_at AS CreatedAt
                 FROM inv.proventos p
                 JOIN inv.ativos a ON a.id = p.ativo_id
                 WHERE p.id = @Id;
@@ -102,9 +104,9 @@ public class ProventoRepository : IProventoRepository
             var result = await conn.QuerySingleOrDefaultAsync<Provento>(sql, new { Id = id });
             if (result is not null) return result;
         }
-        catch { }
+        catch when (_allowInMemoryFallback) { }
 
-        return _proventosFallback.FirstOrDefault(p => p.Id == id);
+        return _allowInMemoryFallback ? _proventosFallback.FirstOrDefault(p => p.Id == id) : null;
     }
 
     public async Task<int> CriarAsync(Provento provento)
@@ -113,13 +115,13 @@ public class ProventoRepository : IProventoRepository
         {
             using var conn = _dbFactory.CreateConnection();
             const string sql = """
-                INSERT INTO inv.proventos (ativo_id, user_id, usuario_id, tipo_provento, data_com, data_pagamento, valor_por_cota, quantidade_cotas, valor_total, observacoes)
-                VALUES (@AtivoId, @UserId, @UserId, @TipoProvento, @DataCom, @DataPagamento, @ValorPorCota, @QuantidadeCotas, @ValorTotal, @Observacoes)
+                INSERT INTO inv.proventos (ativo_id, user_id, tipo_provento, data_com, data_pagamento, valor_por_cota, quantidade_cotas, valor_total, observacoes)
+                VALUES (@AtivoId, @UserId, @TipoProvento, @DataCom, @DataPagamento, @ValorPorCota, @QuantidadeCotas, @ValorTotal, @Observacoes)
                 RETURNING id;
             """;
             return await conn.ExecuteScalarAsync<int>(sql, provento);
         }
-        catch
+        catch when (_allowInMemoryFallback)
         {
             provento.Id = _proventosFallback.Any() ? _proventosFallback.Max(p => p.Id) + 1 : 1;
             _proventosFallback.Add(provento);
@@ -136,9 +138,9 @@ public class ProventoRepository : IProventoRepository
             var rows = await conn.ExecuteAsync(sql, new { Id = id });
             if (rows > 0) return true;
         }
-        catch { }
+        catch when (_allowInMemoryFallback) { }
 
-        var item = _proventosFallback.FirstOrDefault(p => p.Id == id);
+        var item = _allowInMemoryFallback ? _proventosFallback.FirstOrDefault(p => p.Id == id) : null;
         if (item is not null)
         {
             _proventosFallback.Remove(item);
@@ -155,7 +157,7 @@ public class ProventoRepository : IProventoRepository
             string sql;
             if (userId.HasValue)
             {
-                sql = "SELECT COALESCE(SUM(valor_total), 0) FROM inv.proventos WHERE (usuario_id = @UserId OR user_id = @UserId);";
+                sql = "SELECT COALESCE(SUM(valor_total), 0) FROM inv.proventos WHERE user_id = @UserId OR (user_id IS NULL AND usuario_id = @UserId);";
                 return await conn.ExecuteScalarAsync<decimal>(sql, new { UserId = userId.Value });
             }
             else
@@ -164,9 +166,9 @@ public class ProventoRepository : IProventoRepository
                 return await conn.ExecuteScalarAsync<decimal>(sql);
             }
         }
-        catch { }
+        catch when (_allowInMemoryFallback) { }
 
-        if (userId.HasValue && userId.Value != _defaultUserId)
+        if (!_allowInMemoryFallback || (userId.HasValue && userId.Value != _defaultUserId))
         {
             return 0m;
         }

@@ -559,6 +559,8 @@ public class AuthIntegrationTests : IClassFixture<TestWebApplicationFactory>
         Assert.Contains("httponly", cookieHeader, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("samesite=strict", cookieHeader, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("path=/api/auth", cookieHeader, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("secure", cookieHeader, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("max-age=", cookieHeader, StringComparison.OrdinalIgnoreCase);
 
         // 2. Verifica corpo JSON da resposta: NUNCA deve retornar o refresh token
         string jsonBody = await loginResp.Content.ReadAsStringAsync();
@@ -576,5 +578,43 @@ public class AuthIntegrationTests : IClassFixture<TestWebApplicationFactory>
         Assert.NotNull(cacheControl);
         Assert.True(cacheControl.NoStore);
         Assert.True(cacheControl.NoCache);
+    }
+
+    [Fact]
+    public async Task Test15_HttpsHostCookie_IsAcceptedAndRestoresSession()
+    {
+        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            HandleCookies = true,
+            BaseAddress = new Uri("https://localhost:5050")
+        });
+        client.DefaultRequestHeaders.Add("Origin", "https://localhost:5173");
+        client.DefaultRequestHeaders.Add("X-Forwarded-For", "192.168.1.15");
+
+        var testUser = await CreateTestUserAsync("user_host_cookie_t15@investirgo.com");
+        var loginResp = await client.PostAsJsonAsync(
+            "/api/auth/login",
+            new LoginRequestDto(testUser.Email, "User@InvestirGo2026!", true)
+        );
+
+        Assert.Equal(HttpStatusCode.OK, loginResp.StatusCode);
+        string cookieHeader = loginResp.Headers.GetValues("Set-Cookie")
+            .First(c => c.Contains("__Host-investir_refresh"));
+
+        Assert.Contains("httponly", cookieHeader, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("secure", cookieHeader, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("samesite=strict", cookieHeader, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("path=/", cookieHeader, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("domain=", cookieHeader, StringComparison.OrdinalIgnoreCase);
+
+        // Simula o refresh da SPA: o access token em memória desaparece e a
+        // sessão é recuperada somente a partir do cookie HttpOnly.
+        var refreshResp = await client.PostAsync("/api/auth/refresh", null);
+        Assert.Equal(HttpStatusCode.OK, refreshResp.StatusCode);
+
+        var refreshData = await refreshResp.Content.ReadFromJsonAsync<RefreshTokenResponseDto>(_jsonOptions);
+        Assert.NotNull(refreshData);
+        Assert.Equal(testUser.Id, refreshData.User.Id);
+        Assert.False(string.IsNullOrWhiteSpace(refreshData.AccessToken));
     }
 }

@@ -25,6 +25,9 @@ public class JwtOptions
 public class SessionOptions
 {
     public int AbsoluteLifetimeDays { get; set; } = 7;
+    // A sessao nunca expira antes deste periodo, mesmo sem "manter conectado".
+    // Logout, troca de senha e revogacao administrativa continuam imediatos.
+    public int MinimumLifetimeHours { get; set; } = 24;
     public int InactivityLifetimeHours { get; set; } = 24;
     public int GraceWindowSeconds { get; set; } = 20; // Tolerância estrita para concorrência de abas
     public string CookieName { get; set; } = "__Host-investir_refresh";

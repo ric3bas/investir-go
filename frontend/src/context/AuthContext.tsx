@@ -48,14 +48,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(updatedUser);
     });
 
-    // Tentativa inicial silenciosa de renovar autenticação via cookie HttpOnly
+    // Restaura silenciosamente a sessão. O refresh token fica apenas no cookie
+    // HttpOnly; a resposta de refresh já traz o usuário e o access token novo.
     const initAuth = async () => {
       try {
-        await AuthService.initCsrf();
-        const token = await AuthService.refresh();
-        if (token) {
-          await AuthService.getCurrentUser();
-        }
+        await AuthService.refresh();
       } catch {
         // Sem sessão ativa no carregamento inicial
       } finally {
