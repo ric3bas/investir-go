@@ -396,13 +396,15 @@ using (var scope = app.Services.CreateScope())
 // 8. Pipeline de Middlewares de Segurança
 // ----------------------------------------------------------------------------
 
+// CORS resiliente deve ser o primeiro middleware para garantir que todas as respostas
+// (incluindo preflights OPTIONS, rejeições de CSRF e erros de autenticação) contenham os cabeçalhos de CORS
+app.UseCors("StrictCorsPolicy");
+
 // Cabeçalhos de Segurança (CSP, HSTS, X-Frame-Options, No-Cache em auth)
 app.UseMiddleware<SecurityHeadersMiddleware>();
 
 // Proteção CSRF e validação de Origin/Referer em endpoints com cookies
 app.UseMiddleware<CsrfProtectionMiddleware>();
-
-app.UseCors("StrictCorsPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();

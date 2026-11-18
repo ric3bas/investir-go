@@ -95,7 +95,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6">
       
       {/* ===================================================================== */}
       {/* 1. PORTFOLIO COMMAND CENTER (HERO MASTER CARD)                        */}

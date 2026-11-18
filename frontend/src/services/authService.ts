@@ -5,6 +5,7 @@ import { User, UserSession, LoginResponse, MfaSetupData, AuditLogItem } from '..
 // Ele reside estritamente em memória volátil de JavaScript (fechamento de módulo)
 let inMemoryAccessToken: string | null = null;
 let inMemoryUser: User | null = null;
+let inMemoryCsrfToken: string | null = null;
 
 // Controle de concorrência para renovação coordenada de refresh token (evita tempestade de refresh)
 let refreshPromise: Promise<string | null> | null = null;
@@ -43,7 +44,7 @@ authClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     config.headers.set('Authorization', `Bearer ${inMemoryAccessToken}`);
   }
 
-  const csrfToken = getCsrfTokenFromCookie();
+  const csrfToken = inMemoryCsrfToken || getCsrfTokenFromCookie();
   if (csrfToken) {
     config.headers.set('X-CSRF-Token', csrfToken);
   }
@@ -108,7 +109,10 @@ export const AuthService = {
   initCsrf: async (): Promise<string> => {
     try {
       const { data } = await authClient.get('/auth/csrf');
-      return data.csrfToken;
+      if (data?.csrfToken) {
+        inMemoryCsrfToken = data.csrfToken;
+      }
+      return data?.csrfToken || '';
     } catch {
       return '';
     }

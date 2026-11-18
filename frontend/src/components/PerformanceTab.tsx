@@ -118,7 +118,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-6">
       {/* Header com Seletor de Períodos e Filtro */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>

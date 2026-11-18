@@ -36,7 +36,7 @@ public class CsrfProtectionMiddleware
                 if (context.Request.Headers.TryGetValue("Origin", out var originHeader))
                 {
                     string origin = originHeader.ToString().TrimEnd('/');
-                    bool isAllowedOrigin = _options.AllowedOrigins.Any(o => o.TrimEnd('/').Equals(origin, StringComparison.OrdinalIgnoreCase));
+                    bool isAllowedOrigin = IsOriginAllowed(origin);
                     if (!isAllowedOrigin)
                     {
                         context.Response.StatusCode = StatusCodes.Status403Forbidden;
@@ -49,7 +49,7 @@ public class CsrfProtectionMiddleware
                     if (Uri.TryCreate(refererHeader.ToString(), UriKind.Absolute, out var refererUri))
                     {
                         string refererOrigin = $"{refererUri.Scheme}://{refererUri.Authority}";
-                        bool isAllowedReferer = _options.AllowedOrigins.Any(o => o.TrimEnd('/').Equals(refererOrigin, StringComparison.OrdinalIgnoreCase));
+                        bool isAllowedReferer = IsOriginAllowed(refererOrigin);
                         if (!isAllowedReferer)
                         {
                             context.Response.StatusCode = StatusCodes.Status403Forbidden;
@@ -82,5 +82,33 @@ public class CsrfProtectionMiddleware
         }
 
         await _next(context);
+    }
+
+    private bool IsOriginAllowed(string origin)
+    {
+        if (string.IsNullOrWhiteSpace(origin)) return false;
+
+        // 1. Verifica contra as origens configuradas em Security:AllowedOrigins
+        if (_options.AllowedOrigins != null &&
+            _options.AllowedOrigins.Any(o => o == "*" || o.TrimEnd('/').Equals(origin.TrimEnd('/'), StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        // 2. Permite automaticamente domínios da plataforma investir.cloud, localhost ou easypanel
+        if (Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+        {
+            var host = uri.Host;
+            if (host.Equals("investir.cloud", StringComparison.OrdinalIgnoreCase) ||
+                host.EndsWith(".investir.cloud", StringComparison.OrdinalIgnoreCase) ||
+                host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+                host.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
+                host.EndsWith(".easypanel.host", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

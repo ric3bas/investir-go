@@ -42,7 +42,7 @@ public class SecurityHeadersMiddleware
                      "style-src 'self' 'unsafe-inline'; " +
                      "img-src 'self' data: https:; " +
                      "font-src 'self'; " +
-                     "connect-src 'self' http://localhost:5050 https://localhost:5050 http://localhost:5173 https://localhost:5173; " +
+                     "connect-src 'self' https://investir.cloud https://api.investir.cloud http://localhost:5050 https://localhost:5050 http://localhost:5173 https://localhost:5173; " +
                      "frame-ancestors 'none'; " +
                      "object-src 'none'; " +
                      "base-uri 'self';";

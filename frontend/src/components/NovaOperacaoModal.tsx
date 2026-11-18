@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, ArrowDownRight, ArrowUpRight, DollarSign, Calendar, Hash, Tag, Calculator } from 'lucide-react';
 import { Ativo } from '../types';
+import { TOP_30_ATIVOS } from '../utils/marketData';
 import { AtivoCombobox } from './AtivoCombobox';
 
 interface NovaOperacaoModalProps {
@@ -29,8 +30,9 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
   defaultTipo = 'COMPRA',
   onSubmit,
 }) => {
-  const [ticker, setTicker] = useState(defaultTicker);
-  const [tipoOperacao, setTipoOperacao] = useState<'COMPRA' | 'VENDA'>(defaultTipo);
+  const listaAtivos = Array.isArray(ativos) && ativos.length > 0 ? ativos : TOP_30_ATIVOS;
+  const [ticker, setTicker] = useState(defaultTicker || '');
+  const [tipoOperacao, setTipoOperacao] = useState<'COMPRA' | 'VENDA'>(defaultTipo || 'COMPRA');
   const [dataOperacao, setDataOperacao] = useState(new Date().toISOString().split('T')[0]);
   const [quantidade, setQuantidade] = useState<string>('100');
   const [precoUnitario, setPrecoUnitario] = useState<string>('');
@@ -39,25 +41,47 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
-    if (defaultTicker) {
-      setTicker(defaultTicker);
-      const ativo = ativos.find((a) => a.ticker.toUpperCase() === defaultTicker.toUpperCase());
-      if (ativo) {
-        setPrecoUnitario(ativo.precoAtual.toString());
+    if (isOpen) {
+      const initialTicker = (defaultTicker || '').trim();
+      setTicker(initialTicker);
+      setTipoOperacao(defaultTipo || 'COMPRA');
+      setQuantidade('100');
+      setTaxas('0');
+      setObservacoes('');
+      if (initialTicker) {
+        const ativo = listaAtivos.find(
+          (a) => (a?.ticker || '').toUpperCase() === initialTicker.toUpperCase()
+        );
+        if (ativo && typeof ativo.precoAtual === 'number' && ativo.precoAtual > 0) {
+          setPrecoUnitario(ativo.precoAtual.toString());
+        } else {
+          setPrecoUnitario('');
+        }
+      } else {
+        setPrecoUnitario('');
       }
     }
-    if (defaultTipo) {
-      setTipoOperacao(defaultTipo);
+  }, [isOpen, defaultTicker, defaultTipo, listaAtivos]);
+
+  // Fecha o modal ao pressionar ESC (declarado no nível superior com todos os hooks)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
     }
-  }, [defaultTicker, defaultTipo, ativos, isOpen]);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
   const handleSelectAtivo = (ativo: { ticker: string; precoAtual: number; nome?: string }) => {
-    setTicker(ativo.ticker);
-    if (ativo.precoAtual > 0) {
+    const t = (ativo?.ticker || '').toUpperCase();
+    setTicker(t);
+    if (ativo && typeof ativo.precoAtual === 'number' && ativo.precoAtual > 0) {
       setPrecoUnitario(ativo.precoAtual.toString());
-    } else if (!ativo.ticker) {
+    } else if (!t) {
       setPrecoUnitario('');
     }
   };
@@ -97,17 +121,6 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
       setSalvando(false);
     }
   };
-
-  // Fecha o modal ao pressionar ESC
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-    }
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
 
   return (
     <div
@@ -179,7 +192,7 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
 
           {/* Combobox de Ativos com Busca Elegante */}
           <AtivoCombobox
-            ativos={ativos}
+            ativos={listaAtivos}
             selectedTicker={ticker}
             onSelectAtivo={handleSelectAtivo}
             accentColor={tipoOperacao === 'COMPRA' ? 'emerald' : 'cyan'}

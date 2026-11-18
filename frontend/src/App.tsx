@@ -6,10 +6,10 @@ import { ProventosTab } from './components/ProventosTab';
 import { PerformanceTab } from './components/PerformanceTab';
 import { NoticiasFavoritosTab } from './components/NoticiasFavoritosTab';
 import { AtivoDetalhesModal } from './components/AtivoDetalhesModal';
-import { LancamentosModal } from './components/LancamentosModal';
 import { NovaOperacaoModal } from './components/NovaOperacaoModal';
 import { NovoProventoModal } from './components/NovoProventoModal';
 import { NovoAtivoModal } from './components/NovoAtivoModal';
+import { LancamentosModal } from './components/LancamentosModal';
 import { LoginModal } from './components/auth/LoginModal';
 import { LoginScreen } from './components/auth/LoginScreen';
 import { RegisterModal } from './components/auth/RegisterModal';
@@ -20,7 +20,7 @@ import { AdminPanelTab } from './components/auth/AdminPanelTab';
 import { useAuth } from './context/AuthContext';
 import { InvestirApi } from './services/api';
 import { Ativo, Operacao, Provento, PosicaoCarteira, ResumoCarteira } from './types';
-import { getFavoritos, toggleFavorito, isFavorito } from './utils/marketData';
+import { getFavoritos, toggleFavorito, isFavorito, TOP_30_ATIVOS } from './utils/marketData';
 import { AlertCircle, RefreshCw, TrendingUp } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -30,7 +30,7 @@ export const App: React.FC = () => {
   const [posicoes, setPosicoes] = useState<PosicaoCarteira[]>([]);
   const [operacoes, setOperacoes] = useState<Operacao[]>([]);
   const [proventos, setProventos] = useState<Provento[]>([]);
-  const [ativos, setAtivos] = useState<Ativo[]>([]);
+  const [ativos, setAtivos] = useState<Ativo[]>(TOP_30_ATIVOS);
   const [favoritos, setFavoritos] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +38,7 @@ export const App: React.FC = () => {
   // Modais de Transação & Cadastro
   const [modalOperacaoOpen, setModalOperacaoOpen] = useState(false);
   const [modalProventoOpen, setModalProventoOpen] = useState(false);
+  const [modalLancamentosOpen, setModalLancamentosOpen] = useState(false);
   const [modalAtivoOpen, setModalAtivoOpen] = useState(false);
   const [modalAtivoDados, setModalAtivoDados] = useState<{
     ticker?: string;
@@ -49,9 +50,6 @@ export const App: React.FC = () => {
   } | undefined>();
   const [modalTicker, setModalTicker] = useState<string | undefined>();
   const [modalTipoOperacao, setModalTipoOperacao] = useState<'COMPRA' | 'VENDA'>('COMPRA');
-
-  // Modal de Histórico de Lançamentos (Compras & Vendas)
-  const [modalLancamentosOpen, setModalLancamentosOpen] = useState(false);
 
   // Modal de Detalhes do Ativo (Até 5 Anos com Gráfico)
   const [modalDetalhesOpen, setModalDetalhesOpen] = useState(false);
@@ -114,8 +112,8 @@ export const App: React.FC = () => {
   };
 
   const handleOpenNovaOperacao = (defaultTicker?: string, defaultTipo: 'COMPRA' | 'VENDA' = 'COMPRA') => {
-    setModalTicker(defaultTicker);
-    setModalTipoOperacao(defaultTipo);
+    setModalTicker(defaultTicker || undefined);
+    setModalTipoOperacao(defaultTipo || 'COMPRA');
     setModalOperacaoOpen(true);
   };
 
@@ -209,6 +207,7 @@ export const App: React.FC = () => {
         setActiveTab={handleTabChange}
         resumo={resumo}
         favoritosCount={favoritos.length}
+        totalOperacoes={operacoes.length}
         onOpenNovaOperacao={handleOpenNovaOperacao}
         onOpenNovoProvento={handleOpenNovoProvento}
         onOpenLancamentos={() => setModalLancamentosOpen(true)}
@@ -222,6 +221,7 @@ export const App: React.FC = () => {
           setActiveTab={handleTabChange}
           resumo={resumo}
           favoritosCount={favoritos.length}
+          totalOperacoes={operacoes.length}
           onOpenNovaOperacao={handleOpenNovaOperacao}
           onOpenNovoProvento={handleOpenNovoProvento}
           onOpenLancamentos={() => setModalLancamentosOpen(true)}
@@ -263,13 +263,11 @@ export const App: React.FC = () => {
             )}
 
             {/* 2. Minha Carteira & Preço Médio */}
-            {(activeTab === 'carteira' || activeTab === 'operacoes') && (
+            {activeTab === 'carteira' && (
               <CarteiraTab
                 posicoes={posicoes}
-                totalLancamentos={operacoes.length}
                 onOpenNovaOperacao={handleOpenNovaOperacao}
                 onOpenNovoProvento={handleOpenNovoProvento}
-                onOpenLancamentos={() => setModalLancamentosOpen(true)}
                 onSelectTicker={(ticker) => {
                   const at = ativos.find((a) => a.ticker.toUpperCase() === ticker.toUpperCase());
                   if (at) handleSelectAtivo(at);
@@ -336,6 +334,15 @@ export const App: React.FC = () => {
         onNavigateToNoticias={handleNavigateToNoticias}
       />
 
+      {/* Modal de Extrato e Histórico de Lançamentos */}
+      <LancamentosModal
+        isOpen={modalLancamentosOpen}
+        onClose={() => setModalLancamentosOpen(false)}
+        operacoes={operacoes}
+        onOpenNovaOperacao={handleOpenNovaOperacao}
+        onExcluirOperacao={handleExcluirOperacao}
+      />
+
       {/* Modal de Lançamento de Operações */}
       <NovaOperacaoModal
         isOpen={modalOperacaoOpen}
@@ -353,6 +360,15 @@ export const App: React.FC = () => {
         ativos={ativos}
         defaultTicker={modalTicker}
         onSubmit={handleCriarProvento}
+      />
+
+      {/* Modal de Extrato Completo de Lançamentos */}
+      <LancamentosModal
+        isOpen={modalLancamentosOpen}
+        onClose={() => setModalLancamentosOpen(false)}
+        operacoes={operacoes}
+        onOpenNovaOperacao={handleOpenNovaOperacao}
+        onExcluirOperacao={handleExcluirOperacao}
       />
 
       {/* Modal de Cadastro de Novo Ativo */}

@@ -129,7 +129,7 @@ export const NoticiasFavoritosTab: React.FC<NoticiasFavoritosTabProps> = ({
   const categoriasDisponiveis = ['TODAS', 'Proventos', 'Fato Relevante', 'Resultado', 'Analise'];
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-6">
       {/* Header da Página */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

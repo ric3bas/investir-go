@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Check, ChevronDown, Sparkles, X } from 'lucide-react';
 import { Ativo } from '../types';
+import { TOP_30_ATIVOS } from '../utils/marketData';
 
 interface AtivoComboboxProps {
   ativos: Ativo[];
@@ -10,27 +11,29 @@ interface AtivoComboboxProps {
 }
 
 // Normalizador para ignorar acentos e maiúsculas
-const normalize = (text: string) =>
-  text
+const normalize = (text?: string) =>
+  (text || '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim();
 
 export const AtivoCombobox: React.FC<AtivoComboboxProps> = ({
-  ativos,
-  selectedTicker,
+  ativos = [],
+  selectedTicker = '',
   onSelectAtivo,
   accentColor = 'emerald',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState(selectedTicker);
+  const [query, setQuery] = useState(selectedTicker || '');
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const listaAtivos = Array.isArray(ativos) && ativos.length > 0 ? ativos : TOP_30_ATIVOS;
+
   useEffect(() => {
-    setQuery(selectedTicker);
+    setQuery(selectedTicker || '');
   }, [selectedTicker]);
 
   // Fecha o dropdown se clicar fora
@@ -45,15 +48,16 @@ export const AtivoCombobox: React.FC<AtivoComboboxProps> = ({
   }, []);
 
   // Filtro avançado: ativa após 2 caracteres digitados
-  const trimmedQuery = query.trim();
+  const trimmedQuery = (query || '').trim();
   const searchNormalized = normalize(trimmedQuery);
   const searchWords = searchNormalized.split(/\s+/).filter(Boolean);
 
   const filteredAtivos =
     trimmedQuery.length >= 2
-      ? ativos.filter((a) => {
+      ? listaAtivos.filter((a) => {
+          if (!a || !a.ticker) return false;
           const tickerNorm = normalize(a.ticker);
-          const nomeNorm = normalize(a.nome);
+          const nomeNorm = normalize(a.nome || '');
           const setorNorm = normalize(a.setor || '');
 
           // Se bate no ticker direto
@@ -75,7 +79,7 @@ export const AtivoCombobox: React.FC<AtivoComboboxProps> = ({
           return false;
         })
       : isOpen
-      ? ativos // se abriu pela seta sem digitar 2 letras, mostra todos
+      ? listaAtivos // se abriu pela seta sem digitar 2 letras, mostra todos
       : [];
 
   const handleSelect = (ativo: Ativo) => {
@@ -216,12 +220,15 @@ export const AtivoCombobox: React.FC<AtivoComboboxProps> = ({
                 <span>Cotação Mercado</span>
               </div>
               {filteredAtivos.map((ativo, index) => {
-                const isSelected = ativo.ticker.toUpperCase() === query.trim().toUpperCase();
+                const tickerStr = (ativo?.ticker || '').toUpperCase();
+                const isSelected = tickerStr === trimmedQuery.toUpperCase();
                 const isHighlighted = index === highlightedIndex;
+                const preco = typeof ativo.precoAtual === 'number' ? ativo.precoAtual : 0;
+                const variacao = typeof ativo.variacaoDia === 'number' ? ativo.variacaoDia : 0;
 
                 return (
                   <button
-                    key={ativo.id}
+                    key={ativo.id || tickerStr || index}
                     type="button"
                     onClick={() => handleSelect(ativo)}
                     className={`w-full px-3.5 py-2.5 text-left text-xs flex items-center justify-between transition ${
@@ -234,7 +241,7 @@ export const AtivoCombobox: React.FC<AtivoComboboxProps> = ({
                   >
                     <div className="flex items-center gap-2.5">
                       <span className="font-mono font-bold text-slate-100 text-sm bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
-                        {ativo.ticker}
+                        {tickerStr}
                       </span>
                       <span
                         className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
@@ -243,11 +250,11 @@ export const AtivoCombobox: React.FC<AtivoComboboxProps> = ({
                             : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                         }`}
                       >
-                        {ativo.tipo}
+                        {ativo.tipo || 'Acao'}
                       </span>
                       <div>
                         <span className="font-medium text-slate-200 block truncate max-w-[160px] sm:max-w-[220px]">
-                          {ativo.nome}
+                          {ativo.nome || tickerStr}
                         </span>
                         {ativo.setor && (
                           <span className="text-[10px] text-slate-500 block truncate max-w-[160px]">
@@ -260,18 +267,18 @@ export const AtivoCombobox: React.FC<AtivoComboboxProps> = ({
                     <div className="flex items-center gap-2">
                       <div className="text-right">
                         <span className="font-mono font-bold text-slate-100 text-xs block">
-                          {ativo.precoAtual.toLocaleString('pt-BR', {
+                          {preco.toLocaleString('pt-BR', {
                             style: 'currency',
                             currency: 'BRL',
                           })}
                         </span>
                         <span
                           className={`text-[10px] block ${
-                            ativo.variacaoDia >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                            variacao >= 0 ? 'text-emerald-400' : 'text-rose-400'
                           }`}
                         >
-                          {ativo.variacaoDia >= 0 ? '+' : ''}
-                          {ativo.variacaoDia.toFixed(2)}%
+                          {variacao >= 0 ? '+' : ''}
+                          {variacao.toFixed(2)}%
                         </span>
                       </div>
                       {isSelected && <Check className="w-4 h-4 text-emerald-400 shrink-0" />}

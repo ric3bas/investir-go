@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Coins, DollarSign, Calendar, Hash, Sparkles } from 'lucide-react';
 import { Ativo } from '../types';
+import { TOP_30_ATIVOS } from '../utils/marketData';
 import { AtivoCombobox } from './AtivoCombobox';
 
 interface NovoProventoModalProps {
@@ -28,7 +29,8 @@ export const NovoProventoModal: React.FC<NovoProventoModalProps> = ({
   defaultTicker = '',
   onSubmit,
 }) => {
-  const [ticker, setTicker] = useState(defaultTicker);
+  const listaAtivos = Array.isArray(ativos) && ativos.length > 0 ? ativos : TOP_30_ATIVOS;
+  const [ticker, setTicker] = useState(defaultTicker || '');
   const [tipoProvento, setTipoProvento] = useState('Dividendo');
   const [dataCom, setDataCom] = useState('');
   const [dataPagamento, setDataPagamento] = useState(new Date().toISOString().split('T')[0]);
@@ -39,20 +41,46 @@ export const NovoProventoModal: React.FC<NovoProventoModalProps> = ({
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
-    if (defaultTicker) {
-      setTicker(defaultTicker);
-      const ativo = ativos.find((a) => a.ticker.toUpperCase() === defaultTicker.toUpperCase());
-      if (ativo && ativo.tipo === 'FII') {
-        setTipoProvento('Rendimento');
+    if (isOpen) {
+      const initialTicker = (defaultTicker || '').trim();
+      setTicker(initialTicker);
+      setDataPagamento(new Date().toISOString().split('T')[0]);
+      setValorPorCota('0.50');
+      setQuantidadeCotas('100');
+      setValorTotalManual('');
+      setObservacoes('');
+      if (initialTicker) {
+        const ativo = listaAtivos.find(
+          (a) => (a?.ticker || '').toUpperCase() === initialTicker.toUpperCase()
+        );
+        if (ativo && ativo.tipo === 'FII') {
+          setTipoProvento('Rendimento');
+        } else {
+          setTipoProvento('Dividendo');
+        }
+      } else {
+        setTipoProvento('Dividendo');
       }
     }
-  }, [defaultTicker, ativos, isOpen]);
+  }, [isOpen, defaultTicker, listaAtivos]);
+
+  // Fecha o modal ao pressionar ESC (declarado no nível superior com todos os hooks)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
   const handleSelectAtivo = (ativo: { ticker: string; precoAtual: number; nome?: string }) => {
-    setTicker(ativo.ticker);
-    const encontrado = ativos.find((a) => a.ticker === ativo.ticker);
+    const t = (ativo?.ticker || '').toUpperCase();
+    setTicker(t);
+    const encontrado = listaAtivos.find((a) => (a?.ticker || '').toUpperCase() === t);
     if (encontrado?.tipo === 'FII') {
       setTipoProvento('Rendimento');
     }
@@ -94,17 +122,6 @@ export const NovoProventoModal: React.FC<NovoProventoModalProps> = ({
       setSalvando(false);
     }
   };
-
-  // Fecha o modal ao pressionar ESC
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-    }
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
 
   const tiposDisponiveis = [
     { id: 'Dividendo', label: 'Dividendo (Ação)' },
@@ -167,7 +184,7 @@ export const NovoProventoModal: React.FC<NovoProventoModalProps> = ({
 
           {/* Combobox de Ativos */}
           <AtivoCombobox
-            ativos={ativos}
+            ativos={listaAtivos}
             selectedTicker={ticker}
             onSelectAtivo={handleSelectAtivo}
             accentColor="amber"
