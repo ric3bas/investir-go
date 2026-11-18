@@ -475,6 +475,20 @@ export const TopHeader: React.FC<NavigationProps> = ({
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span className="hidden sm:inline">Nova Operação</span>
           </button>
+          
+          {/* Declarar Provento Rápido */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onOpenNovoProvento();
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white shadow-sm transition cursor-pointer"
+          >
+            <Coins className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Declarar Provento</span>
+          </button>
         </div>
       </header>
 

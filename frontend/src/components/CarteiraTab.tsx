@@ -58,15 +58,6 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
             <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               {filtered.length} ativos
             </span>
-            {onAtualizarPrecos && (
-              <button
-                onClick={onAtualizarPrecos}
-                className={`p-1.5 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 transition ${carregandoPrecos ? 'animate-spin' : ''}`}
-                title="Atualizar cotações em tempo real"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </button>
-            )}
           </div>
           <p className="text-xs text-slate-400 mt-1">
             Controle de preço médio fiscal ponderado, cotações a mercado e fluxo de rendimentos.
@@ -74,15 +65,42 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          {/* Botões Novos (Realocados) */}
+          <button
+            onClick={() => onOpenNovaOperacao()}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20 transition"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Nova Operação
+          </button>
+          <button
+            onClick={() => onOpenNovoProvento()}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white shadow-md shadow-amber-600/20 transition"
+          >
+            <Coins className="w-3.5 h-3.5" />
+            Declarar Provento
+          </button>
+
+          {/* Refresh */}
+          {onAtualizarPrecos && (
+            <button
+              onClick={onAtualizarPrecos}
+              className={`p-1.5 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 transition ${carregandoPrecos ? 'animate-spin' : ''}`}
+              title="Atualizar cotações em tempo real"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          )}
+
           {/* Busca */}
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
-              placeholder="Buscar ticker ou ativo..."
+              placeholder="Buscar ticker..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 pr-3 py-1.5 text-xs rounded-xl bg-white/[0.03] border border-white/[0.08] text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition w-44 sm:w-56"
+              className="pl-8 pr-3 py-1.5 text-xs rounded-xl bg-white/[0.03] border border-white/[0.08] text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition w-32 sm:w-40"
             />
           </div>
 
@@ -110,8 +128,8 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
             className="px-3 py-1.5 text-xs rounded-xl bg-white/[0.03] border border-white/[0.08] text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition font-medium"
           >
             <option value="saldo" className="bg-[#0b0f1a] text-slate-200">Maior Saldo</option>
-            <option value="rentabilidade" className="bg-[#0b0f1a] text-slate-200">Maior Rentabilidade</option>
-            <option value="ticker" className="bg-[#0b0f1a] text-slate-200">Ticker (A-Z)</option>
+            <option value="rentabilidade" className="bg-[#0b0f1a] text-slate-200">Rentabilidade</option>
+            <option value="ticker" className="bg-[#0b0f1a] text-slate-200">Ticker</option>
           </select>
         </div>
       </div>
