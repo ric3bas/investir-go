@@ -1,4 +1,3 @@
-using System.Globalization;
 using InvestirGo.API.Application.DTOs;
 using InvestirGo.API.Application.Interfaces;
 using InvestirGo.API.Domain.Entities;
@@ -18,6 +17,8 @@ public sealed class ApuracaoFiscalService(IOperacaoRepository operacaoRepository
     private const decimal AliquotaIrrfComum = 0.00005m;
     private const decimal AliquotaIrrfDayTrade = 0.01m;
     private const decimal ValorMinimoDarf = 10m;
+    private static readonly string[] MesesPtBr =
+        ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 
     public async Task<ApuracaoFiscalResponseDto> CalcularAsync(Guid userId, int ano)
     {
@@ -287,7 +288,7 @@ public sealed class ApuracaoFiscalService(IOperacaoRepository operacaoRepository
 
                 resultado.Add(new ApuracaoFiscalMensalDto(
                     ano, mesNumero,
-                    competencia.ToString("MMM/yyyy", new CultureInfo("pt-BR")),
+                    $"{MesesPtBr[mesNumero - 1]}/{ano}",
                     CalcularVencimento(ano, mesNumero),
                     Arredondar(acoes.VendasComuns),
                     Arredondar(ouro.VendasComuns),
