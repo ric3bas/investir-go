@@ -2,9 +2,9 @@ using System.Collections.Concurrent;
 using InvestirGo.API.Application.Interfaces;
 using InvestirGo.API.Domain.Entities;
 
-namespace InvestirGo.API.Infrastructure.Repositories;
+namespace InvestirGo.Tests;
 
-public class InMemoryAuthRepository : IAuthRepository
+internal sealed class TestAuthRepository : IAuthRepository
 {
     private readonly ConcurrentDictionary<Guid, User> _users = new();
     private readonly ConcurrentDictionary<string, Guid> _emailIndex = new(StringComparer.OrdinalIgnoreCase);
@@ -252,3 +252,4 @@ public class InMemoryAuthRepository : IAuthRepository
         return Task.FromResult<IEnumerable<AuditLog>>(list);
     }
 }
+

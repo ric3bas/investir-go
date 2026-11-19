@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using System.Text;
-using Dapper;
 using InvestirGo.API.API.Endpoints;
 using InvestirGo.API.API.Middlewares;
 using InvestirGo.API.Application.Interfaces;
@@ -83,24 +82,12 @@ builder.Services.AddSingleton<IPasswordHasher, Argon2idPasswordHasher>();
 builder.Services.AddSingleton<IPasswordValidator, PasswordValidator>();
 builder.Services.AddSingleton<ITokenService, JwtTokenService>();
 builder.Services.AddSingleton<ITotpService, TotpService>();
-builder.Services.AddSingleton<IRateLimiterService, MemoryRateLimiterService>();
+builder.Services.AddScoped<IRateLimiterService, PostgreSqlRateLimiterService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<ISecurityAuditService, SecurityAuditService>();
 
-// Repositórios: Suporte dual PostgreSQL e In-Memory (para testes e fallback)
-builder.Services.AddSingleton<InMemoryAuthRepository>();
-builder.Services.AddScoped<IAuthRepository>(sp =>
-{
-    var config = sp.GetRequiredService<IConfiguration>();
-    if (config.GetValue<bool>("UseInMemoryAuth", false))
-    {
-        return sp.GetRequiredService<InMemoryAuthRepository>();
-    }
-
-    // Em produção, falhas do PostgreSQL devem ser visíveis. Fazer fallback
-    // silencioso para memória cria sessões e usuários que somem no restart.
-    return new PostgreSqlAuthRepository(sp.GetRequiredService<DbConnectionFactory>());
-});
+// PostgreSQL é a única fonte de autenticação, sessões e dados financeiros.
+builder.Services.AddScoped<IAuthRepository, PostgreSqlAuthRepository>();
 
 // Repositórios da Carteira
 builder.Services.AddScoped<IAtivoRepository, AtivoRepository>();
@@ -194,38 +181,6 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
-
-// ----------------------------------------------------------------------------
-// Migração estrutural aditiva. Nunca altera, apaga ou recria dados do usuário.
-// ----------------------------------------------------------------------------
-using (var scope = app.Services.CreateScope())
-{
-    try
-    {
-        if (!builder.Configuration.GetValue<bool>("UseInMemoryAuth", false))
-        {
-            var dbFactory = scope.ServiceProvider.GetRequiredService<DbConnectionFactory>();
-            using var conn = dbFactory.CreateConnection();
-            await conn.ExecuteAsync(@"
-                ALTER TABLE inv.operacoes ADD COLUMN IF NOT EXISTS user_id UUID;
-                ALTER TABLE inv.proventos ADD COLUMN IF NOT EXISTS user_id UUID;
-
-                CREATE INDEX IF NOT EXISTS idx_operacoes_user_id ON inv.operacoes(user_id);
-                CREATE INDEX IF NOT EXISTS idx_proventos_user_id ON inv.proventos(user_id);
-            ");
-        }
-    }
-    catch (Exception ex)
-    {
-        Log.Error(ex, "Falha ao conectar ao PostgreSQL durante a validação inicial.");
-        if (builder.Environment.IsProduction())
-        {
-            throw new InvalidOperationException(
-                "Não foi possível conectar ao PostgreSQL. No EasyPanel, copie a Internal Connection URL " +
-                "para DATABASE_URL; em Docker Compose, confira POSTGRES_USER e POSTGRES_PASSWORD.", ex);
-        }
-    }
-}
 
 // ----------------------------------------------------------------------------
 // 8. Pipeline de Middlewares de Segurança

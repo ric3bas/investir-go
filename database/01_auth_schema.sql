@@ -102,7 +102,19 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_user_action ON auth.audit_logs(user_id
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON auth.audit_logs(created_at);
 
 -- ----------------------------------------------------------------------------
--- 6. Adição de usuario_id e user_id no schema inv para controle de acesso (IDOR)
+-- 6. Tentativas de rate limit persistidas e compartilhadas entre réplicas
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS auth.rate_limit_attempts (
+    id BIGSERIAL PRIMARY KEY,
+    rate_key VARCHAR(300) NOT NULL,
+    occurred_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_rate_limit_attempts_key_time
+    ON auth.rate_limit_attempts(rate_key, occurred_at);
+
+-- ----------------------------------------------------------------------------
+-- 7. Adição de usuario_id e user_id no schema inv para controle de acesso (IDOR)
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS inv.usuarios (
     id UUID PRIMARY KEY DEFAULT '22222222-2222-2222-2222-222222222222'::UUID,

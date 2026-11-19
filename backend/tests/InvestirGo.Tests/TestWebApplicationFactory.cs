@@ -1,10 +1,12 @@
 using InvestirGo.API.Application.Interfaces;
 using InvestirGo.API.Application.Security.Options;
-using InvestirGo.API.Infrastructure.Repositories;
+using InvestirGo.API.Application.Security.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 
 namespace InvestirGo.Tests;
 
@@ -16,8 +18,6 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["UseInMemoryAuth"] = "true",
-                ["UseInMemoryPortfolio"] = "true",
                 ["Security:EnforceHttps"] = "false", // Facilita execução em TestServer HTTP
                 ["Security:Jwt:SecretKey"] = "InvestirGo_DevSecretKey_AtLeast32Bytes_ChangeInProduction2026!",
                 ["Security:Jwt:AccessTokenLifetimeMinutes"] = "1",
@@ -27,8 +27,14 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
-            // Garante que IAuthRepository utilize o mesmo singleton InMemoryAuthRepository
-            services.AddScoped<IAuthRepository>(sp => sp.GetRequiredService<InMemoryAuthRepository>());
+            // Dublês existem somente no assembly de testes e nunca são publicados.
+            services.RemoveAll<IHostedService>();
+            services.RemoveAll<IAuthRepository>();
+            services.RemoveAll<IRateLimiterService>();
+            services.RemoveAll<IOperacaoRepository>();
+            services.AddSingleton<IAuthRepository, TestAuthRepository>();
+            services.AddSingleton<IRateLimiterService, TestRateLimiterService>();
+            services.AddSingleton<IOperacaoRepository, TestOperacaoRepository>();
         });
     }
 }
