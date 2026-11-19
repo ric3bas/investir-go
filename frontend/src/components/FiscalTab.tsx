@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import axios from 'axios';
 import {
   AlertTriangle,
   ArrowDownRight,
@@ -14,6 +15,7 @@ import {
   Info,
   Loader2,
   ReceiptText,
+  RefreshCw,
   Scale,
   ShieldCheck,
 } from 'lucide-react';
@@ -33,6 +35,24 @@ const dataBrasileira = (valor: string) => {
 };
 
 const resultadoClass = (valor: number) => valor > 0 ? 'text-emerald-300' : valor < 0 ? 'text-rose-300' : 'text-slate-300';
+
+const mensagemErroFiscal = (erro: unknown) => {
+  if (!axios.isAxiosError<{ message?: string; detail?: string; title?: string }>(erro))
+    return 'Falha inesperada ao calcular a apuração fiscal.';
+
+  const status = erro.response?.status;
+  if (status === 404)
+    return 'A API em execução ainda não possui a rota fiscal. Reinicie ou publique a versão atual do backend.';
+  if (status === 401)
+    return 'Sua sessão expirou. Entre novamente para consultar a apuração fiscal.';
+  if (status === 403)
+    return 'Sua conta não tem autorização para consultar esta apuração.';
+  if (status && status >= 500)
+    return erro.response?.data?.detail || erro.response?.data?.message || `A API encontrou um erro durante o cálculo (HTTP ${status}).`;
+  if (!erro.response)
+    return 'Não foi possível alcançar a API. Verifique se o backend está online e se VITE_API_URL aponta para o endereço correto.';
+  return erro.response.data?.message || erro.response.data?.detail || `A consulta fiscal falhou (HTTP ${status}).`;
+};
 
 const StatusBadge: React.FC<{ mes: ApuracaoFiscalMensal }> = ({ mes }) => {
   const classe = mes.darfDevido
@@ -67,7 +87,7 @@ export const FiscalTab: React.FC = () => {
         const preferido = ano === anoAtual ? new Date().getMonth() + 1 : comMovimento?.mes ?? 12;
         setMesSelecionado(preferido);
       })
-      .catch(() => ativo && setErro('Não foi possível calcular a apuração fiscal. Verifique a conexão com a API.'))
+      .catch((erroConsulta) => ativo && setErro(mensagemErroFiscal(erroConsulta)))
       .finally(() => ativo && setCarregando(false));
     return () => { ativo = false; };
   }, [ano, anoAtual, versao]);
@@ -102,6 +122,7 @@ export const FiscalTab: React.FC = () => {
       <div className="mx-auto mt-12 max-w-xl rounded-2xl border border-rose-400/20 bg-rose-500/5 p-6 text-center">
         <AlertTriangle className="mx-auto mb-3 h-7 w-7 text-rose-300" />
         <p className="font-semibold text-slate-100">{erro ?? 'Apuração indisponível.'}</p>
+        <button type="button" onClick={() => setVersao((valor) => valor + 1)} className="mx-auto mt-5 inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-xs font-bold text-slate-200 transition hover:border-emerald-400/30 hover:bg-emerald-400/[0.07] hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/40"><RefreshCw className="h-3.5 w-3.5" /> Tentar novamente</button>
       </div>
     );
   }
