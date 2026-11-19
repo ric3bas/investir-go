@@ -126,7 +126,7 @@ export const FiscalTab: React.FC = () => {
   }
 
   return (
-    <main className="mx-auto w-full max-w-[1500px] space-y-5 p-4 sm:p-6 lg:p-8">
+    <main className="mx-auto w-full max-w-[1500px] space-y-4 sm:space-y-5">
       <header className="flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
         <div>
           <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-300">
@@ -137,40 +137,40 @@ export const FiscalTab: React.FC = () => {
             Memória de cálculo construída com as compras e vendas da sua conta, separando operações comuns, day trade e FIIs.
           </p>
         </div>
-        <div className="flex items-center gap-1 rounded-xl border border-white/[0.08] bg-[#090e19] p-1 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset]">
+        <div className="flex w-full items-center justify-between gap-1 rounded-xl border border-white/[0.08] bg-[#090e19] p-1 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] sm:w-auto sm:justify-start">
           <button type="button" onClick={() => setAno((valor) => valor - 1)} className="rounded-lg p-2 text-slate-400 transition hover:bg-white/[0.05] hover:text-white" aria-label="Ano anterior"><ChevronLeft className="h-4 w-4" /></button>
           <span className="min-w-20 text-center font-mono text-sm font-bold tabular-nums text-white">{ano}</span>
           <button type="button" onClick={() => setAno((valor) => Math.min(anoAtual, valor + 1))} disabled={ano >= anoAtual} className="rounded-lg p-2 text-slate-400 transition hover:bg-white/[0.05] hover:text-white disabled:cursor-not-allowed disabled:opacity-30" aria-label="Próximo ano"><ChevronRight className="h-4 w-4" /></button>
         </div>
       </header>
 
-      <section className="grid overflow-hidden rounded-3xl border border-white/[0.07] bg-[#080d18] shadow-[0_1px_0_rgba(255,255,255,0.04)_inset,0_24px_70px_rgba(0,0,0,0.22)] xl:grid-cols-[1.12fr_0.88fr]">
-        <div className="relative overflow-hidden p-5 sm:p-7">
+      <section className="grid overflow-hidden rounded-2xl border border-white/[0.07] bg-[#080d18] shadow-[0_1px_0_rgba(255,255,255,0.04)_inset,0_24px_70px_rgba(0,0,0,0.22)] sm:rounded-3xl xl:grid-cols-[1.12fr_0.88fr]">
+        <div className="relative overflow-hidden p-4 sm:p-7">
           <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-emerald-500/[0.08] blur-3xl" />
-          <div className="relative flex flex-wrap items-start justify-between gap-4">
+          <div className="relative grid items-start gap-4 min-[480px]:grid-cols-[minmax(0,1fr)_auto]">
             <div>
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-400"><ReceiptText className="h-4 w-4 text-emerald-300" /> DARF estimado · {mes.competencia}</div>
               <p className={`mt-3 font-mono text-3xl font-black tabular-nums sm:text-5xl ${mes.darfDevido ? 'text-amber-200' : 'text-emerald-300'}`}>{moeda(mes.darfEstimado)}</p>
               <div className="mt-3"><StatusBadge mes={mes} /></div>
             </div>
-            <div className="rounded-2xl border border-white/[0.07] bg-black/20 px-4 py-3 text-right">
+            <div className="w-fit rounded-2xl border border-white/[0.07] bg-black/20 px-4 py-3 text-left min-[480px]:text-right">
               <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Código da receita</span>
               <span className="mt-1 block font-mono text-2xl font-black tracking-wider text-white">{apuracao.codigoDarf}</span>
             </div>
           </div>
 
-          <div className="relative mt-7 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
+          <div className="relative mt-6 grid grid-cols-2 gap-3 min-[520px]:grid-cols-3 sm:mt-7">
+            <div className="col-span-2 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-3.5 min-[520px]:col-span-1 sm:p-4">
               <CalendarClock className="mb-3 h-4 w-4 text-cyan-300" />
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Vencimento estimado</span>
               <strong className="mt-1 block font-mono text-sm tabular-nums text-slate-100">{dataBrasileira(mes.vencimentoEstimado)}</strong>
             </div>
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-3.5 sm:p-4">
               <CircleDollarSign className="mb-3 h-4 w-4 text-amber-300" />
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Imposto bruto</span>
               <strong className="mt-1 block font-mono text-sm tabular-nums text-slate-100">{moeda(mes.impostoBruto)}</strong>
             </div>
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-3.5 sm:p-4">
               <ShieldCheck className="mb-3 h-4 w-4 text-emerald-300" />
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">IRRF compensado</span>
               <strong className="mt-1 block font-mono text-sm tabular-nums text-slate-100">− {moeda(mes.irrfCompensado)}</strong>
@@ -178,7 +178,7 @@ export const FiscalTab: React.FC = () => {
           </div>
         </div>
 
-        <div className="border-t border-white/[0.07] bg-[#0b111e] p-5 sm:p-7 xl:border-l xl:border-t-0">
+        <div className="border-t border-white/[0.07] bg-[#0b111e] p-4 sm:p-7 xl:border-l xl:border-t-0">
           <div className="mb-5 flex items-center gap-2"><Calculator className="h-4 w-4 text-emerald-300" /><h3 className="text-sm font-bold text-white">Como chegamos ao valor</h3></div>
           <div className="space-y-3 text-sm">
             <LinhaCalculo label="Base tributável comum" valor={moeda(mes.baseTributavelComum)} detalhe="15%" />
@@ -187,7 +187,7 @@ export const FiscalTab: React.FC = () => {
             <LinhaCalculo label="IRRF estimado utilizado" valor={`− ${moeda(mes.irrfCompensado)}`} tom="emerald" />
             <LinhaCalculo label="Saldo abaixo de R$ 10 anterior" valor={`+ ${moeda(mes.saldoMesesAnteriores)}`} tom="cyan" />
           </div>
-          <div className="mt-5 flex items-center justify-between border-t border-white/[0.08] pt-5">
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-white/[0.08] pt-5">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total para DARF</span>
             <span className="font-mono text-lg font-black tabular-nums text-white">{moeda(mes.darfEstimado)}</span>
           </div>
@@ -209,7 +209,7 @@ export const FiscalTab: React.FC = () => {
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[1fr_0.72fr]">
-        <div className="rounded-3xl border border-white/[0.07] bg-[#090e18] p-5 sm:p-6">
+        <div className="rounded-2xl border border-white/[0.07] bg-[#090e18] p-4 sm:rounded-3xl sm:p-6">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div><span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Memória mensal</span><h3 className="mt-1 text-lg font-black text-white">Resultados por modalidade</h3></div>
             <span className="font-mono text-xs text-slate-500">Vendas comuns: {moeda(totalVendasComuns)}</span>
@@ -226,7 +226,7 @@ export const FiscalTab: React.FC = () => {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-white/[0.07] bg-[#090e18] p-5 sm:p-6">
+        <div className="rounded-2xl border border-white/[0.07] bg-[#090e18] p-4 sm:rounded-3xl sm:p-6">
           <div className="mb-5 flex items-center gap-2"><ArrowDownRight className="h-4 w-4 text-rose-300" /><h3 className="text-sm font-bold text-white">Prejuízos a compensar</h3></div>
           <p className="font-mono text-3xl font-black tabular-nums text-slate-100">{moeda(totalPrejuizo)}</p>
           <p className="mt-2 text-xs leading-5 text-slate-500">Saldo transportado para os meses seguintes, preservando a separação legal entre as modalidades.</p>
@@ -238,7 +238,7 @@ export const FiscalTab: React.FC = () => {
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-3xl border border-white/[0.07] bg-[#090e18]">
+      <section className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#090e18] sm:rounded-3xl">
         <div className="flex flex-col justify-between gap-3 border-b border-white/[0.06] p-5 sm:flex-row sm:items-end sm:px-6">
           <div><span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Regras utilizadas</span><h3 className="mt-1 text-lg font-black text-white">Matriz fiscal aplicada</h3></div>
           <p className="max-w-xl text-xs leading-5 text-slate-500">A classificação vem do cadastro do ativo. Classes não reconhecidas ficam em revisão manual e não alteram o DARF.</p>
@@ -257,7 +257,7 @@ export const FiscalTab: React.FC = () => {
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-3xl border border-white/[0.07] bg-[#090e18]">
+      <section className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#090e18] sm:rounded-3xl">
         <div className="flex flex-col justify-between gap-3 border-b border-white/[0.06] p-5 sm:flex-row sm:items-center sm:px-6">
           <div><span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Rastreabilidade</span><h3 className="mt-1 text-lg font-black text-white">Ativos que formaram o mês</h3></div>
           <span className="text-xs text-slate-500">Preço médio inclui taxas informadas nos lançamentos</span>
@@ -286,7 +286,7 @@ export const FiscalTab: React.FC = () => {
 };
 
 const LinhaCalculo: React.FC<{ label: string; valor: string; detalhe?: string; tom?: 'emerald' | 'cyan' }> = ({ label, valor, detalhe, tom }) => (
-  <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2 text-slate-400"><span>{label}</span>{detalhe && <span className="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-[9px] text-slate-500">{detalhe}</span>}</div><span className={`font-mono font-bold tabular-nums ${tom === 'emerald' ? 'text-emerald-300' : tom === 'cyan' ? 'text-cyan-300' : 'text-slate-100'}`}>{valor}</span></div>
+  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1"><div className="flex min-w-0 items-center gap-2 text-slate-400"><span>{label}</span>{detalhe && <span className="shrink-0 rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-[9px] text-slate-500">{detalhe}</span>}</div><span className={`shrink-0 font-mono font-bold tabular-nums ${tom === 'emerald' ? 'text-emerald-300' : tom === 'cyan' ? 'text-cyan-300' : 'text-slate-100'}`}>{valor}</span></div>
 );
 
 const ResultadoCard: React.FC<{ titulo: string; resultado: number; base: number; aliquota: string; isento?: boolean; moeda: (valor: number) => string }> = ({ titulo, resultado, base, aliquota, isento, moeda }) => (
@@ -305,7 +305,7 @@ const LimiteIsencao: React.FC<{ titulo: string; vendas: number; isento: boolean;
   const percentual = Math.min(100, (vendas / 20_000) * 100);
   return (
     <div className="rounded-2xl border border-white/[0.06] bg-black/20 p-4">
-      <div className="mb-3 flex items-center justify-between gap-3 text-xs"><span className="font-semibold text-slate-300">{titulo}</span><span className="font-mono tabular-nums text-slate-400">{moeda(vendas)} / R$ 20.000,00</span></div>
+      <div className="mb-3 flex flex-col gap-1 text-xs min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between min-[480px]:gap-3"><span className="font-semibold text-slate-300">{titulo}</span><span className="font-mono tabular-nums text-slate-400">{moeda(vendas)} / R$ 20.000,00</span></div>
       <div className="h-2 overflow-hidden rounded-full bg-slate-800"><div className={`h-full rounded-full transition-all ${vendas > 20_000 ? 'bg-amber-400' : 'bg-emerald-400'}`} style={{ width: `${percentual}%` }} /></div>
       <p className="mt-3 text-xs leading-5 text-slate-500">{isento ? 'Dentro do limite próprio; eventual ganho comum positivo é isento.' : 'Limite ultrapassado; eventual ganho positivo entra no grupo geral tributável.'}</p>
     </div>

@@ -349,33 +349,44 @@ export const TopHeader: React.FC<NavigationProps> = ({
 
   const allItems = navigationGroups.flatMap(g => g.items);
   const currentLabel = allItems.find(i => i.id === activeTab)?.label || (activeTab === 'admin' ? 'Governança & Segurança' : 'Dashboard');
+  const mobileLabel: Record<Route, string> = {
+    dashboard: 'Dashboard',
+    carteira: 'Carteira',
+    performance: 'Performance',
+    proventos: 'Proventos',
+    noticias: 'Notícias',
+    fiscal: 'Fiscal & DARF',
+    admin: 'Admin',
+    login: 'Entrar',
+  };
 
   return (
     <>
-      <header className="border-b border-white/[0.06] bg-[#070a12]/80 backdrop-blur-xl sticky top-0 z-20 h-16 px-4 sm:px-6 flex items-center justify-between">
+      <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-2 border-b border-white/[0.06] bg-[#070a12]/80 px-3 backdrop-blur-xl sm:h-16 sm:gap-4 sm:px-6">
         {/* Lado Esquerdo: Mobile Hamburger & Breadcrumb */}
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-xl bg-white/[0.04] border border-white/[0.06] text-slate-300"
+            className="shrink-0 rounded-xl border border-white/[0.06] bg-white/[0.04] p-2 text-slate-300 lg:hidden"
             aria-label="Abrir Menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 font-medium hidden sm:inline">Portfólio /</span>
-            <h1 className="text-sm sm:text-base font-bold text-slate-100 tracking-tight">
-              {currentLabel}
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="hidden text-xs font-medium text-slate-400 xl:inline">Portfólio /</span>
+            <h1 className="min-w-0 truncate whitespace-nowrap text-sm font-bold tracking-tight text-slate-100 sm:text-base">
+              <span className="lg:hidden">{mobileLabel[activeTab]}</span>
+              <span className="hidden lg:inline">{currentLabel}</span>
             </h1>
           </div>
         </div>
 
         {/* Lado Direito: Live B3 Status, Cotação Dólar Sempre Visível & Ações */}
-        <div className="flex items-center gap-2 sm:gap-2.5">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
           {/* Cotação do Dólar Comercial Sempre Visível */}
           <div
-            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs font-mono transition shadow-sm"
+            className="hidden items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 font-mono text-xs shadow-sm transition xl:flex"
           >
             <div className="w-5 h-5 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">
               $
@@ -405,7 +416,7 @@ export const TopHeader: React.FC<NavigationProps> = ({
           </div>
 
           {/* Live Market Badge */}
-          <div className="hidden lg:flex items-center gap-2.5 px-4 py-2 rounded-xl bg-white/[0.02] border border-white/[0.04] text-sm font-mono text-slate-400">
+          <div className="hidden items-center gap-2.5 rounded-xl border border-white/[0.04] bg-white/[0.02] px-4 py-2 font-mono text-sm text-slate-400 2xl:flex">
             <Clock className="w-4 h-4 text-emerald-400" />
             <span>Pregão B3: 10h às 17h</span>
           </div>
@@ -414,7 +425,7 @@ export const TopHeader: React.FC<NavigationProps> = ({
           <button
             type="button"
             onClick={toggleEsconderValores}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition cursor-pointer ${esconderValores
+            className={`flex items-center gap-2 rounded-xl border p-2.5 text-sm font-semibold transition cursor-pointer lg:px-4 lg:py-2 ${esconderValores
                 ? 'bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
                 : 'bg-white/[0.02] hover:bg-white/[0.06] text-slate-300 hover:text-white border-white/[0.06]'
               }`}
@@ -437,14 +448,14 @@ export const TopHeader: React.FC<NavigationProps> = ({
           {/* Quick Favoritos */}
           <button
             onClick={() => setActiveTab('noticias')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition ${activeTab === 'noticias'
+            className={`flex items-center gap-1.5 rounded-xl border p-2.5 text-sm font-semibold transition lg:gap-2 lg:px-4 lg:py-2 ${activeTab === 'noticias'
                 ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
                 : 'bg-white/[0.02] hover:bg-white/[0.05] text-slate-300 border-white/[0.06]'
               }`}
           >
             <Star className="w-4.5 h-4.5 text-amber-400 fill-amber-400" />
-            <span className="hidden sm:inline">Favoritos</span>
-            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono text-xs">
+            <span className="hidden xl:inline">Favoritos</span>
+            <span className="hidden rounded-full bg-amber-500/20 px-2 py-0.5 font-mono text-xs text-amber-300 min-[360px]:inline-flex">
               {favoritosCount}
             </span>
           </button>
