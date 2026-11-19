@@ -217,7 +217,8 @@ app.UseExceptionHandler(exceptionHandler =>
         await Results.Problem(
             statusCode: StatusCodes.Status500InternalServerError,
             title: "Serviço temporariamente indisponível",
-            detail: "Não foi possível concluir a solicitação. Verifique a conexão do servidor com o PostgreSQL.")
+            detail: "Não foi possível concluir esta solicitação. Consulte o log da API usando o identificador da requisição.",
+            extensions: new Dictionary<string, object?> { ["requestId"] = context.TraceIdentifier })
             .ExecuteAsync(context);
     });
 });

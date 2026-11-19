@@ -10,8 +10,6 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleDollarSign,
-  ExternalLink,
-  FileCheck2,
   Info,
   Loader2,
   ReceiptText,
@@ -278,11 +276,10 @@ export const FiscalTab: React.FC = () => {
         )}
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-[1fr_auto]">
+      <section>
         <div className="rounded-2xl border border-amber-400/15 bg-amber-400/[0.045] p-5">
           <div className="flex items-start gap-3"><Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" /><div><h3 className="text-sm font-bold text-amber-100">Antes de recolher</h3><ul className="mt-2 space-y-1.5 text-xs leading-5 text-slate-400">{apuracao.alertas.map((alerta) => <li key={alerta}>• {alerta}</li>)}</ul></div></div>
         </div>
-        <a href="https://www.gov.br/pt-br/servicos/apurar-imposto-sobre-renda-variavel" target="_blank" rel="noreferrer" className="flex min-w-64 items-center justify-between gap-4 rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.07] px-5 py-4 text-sm font-bold text-emerald-200 transition hover:-translate-y-0.5 hover:border-emerald-300/40"><span><FileCheck2 className="mb-2 h-5 w-5" />Conferir no ReVar oficial</span><ExternalLink className="h-4 w-4" /></a>
       </section>
     </main>
   );

@@ -24,13 +24,37 @@ public sealed class ApuracaoFiscalService(IOperacaoRepository operacaoRepository
         if (ano is < 2000 or > 2100)
             throw new ArgumentOutOfRangeException(nameof(ano), "Ano de apuração inválido.");
 
-        var operacoes = (await operacaoRepository.ObterTodasAsync(userId: userId))
-            .Where(o => o.Quantidade > 0 && o.PrecoUnitario > 0)
+        var alertas = new HashSet<string>();
+        var operacoes = new List<Operacao>();
+        foreach (var operacao in await operacaoRepository.ObterTodasAsync(userId: userId))
+        {
+            if (operacao.Quantidade <= 0 || operacao.PrecoUnitario <= 0)
+            {
+                alertas.Add($"Operação #{operacao.Id} ignorada: quantidade ou preço inválido.");
+                continue;
+            }
+            if (operacao.DataOperacao.Year is < 2000 or > 2100)
+            {
+                alertas.Add($"Operação #{operacao.Id} ignorada: data inválida.");
+                continue;
+            }
+            if (string.IsNullOrWhiteSpace(operacao.Ticker))
+            {
+                alertas.Add($"Operação #{operacao.Id} ignorada: ativo sem ticker.");
+                continue;
+            }
+            if (!EhCompra(operacao) && !EhVenda(operacao))
+            {
+                alertas.Add($"Operação #{operacao.Id} ignorada: tipo deve ser COMPRA ou VENDA.");
+                continue;
+            }
+            operacoes.Add(operacao);
+        }
+        operacoes = operacoes
             .OrderBy(o => o.DataOperacao.Date)
             .ThenBy(o => o.Id)
             .ToList();
 
-        var alertas = new HashSet<string>();
         var mesesBrutos = new Dictionary<(int Ano, int Mes), MesBruto>();
         var custodia = new Dictionary<string, PosicaoFiscal>(StringComparer.OrdinalIgnoreCase);
 
@@ -40,12 +64,23 @@ public sealed class ApuracaoFiscalService(IOperacaoRepository operacaoRepository
                      Ticker = o.Ticker.Trim().ToUpperInvariant()
                  }).OrderBy(g => g.Key.Data).ThenBy(g => g.Key.Ticker))
         {
-            ProcessarDiaAtivo(grupoDiaAtivo.ToList(), custodia, mesesBrutos, alertas);
+            try
+            {
+                ProcessarDiaAtivo(grupoDiaAtivo.ToList(), custodia, mesesBrutos, alertas);
+            }
+            catch (OverflowException)
+            {
+                alertas.Add($"{grupoDiaAtivo.Key.Ticker} em {grupoDiaAtivo.Key.Data:dd/MM/yyyy}: valores excedem o limite de cálculo e foram ignorados.");
+            }
+            catch (ArgumentException)
+            {
+                alertas.Add($"{grupoDiaAtivo.Key.Ticker} em {grupoDiaAtivo.Key.Data:dd/MM/yyyy}: lançamento inconsistente ignorado.");
+            }
         }
 
         alertas.Add("O IRRF é estimado porque o cadastro não possui o valor efetivamente retido na nota de corretagem. Confirme o valor real antes de pagar.");
-        alertas.Add("O vencimento considera o último dia útil bancário do mês seguinte, sem calendário local de feriados. Confirme no Sicalc ou no ReVar.");
-        alertas.Add("A apuração considera somente as operações registradas no InvestirGo. Custos iniciais e prejuízos anteriores devem ser informados no ReVar.");
+        alertas.Add("O vencimento considera o último dia útil bancário do mês seguinte, sem calendário local de feriados.");
+        alertas.Add("A apuração considera somente as operações registradas no InvestirGo; custos iniciais e prejuízos anteriores não cadastrados precisam de conferência manual.");
 
         var primeiroAno = operacoes.Count > 0 ? Math.Min(operacoes.Min(o => o.DataOperacao.Year), ano) : ano;
         var avaliados = AvaliarMeses(primeiroAno, ano, mesesBrutos);
@@ -350,8 +385,8 @@ public sealed class ApuracaoFiscalService(IOperacaoRepository operacaoRepository
         return valor;
     }
 
-    private static bool EhCompra(Operacao operacao) => operacao.TipoOperacao.Equals("COMPRA", StringComparison.OrdinalIgnoreCase);
-    private static bool EhVenda(Operacao operacao) => operacao.TipoOperacao.Equals("VENDA", StringComparison.OrdinalIgnoreCase);
+    private static bool EhCompra(Operacao operacao) => string.Equals(operacao.TipoOperacao?.Trim(), "COMPRA", StringComparison.OrdinalIgnoreCase);
+    private static bool EhVenda(Operacao operacao) => string.Equals(operacao.TipoOperacao?.Trim(), "VENDA", StringComparison.OrdinalIgnoreCase);
     private static decimal Arredondar(decimal valor, int casas = 2) => Math.Round(valor, casas, MidpointRounding.AwayFromZero);
 
     private enum GrupoTributacao { Geral, FiiFiagro, RevisaoManual }

@@ -249,6 +249,51 @@ public sealed class ApuracaoFiscalServiceTests
         Assert.Contains(apuracao.MatrizFiscal, item => item.Codigo == "OTHER" && !item.Calculavel);
     }
 
+    [Fact]
+    public async Task LancamentosMalformadosGeramAvisosSemDerrubarTodaApuracao()
+    {
+        var repo = new TestOperacaoRepository();
+        await repo.CriarAsync(new Operacao
+        {
+            UserId = Usuario,
+            Ticker = null!,
+            TipoAtivo = "Acao",
+            TipoOperacao = "COMPRA",
+            DataOperacao = new DateTime(2026, 1, 2),
+            Quantidade = 10,
+            PrecoUnitario = 10
+        });
+        await repo.CriarAsync(new Operacao
+        {
+            UserId = Usuario,
+            Ticker = "ERRO3",
+            TipoAtivo = "Acao",
+            TipoOperacao = null!,
+            DataOperacao = DateTime.MinValue,
+            Quantidade = 10,
+            PrecoUnitario = 10
+        });
+        await repo.CriarAsync(new Operacao
+        {
+            AtivoId = 2,
+            UserId = Usuario,
+            Ticker = "ERRO4",
+            TipoAtivo = "Acao",
+            TipoOperacao = "COMPRA",
+            DataOperacao = new DateTime(2026, 1, 3),
+            Quantidade = decimal.MaxValue,
+            PrecoUnitario = 2m,
+            ValorTotal = 0
+        });
+
+        var apuracao = await new ApuracaoFiscalService(repo).CalcularAsync(Usuario, 2026);
+
+        Assert.Equal(12, apuracao.Meses.Count);
+        Assert.Contains(apuracao.Alertas, alerta => alerta.Contains("sem ticker"));
+        Assert.Contains(apuracao.Alertas, alerta => alerta.Contains("data inválida"));
+        Assert.Contains(apuracao.Alertas, alerta => alerta.Contains("excedem o limite"));
+    }
+
     private static async Task<ApuracaoFiscalService> CriarServiceAsync(params Operacao[] operacoes)
     {
         var repo = new TestOperacaoRepository();
