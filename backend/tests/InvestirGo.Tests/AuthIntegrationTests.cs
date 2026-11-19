@@ -201,7 +201,7 @@ public class AuthIntegrationTests : IClassFixture<TestWebApplicationFactory>
         clientAttacker.DefaultRequestHeaders.Add("Cookie", $"investir_refresh={token1}");
 
         var reuseResponse = await clientAttacker.PostAsync("/api/auth/refresh", null);
-        Assert.Equal(HttpStatusCode.Unauthorized, reuseResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, reuseResponse.StatusCode);
 
         // Verifica que toda a família de sessões foi revogada
         var updatedSession = await repo.GetSessionByIdAsync(session.Id);
@@ -214,7 +214,7 @@ public class AuthIntegrationTests : IClassFixture<TestWebApplicationFactory>
         clientVictim.DefaultRequestHeaders.Add("Cookie", $"investir_refresh={token2}");
 
         var victimResponse = await clientVictim.PostAsync("/api/auth/refresh", null);
-        Assert.Equal(HttpStatusCode.Unauthorized, victimResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, victimResponse.StatusCode);
     }
 
     // ------------------------------------------------------------------------
@@ -279,7 +279,7 @@ public class AuthIntegrationTests : IClassFixture<TestWebApplicationFactory>
 
         // Tentar refresh com o cookie revogado deve falhar
         var refreshAfterLogout = await client.PostAsync("/api/auth/refresh", null);
-        Assert.Equal(HttpStatusCode.Unauthorized, refreshAfterLogout.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, refreshAfterLogout.StatusCode);
 
         // 2. Logout de todas as sessões
         var client2 = CreateTestClient(62);
@@ -616,5 +616,16 @@ public class AuthIntegrationTests : IClassFixture<TestWebApplicationFactory>
         Assert.NotNull(refreshData);
         Assert.Equal(testUser.Id, refreshData.User.Id);
         Assert.False(string.IsNullOrWhiteSpace(refreshData.AccessToken));
+    }
+
+    [Fact]
+    public async Task Test16_RefreshWithoutSession_ReturnsNoContent()
+    {
+        var client = CreateTestClient(16);
+
+        var response = await client.PostAsync("/api/auth/refresh", null);
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal(0, response.Content.Headers.ContentLength ?? 0);
     }
 }

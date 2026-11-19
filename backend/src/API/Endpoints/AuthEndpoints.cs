@@ -374,7 +374,9 @@ public static class AuthEndpoints
 
             if (string.IsNullOrWhiteSpace(refreshToken))
             {
-                return Results.Unauthorized();
+                // O refresh também funciona como bootstrap silencioso da SPA.
+                // Ausência de cookie significa apenas que não há sessão a restaurar.
+                return Results.NoContent();
             }
 
             string tokenHash = tokenService.ComputeSha256Hash(refreshToken);
@@ -416,11 +418,11 @@ public static class AuthEndpoints
                         $"Família {prevSession.SessionFamilyId} revogada devido a reuso de token.");
 
                     ClearRefreshCookie(context, secOptions.Value);
-                    return Results.Unauthorized();
+                    return Results.NoContent();
                 }
 
                 ClearRefreshCookie(context, secOptions.Value);
-                return Results.Unauthorized();
+                return Results.NoContent();
             }
 
             // Verifica se a sessão está revogada ou expirada
@@ -428,7 +430,7 @@ public static class AuthEndpoints
             if (session.IsRevoked || session.ExpiresAt <= currentTime || session.IdleExpiresAt <= currentTime)
             {
                 ClearRefreshCookie(context, secOptions.Value);
-                return Results.Unauthorized();
+                return Results.NoContent();
             }
 
             var user = await authRepo.GetUserByIdAsync(session.UserId);
@@ -436,7 +438,7 @@ public static class AuthEndpoints
             {
                 await authRepo.RevokeSessionAsync(session.Id, "USER_INACTIVE_OR_DELETED");
                 ClearRefreshCookie(context, secOptions.Value);
-                return Results.Unauthorized();
+                return Results.NoContent();
             }
 
             // Rotação atômica do refresh token

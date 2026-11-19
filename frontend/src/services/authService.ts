@@ -189,7 +189,12 @@ export const AuthService = {
     refreshPromise = (async () => {
       try {
         await AuthService.initCsrf();
-        const { data } = await authClient.post<{ accessToken: string; user: User }>('/auth/refresh');
+        const { data, status } = await authClient.post<{ accessToken: string; user: User } | undefined>('/auth/refresh');
+        if (status === 204 || !data?.accessToken || !data.user) {
+          AuthService.clearSession();
+          return null;
+        }
+
         inMemoryAccessToken = data.accessToken;
         inMemoryUser = data.user;
         if (data.user) {
