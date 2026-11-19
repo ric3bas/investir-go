@@ -15,7 +15,7 @@ public sealed class OperacaoRepository(DbConnectionFactory dbFactory) : IOperaca
                    o.tipo_operacao AS TipoOperacao, o.data_operacao AS DataOperacao,
                    o.quantidade AS Quantidade, o.preco_unitario AS PrecoUnitario,
                    o.valor_total AS ValorTotal, o.taxas AS Taxas, o.observacoes AS Observacoes,
-                   a.preco_atual AS PrecoAtual, COALESCE(o.user_id, o.usuario_id) AS UserId,
+                   a.preco_atual AS PrecoAtual, o.user_id AS UserId,
                    o.created_at AS CreatedAt
             FROM inv.operacoes o
             JOIN inv.ativos a ON a.id = o.ativo_id
@@ -25,7 +25,7 @@ public sealed class OperacaoRepository(DbConnectionFactory dbFactory) : IOperaca
 
         if (userId.HasValue)
         {
-            sql += " AND (o.user_id = @UserId OR (o.user_id IS NULL AND o.usuario_id = @UserId))";
+            sql += " AND o.user_id = @UserId";
             parameters.Add("UserId", userId.Value);
         }
         if (!string.IsNullOrWhiteSpace(ticker))
@@ -51,7 +51,7 @@ public sealed class OperacaoRepository(DbConnectionFactory dbFactory) : IOperaca
                    o.tipo_operacao AS TipoOperacao, o.data_operacao AS DataOperacao,
                    o.quantidade AS Quantidade, o.preco_unitario AS PrecoUnitario,
                    o.valor_total AS ValorTotal, o.taxas AS Taxas, o.observacoes AS Observacoes,
-                   a.preco_atual AS PrecoAtual, COALESCE(o.user_id, o.usuario_id) AS UserId,
+                   a.preco_atual AS PrecoAtual, o.user_id AS UserId,
                    o.created_at AS CreatedAt
             FROM inv.operacoes o
             JOIN inv.ativos a ON a.id = o.ativo_id

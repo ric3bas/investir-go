@@ -114,50 +114,45 @@ CREATE INDEX IF NOT EXISTS idx_rate_limit_attempts_key_time
     ON auth.rate_limit_attempts(rate_key, occurred_at);
 
 -- ----------------------------------------------------------------------------
--- 7. Adição de usuario_id e user_id no schema inv para controle de acesso (IDOR)
+-- 7. auth.users é a única origem de usuários do sistema
 -- ----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS inv.usuarios (
-    id UUID PRIMARY KEY DEFAULT '22222222-2222-2222-2222-222222222222'::UUID,
-    nome VARCHAR(120) NOT NULL DEFAULT 'Investidor',
-    email VARCHAR(255) NOT NULL UNIQUE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
+ALTER TABLE inv.operacoes ADD COLUMN IF NOT EXISTS user_id UUID;
+ALTER TABLE inv.proventos ADD COLUMN IF NOT EXISTS user_id UUID;
 
-INSERT INTO inv.usuarios (id, nome, email)
-VALUES ('22222222-2222-2222-2222-222222222222'::UUID, 'Investidor', 'usuario@investirgo.com')
-ON CONFLICT (id) DO NOTHING;
+CREATE INDEX IF NOT EXISTS idx_operacoes_user_id ON inv.operacoes(user_id);
+CREATE INDEX IF NOT EXISTS idx_proventos_user_id ON inv.proventos(user_id);
 
 DO $$
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_schema = 'inv' AND table_name = 'operacoes' AND column_name = 'usuario_id'
+        SELECT 1
+          FROM pg_constraint constraint_info
+          JOIN pg_attribute column_info
+            ON column_info.attrelid = constraint_info.conrelid
+           AND column_info.attnum = ANY (constraint_info.conkey)
+         WHERE constraint_info.contype = 'f'
+           AND constraint_info.conrelid = 'inv.operacoes'::regclass
+           AND constraint_info.confrelid = 'auth.users'::regclass
+           AND column_info.attname = 'user_id'
     ) THEN
-        ALTER TABLE inv.operacoes ADD COLUMN usuario_id UUID REFERENCES inv.usuarios(id) ON DELETE CASCADE;
-        CREATE INDEX IF NOT EXISTS idx_operacoes_usuario_id ON inv.operacoes(usuario_id);
+        ALTER TABLE inv.operacoes
+            ADD CONSTRAINT fk_operacoes_auth_user
+            FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
     END IF;
 
     IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_schema = 'inv' AND table_name = 'operacoes' AND column_name = 'user_id'
+        SELECT 1
+          FROM pg_constraint constraint_info
+          JOIN pg_attribute column_info
+            ON column_info.attrelid = constraint_info.conrelid
+           AND column_info.attnum = ANY (constraint_info.conkey)
+         WHERE constraint_info.contype = 'f'
+           AND constraint_info.conrelid = 'inv.proventos'::regclass
+           AND constraint_info.confrelid = 'auth.users'::regclass
+           AND column_info.attname = 'user_id'
     ) THEN
-        ALTER TABLE inv.operacoes ADD COLUMN user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
-        CREATE INDEX IF NOT EXISTS idx_operacoes_user_id ON inv.operacoes(user_id);
-    END IF;
-
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_schema = 'inv' AND table_name = 'proventos' AND column_name = 'usuario_id'
-    ) THEN
-        ALTER TABLE inv.proventos ADD COLUMN usuario_id UUID REFERENCES inv.usuarios(id) ON DELETE CASCADE;
-        CREATE INDEX IF NOT EXISTS idx_proventos_usuario_id ON inv.proventos(usuario_id);
-    END IF;
-
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_schema = 'inv' AND table_name = 'proventos' AND column_name = 'user_id'
-    ) THEN
-        ALTER TABLE inv.proventos ADD COLUMN user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
-        CREATE INDEX IF NOT EXISTS idx_proventos_user_id ON inv.proventos(user_id);
+        ALTER TABLE inv.proventos
+            ADD CONSTRAINT fk_proventos_auth_user
+            FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
     END IF;
 END $$;

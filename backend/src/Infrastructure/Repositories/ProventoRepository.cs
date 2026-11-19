@@ -15,7 +15,7 @@ public sealed class ProventoRepository(DbConnectionFactory dbFactory) : IProvent
                    p.tipo_provento AS TipoProvento, p.data_com AS DataCom,
                    p.data_pagamento AS DataPagamento, p.valor_por_cota AS ValorPorCota,
                    p.quantidade_cotas AS QuantidadeCotas, p.valor_total AS ValorTotal,
-                   p.observacoes AS Observacoes, COALESCE(p.user_id, p.usuario_id) AS UserId,
+                   p.observacoes AS Observacoes, p.user_id AS UserId,
                    p.created_at AS CreatedAt
             FROM inv.proventos p
             JOIN inv.ativos a ON a.id = p.ativo_id
@@ -25,7 +25,7 @@ public sealed class ProventoRepository(DbConnectionFactory dbFactory) : IProvent
 
         if (userId.HasValue)
         {
-            sql += " AND (p.user_id = @UserId OR (p.user_id IS NULL AND p.usuario_id = @UserId))";
+            sql += " AND p.user_id = @UserId";
             parameters.Add("UserId", userId.Value);
         }
         if (!string.IsNullOrWhiteSpace(ticker))
@@ -51,7 +51,7 @@ public sealed class ProventoRepository(DbConnectionFactory dbFactory) : IProvent
                    p.tipo_provento AS TipoProvento, p.data_com AS DataCom,
                    p.data_pagamento AS DataPagamento, p.valor_por_cota AS ValorPorCota,
                    p.quantidade_cotas AS QuantidadeCotas, p.valor_total AS ValorTotal,
-                   p.observacoes AS Observacoes, COALESCE(p.user_id, p.usuario_id) AS UserId,
+                   p.observacoes AS Observacoes, p.user_id AS UserId,
                    p.created_at AS CreatedAt
             FROM inv.proventos p
             JOIN inv.ativos a ON a.id = p.ativo_id
@@ -87,7 +87,7 @@ public sealed class ProventoRepository(DbConnectionFactory dbFactory) : IProvent
             const string userSql = """
                 SELECT COALESCE(SUM(valor_total), 0)
                 FROM inv.proventos
-                WHERE user_id = @UserId OR (user_id IS NULL AND usuario_id = @UserId);
+                WHERE user_id = @UserId;
             """;
             return await conn.ExecuteScalarAsync<decimal>(userSql, new { UserId = userId.Value });
         }
