@@ -9,6 +9,7 @@ public interface IAtivoRepository
     Task<Ativo?> ObterPorTickerAsync(string ticker);
     Task<int> CriarAsync(Ativo ativo);
     Task<bool> AtualizarCotacaoAsync(int id, decimal precoAtual, decimal? variacaoDia, decimal? dividendYield);
+    Task<bool> AtualizarTipoAsync(int id, string tipo);
 }
 
 public interface IOperacaoRepository

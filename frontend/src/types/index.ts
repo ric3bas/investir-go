@@ -1,8 +1,10 @@
+export type TipoAtivo = 'Acao' | 'BR_STOCK_SPOT' | 'ETF' | 'BDR' | 'FII' | 'FIAGRO' | 'OPTION' | 'FUTURE' | 'GOLD' | 'OTHER';
+
 export interface Ativo {
   id: number;
   ticker: string;
   nome: string;
-  tipo: 'Acao' | 'FII' | 'BDR' | 'ETF';
+  tipo: TipoAtivo;
   setor?: string;
   precoAtual: number;
   variacaoDia: number;
@@ -76,6 +78,90 @@ export interface ResumoCarteira {
   percentualFIIs: number;
 }
 
+// ------------------- APURACAO FISCAL / DARF -------------------
+export interface ApuracaoFiscalAtivo {
+  ativoId: number;
+  ticker: string;
+  tipoAtivo: string;
+  classeFiscal: string;
+  calculado: boolean;
+  quantidadeVendida: number;
+  totalVendas: number;
+  resultadoComum: number;
+  resultadoDayTrade: number;
+}
+
+export interface ApuracaoFiscalMensal {
+  ano: number;
+  mes: number;
+  competencia: string;
+  vencimentoEstimado: string;
+  vendasAcoes: number;
+  vendasOuro: number;
+  vendasOutros: number;
+  vendasFiis: number;
+  vendasDayTrade: number;
+  resultadoAcoes: number;
+  resultadoIsentoAcoes: number;
+  resultadoOuro: number;
+  resultadoIsentoOuro: number;
+  resultadoOutros: number;
+  resultadoFiis: number;
+  resultadoDayTrade: number;
+  baseTributavelComum: number;
+  baseTributavelFiis: number;
+  baseTributavelDayTrade: number;
+  prejuizoCompensadoComum: number;
+  prejuizoCompensadoFiis: number;
+  prejuizoCompensadoDayTrade: number;
+  saldoPrejuizoComum: number;
+  saldoPrejuizoFiis: number;
+  saldoPrejuizoDayTrade: number;
+  irrfComumEstimado: number;
+  irrfDayTradeEstimado: number;
+  irrfCompensado: number;
+  impostoBruto: number;
+  impostoLiquido: number;
+  saldoMesesAnteriores: number;
+  darfEstimado: number;
+  saldoAbaixoMinimo: number;
+  acoesIsentas: boolean;
+  ouroIsento: boolean;
+  darfDevido: boolean;
+  situacao: string;
+  classes: ApuracaoFiscalClasseMensal[];
+  ativos: ApuracaoFiscalAtivo[];
+}
+
+export interface ApuracaoFiscalClasseMensal {
+  codigo: string;
+  vendasComuns: number;
+  vendasDayTrade: number;
+  resultadoComum: number;
+  resultadoDayTrade: number;
+  calculado: boolean;
+}
+
+export interface MatrizFiscalClasse {
+  codigo: string;
+  rotulo: string;
+  aliquotaComum: number | null;
+  aliquotaDayTrade: number | null;
+  isencao: string;
+  grupoPrejuizo: string;
+  calculavel: boolean;
+}
+
+export interface ApuracaoFiscal {
+  ano: number;
+  geradoEm: string;
+  codigoDarf: string;
+  escopo: string;
+  matrizFiscal: MatrizFiscalClasse[];
+  meses: ApuracaoFiscalMensal[];
+  alertas: string[];
+}
+
 // ------------------- HISTÓRICO E GRÁFICOS (ATÉ 5 ANOS) -------------------
 export type PeriodoHistorico = '1D' | '7D' | '15D' | '1M' | '6M' | '1A' | '2A' | '5A';
 
@@ -108,7 +194,7 @@ export interface PerformanceAtivo {
   ativo: Ativo;
   ticker: string;
   nome: string;
-  tipo: 'Acao' | 'FII' | 'BDR' | 'ETF';
+  tipo: TipoAtivo;
   setor?: string;
   precoAtual: number;
   precoInicial: number;

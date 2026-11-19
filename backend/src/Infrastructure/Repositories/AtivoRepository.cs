@@ -77,4 +77,16 @@ public sealed class AtivoRepository(DbConnectionFactory dbFactory) : IAtivoRepos
         });
         return rows > 0;
     }
+
+    public async Task<bool> AtualizarTipoAsync(int id, string tipo)
+    {
+        using var conn = dbFactory.CreateConnection();
+        const string sql = """
+            UPDATE inv.ativos
+            SET tipo = @Tipo,
+                data_atualizacao = NOW()
+            WHERE id = @Id;
+        """;
+        return await conn.ExecuteAsync(sql, new { Id = id, Tipo = tipo }) > 0;
+    }
 }

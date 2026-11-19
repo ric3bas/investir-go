@@ -25,6 +25,19 @@ public static class ApiEndpoints
             return Results.Ok(resumo);
         }).WithTags("Carteira").RequireAuthorization();
 
+        // ----------------- APURACAO FISCAL / DARF -----------------
+        group.MapGet("/fiscal/apuracao", async (int? ano, IApuracaoFiscalService fiscalService, ICurrentUserService currentUser) =>
+        {
+            var anoApuracao = ano ?? DateTime.Today.Year;
+            if (anoApuracao is < 2000 or > 2100)
+                return Results.BadRequest(new { message = "Ano de apuracao invalido." });
+            if (!currentUser.UserId.HasValue)
+                return Results.Unauthorized();
+
+            var apuracao = await fiscalService.CalcularAsync(currentUser.UserId.Value, anoApuracao);
+            return Results.Ok(apuracao);
+        }).WithTags("Fiscal").RequireAuthorization();
+
         // ----------------- OPERAÇÕES (COMPRAS & VENDAS) -----------------
         group.MapGet("/operacoes", async (string? ticker, string? tipo, IOperacaoRepository operacaoRepo, ICurrentUserService currentUser) =>
         {
@@ -59,12 +72,9 @@ public static class ApiEndpoints
                 var ativoExistente = await ativoRepo.ObterPorTickerAsync(dto.Ticker.Trim().ToUpper());
                 if (ativoExistente is null)
                 {
-                    ativoId = await ativoRepo.CriarAsync(new Ativo
+                    return Results.BadRequest(new
                     {
-                        Ticker = dto.Ticker.Trim().ToUpper(),
-                        Nome = dto.Ticker.Trim().ToUpper(),
-                        Tipo = dto.Ticker.Trim().ToUpper().EndsWith("11") ? "FII" : "Acao",
-                        PrecoAtual = dto.PrecoUnitario
+                        message = $"Ativo '{dto.Ticker.Trim().ToUpper()}' não cadastrado. Cadastre o ativo e selecione sua classe fiscal antes de registrar a operação."
                     });
                 }
                 else
@@ -191,10 +201,19 @@ public static class ApiEndpoints
                 return Results.Conflict(new { message = $"Ativo com ticker {dto.Ticker} já cadastrado." });
             }
 
-            BrapiResult cotacao;
+            var tipoNormalizado = NormalizarClasseFiscal(dto.Tipo);
+            if (string.IsNullOrEmpty(tipoNormalizado))
+                return Results.BadRequest(new { message = "Classe fiscal do ativo inválida." });
+
+            BrapiResult? cotacao = null;
             try
             {
                 cotacao = await marketData.ObterDadosCompletosAsync(dto.Ticker, cancellationToken);
+            }
+            catch (MarketDataException) when (dto.PrecoAtual > 0)
+            {
+                // Derivativos, ouro e ativos customizados podem não existir no provedor.
+                // Nesses casos, preserva o preço explicitamente informado pelo usuário.
             }
             catch (MarketDataException ex)
             {
@@ -206,10 +225,10 @@ public static class ApiEndpoints
             {
                 Ticker = dto.Ticker.Trim().ToUpper(),
                 Nome = dto.Nome,
-                Tipo = dto.Tipo,
+                Tipo = tipoNormalizado,
                 Setor = dto.Setor,
-                PrecoAtual = cotacao.RegularMarketPrice,
-                VariacaoDia = cotacao.RegularMarketChangePercent,
+                PrecoAtual = cotacao?.RegularMarketPrice ?? dto.PrecoAtual,
+                VariacaoDia = cotacao?.RegularMarketChangePercent ?? dto.VariacaoDia,
                 DividendYield = dto.DividendYield
             };
 
@@ -217,6 +236,21 @@ public static class ApiEndpoints
             ativo.Id = id;
 
             return Results.Created($"/api/ativos/{ativo.Ticker}", ativo);
+        }).WithTags("Ativos").RequireAuthorization();
+
+        group.MapPut("/ativos/{id:int}/classe-fiscal", async (
+            int id,
+            AtualizarClasseFiscalDto dto,
+            IAtivoRepository ativoRepo) =>
+        {
+            var classe = NormalizarClasseFiscal(dto.ClasseFiscal);
+            if (string.IsNullOrEmpty(classe))
+                return Results.BadRequest(new { message = "Classe fiscal do ativo inválida." });
+            if (await ativoRepo.ObterPorIdAsync(id) is null)
+                return Results.NotFound(new { message = "Ativo não encontrado." });
+
+            await ativoRepo.AtualizarTipoAsync(id, classe);
+            return Results.Ok(new { id, classeFiscal = classe });
         }).WithTags("Ativos").RequireAuthorization();
 
         // ----------------- HISTÓRICO REAL DE MERCADO -----------------
@@ -326,4 +360,18 @@ public static class ApiEndpoints
             return Results.Ok(noticias);
         }).WithTags("Noticias");
     }
+
+    private static string NormalizarClasseFiscal(string? tipo) => (tipo ?? string.Empty).Trim().ToUpperInvariant() switch
+    {
+        "ACAO" or "AÇÃO" or "BR_STOCK_SPOT" => "Acao",
+        "ETF" => "ETF",
+        "BDR" => "BDR",
+        "FII" => "FII",
+        "FIAGRO" => "FIAGRO",
+        "OPTION" or "OPCAO" or "OPÇÃO" => "OPTION",
+        "FUTURE" or "FUTURO" => "FUTURE",
+        "GOLD" or "OURO" => "GOLD",
+        "OTHER" or "OUTRO" => "OTHER",
+        _ => string.Empty
+    };
 }

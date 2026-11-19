@@ -19,6 +19,7 @@ import { PerformanceTab } from './components/PerformanceTab';
 import { NoticiasFavoritosTab } from './components/NoticiasFavoritosTab';
 import { ProventosTab } from './components/ProventosTab';
 import { AdminPanelTab } from './components/auth/AdminPanelTab';
+import { FiscalTab } from './components/FiscalTab';
 import { AtivoDetalhesModal } from './components/AtivoDetalhesModal';
 import { LancamentosModal } from './components/LancamentosModal';
 import { NovaOperacaoModal } from './components/NovaOperacaoModal';
@@ -199,6 +200,7 @@ export const AppWrapper: React.FC = () => {
             {currentRoute === 'performance' && <PerformanceTab ativos={ativos} favoritos={favoritos} onToggleFavorito={handleToggleFavorito} onSelectAtivo={handleSelectAtivo} onCadastrarAtivo={handleOpenCadastrarAtivo} onSalvarAtivoRapido={handleCadastrarAtivo} onAtualizarPrecos={handleAtualizarPrecos} carregandoPrecos={carregandoPrecos} />}
             {currentRoute === 'noticias' && <NoticiasFavoritosTab key={noticiasTickerFiltro || 'noticias-geral'} ativos={ativos} favoritos={favoritos} initialTickerFiltro={noticiasTickerFiltro} onToggleFavorito={handleToggleFavorito} onSelectAtivo={handleSelectAtivo} />}
             {currentRoute === 'proventos' && <ProventosTab proventos={proventos} onOpenNovoProvento={handleOpenNovoProvento} onExcluirProvento={handleExcluirProvento} />}
+            {currentRoute === 'fiscal' && <FiscalTab />}
             {currentRoute === 'admin' && <AdminPanelTab />}
           </>
         )}

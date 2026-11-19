@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Ativo, PerformanceAtivo, PeriodoPerformance } from '../types';
+import { Ativo, PerformanceAtivo, PeriodoPerformance, TipoAtivo } from '../types';
 import { buscarAtivosMercado, AtivoPesquisaResultado } from '../utils/marketData';
 import { InvestirApi } from '../services/api';
 import {
@@ -30,7 +30,7 @@ interface PerformanceTabProps {
   onCadastrarAtivo?: (dados?: {
     ticker?: string;
     nome?: string;
-    tipo?: 'Acao' | 'FII' | 'BDR' | 'ETF';
+    tipo?: TipoAtivo;
     setor?: string;
     precoAtual?: number;
     dividendYield?: number;
@@ -385,7 +385,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
                     onClick={() =>
                       onCadastrarAtivo({
                         ticker: termoPesquisa.trim().toUpperCase(),
-                        tipo: termoPesquisa.trim().endsWith('11') ? 'FII' : 'Acao',
+                        tipo: 'OTHER',
                       })
                     }
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 transition"

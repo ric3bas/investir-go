@@ -5,7 +5,7 @@ public class Ativo
     public int Id { get; set; }
     public string Ticker { get; set; } = string.Empty;
     public string Nome { get; set; } = string.Empty;
-    public string Tipo { get; set; } = "Acao"; // 'Acao', 'FII', 'BDR', 'ETF'
+    public string Tipo { get; set; } = "Acao"; // Classe fiscal: Acao, ETF, BDR, FII, FIAGRO, OPTION, FUTURE, GOLD ou OTHER
     public string? Setor { get; set; }
     public decimal PrecoAtual { get; set; }
     public decimal VariacaoDia { get; set; }

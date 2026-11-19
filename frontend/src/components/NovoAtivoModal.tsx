@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { X, Building2 } from 'lucide-react';
+import { TipoAtivo } from '../types';
 
 interface NovoAtivoModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultTicker?: string;
   defaultNome?: string;
-  defaultTipo?: 'Acao' | 'FII' | 'BDR' | 'ETF';
+  defaultTipo?: TipoAtivo;
   defaultSetor?: string;
   defaultPreco?: number;
   defaultDividendYield?: number;
@@ -33,7 +34,7 @@ export const NovoAtivoModal: React.FC<NovoAtivoModalProps> = ({
 }) => {
   const [ticker, setTicker] = useState(defaultTicker);
   const [nome, setNome] = useState(defaultNome);
-  const [tipo, setTipo] = useState<'Acao' | 'FII' | 'BDR' | 'ETF'>('Acao');
+  const [tipo, setTipo] = useState<TipoAtivo>('Acao');
   const [setor, setSetor] = useState(defaultSetor);
   const [precoAtual, setPrecoAtual] = useState(defaultPreco !== undefined ? defaultPreco.toString() : '');
   const [dividendYield, setDividendYield] = useState(defaultDividendYield !== undefined ? defaultDividendYield.toString() : '');
@@ -43,7 +44,7 @@ export const NovoAtivoModal: React.FC<NovoAtivoModalProps> = ({
     if (isOpen) {
       setTicker(defaultTicker || '');
       setNome(defaultNome || '');
-      const tipoPadrao = defaultTipo || (defaultTicker && defaultTicker.endsWith('11') ? 'FII' : 'Acao');
+      const tipoPadrao: TipoAtivo = defaultTipo || (defaultTicker ? 'OTHER' : 'Acao');
       setTipo(tipoPadrao);
       setSetor(defaultSetor || '');
       setPrecoAtual(defaultPreco !== undefined ? defaultPreco.toString() : '');
@@ -112,7 +113,7 @@ export const NovoAtivoModal: React.FC<NovoAtivoModalProps> = ({
           </div>
           <div>
             <h3 className="text-lg font-bold text-slate-100">Cadastrar Novo Ativo</h3>
-            <p className="text-xs text-slate-400">Adicione uma ação ou FII ao catálogo</p>
+            <p className="text-xs text-slate-400">Cadastre o ativo com sua classe fiscal correta</p>
           </div>
         </div>
 
@@ -123,11 +124,7 @@ export const NovoAtivoModal: React.FC<NovoAtivoModalProps> = ({
               type="text"
               placeholder="Ex: WEGE3, KNRI11"
               value={ticker}
-              onChange={(e) => {
-                const t = e.target.value.toUpperCase();
-                setTicker(t);
-                if (t.endsWith('11')) setTipo('FII');
-              }}
+              onChange={(e) => setTicker(e.target.value.toUpperCase())}
               className="w-full px-3 py-2 text-sm rounded-xl bg-slate-950 border border-slate-800 text-slate-100 font-mono uppercase focus:outline-none focus:border-teal-500"
               required
             />
@@ -150,13 +147,18 @@ export const NovoAtivoModal: React.FC<NovoAtivoModalProps> = ({
               <label className="block text-xs font-medium text-slate-300 mb-1">Tipo</label>
               <select
                 value={tipo}
-                onChange={(e) => setTipo(e.target.value as any)}
+                onChange={(e) => setTipo(e.target.value as TipoAtivo)}
                 className="w-full px-3 py-2 text-sm rounded-xl bg-slate-950 border border-slate-800 text-slate-100 focus:outline-none focus:border-teal-500"
               >
                 <option value="Acao">Ação</option>
                 <option value="FII">FII</option>
                 <option value="BDR">BDR</option>
                 <option value="ETF">ETF</option>
+                <option value="FIAGRO">Fiagro</option>
+                <option value="OPTION">Opção</option>
+                <option value="FUTURE">Futuro</option>
+                <option value="GOLD">Ouro ativo financeiro</option>
+                <option value="OTHER">Outro / revisão manual</option>
               </select>
             </div>
 

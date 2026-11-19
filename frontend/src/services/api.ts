@@ -9,7 +9,8 @@ import {
   PerformanceAtivo,
   PeriodoHistorico,
   PeriodoPerformance,
-  NoticiaAtivo
+  NoticiaAtivo,
+  ApuracaoFiscal
 } from '../types';
 import { NOTICIAS_MERCADO } from '../utils/marketData';
 
@@ -31,6 +32,11 @@ export const InvestirApi = {
 
   getPosicoes: async (): Promise<PosicaoCarteira[]> => {
     const { data } = await authClient.get('/carteira/posicoes');
+    return data;
+  },
+
+  getApuracaoFiscal: async (ano: number): Promise<ApuracaoFiscal> => {
+    const { data } = await authClient.get('/fiscal/apuracao', { params: { ano } });
     return data;
   },
 
@@ -100,6 +106,10 @@ export const InvestirApi = {
   }): Promise<Ativo> => {
     const { data } = await authClient.post('/ativos', ativo);
     return data;
+  },
+
+  atualizarClasseFiscal: async (ativoId: number, classeFiscal: string): Promise<void> => {
+    await authClient.put(`/ativos/${ativoId}/classe-fiscal`, { classeFiscal });
   },
 
   // ----------------- HISTÓRICO & PERFORMANCE (ATÉ 5 ANOS) -----------------

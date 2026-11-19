@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useState, ReactNode, useEffect } from 'react';
 
-export type Route = 'dashboard' | 'carteira' | 'performance' | 'proventos' | 'noticias' | 'admin' | 'login';
+export type Route = 'dashboard' | 'carteira' | 'performance' | 'proventos' | 'noticias' | 'fiscal' | 'admin' | 'login';
 
 interface RouterContextType {
   currentRoute: Route;
@@ -12,7 +12,7 @@ const RouterContext = createContext<RouterContextType | undefined>(undefined);
 export const RouterProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const getRouteFromPath = (): Route => {
     const path = window.location.pathname.substring(1);
-    const validRoutes: Route[] = ['dashboard', 'carteira', 'performance', 'proventos', 'noticias', 'admin', 'login'];
+    const validRoutes: Route[] = ['dashboard', 'carteira', 'performance', 'proventos', 'noticias', 'fiscal', 'admin', 'login'];
     return validRoutes.includes(path as Route) ? (path as Route) : 'dashboard';
   };
 

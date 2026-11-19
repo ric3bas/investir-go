@@ -94,6 +94,7 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
   const subtotal = qtdNum * precoNum;
   const totalCalculado = subtotal + (tipoOperacao === 'COMPRA' ? taxasNum : -taxasNum);
   const tickerNormalizado = ticker.trim().toUpperCase();
+  const ativoSelecionado = listaAtivos.find((ativo) => ativo.ticker.toUpperCase() === tickerNormalizado);
   const posicaoAtual = posicoes.find((posicao) => posicao.ticker.toUpperCase() === tickerNormalizado);
   const quantidadeAtual = posicaoAtual?.quantidadeCustodia ?? 0;
   const precoMedioAtual = posicaoAtual?.precoMedio ?? 0;
@@ -115,6 +116,10 @@ export const NovaOperacaoModal: React.FC<NovaOperacaoModalProps> = ({
     e.preventDefault();
     if (!ticker.trim()) {
       alert('Informe o Ticker do ativo (ex: BBAS3, MXRF11).');
+      return;
+    }
+    if (!ativoSelecionado) {
+      alert(`Cadastre ${tickerNormalizado} e informe sua classe fiscal antes de registrar a operação.`);
       return;
     }
     if (qtdNum <= 0 || precoNum <= 0) {

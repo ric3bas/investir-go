@@ -50,81 +50,7 @@ interface AllocationChartItem {
   color: string;
 }
 
-interface OutsideLabelPosition {
-  side: 'left' | 'right';
-  y: number;
-}
-
 const RADIAN = Math.PI / 180;
-
-/**
- * Espalha os rótulos de cada lado do donut para impedir sobreposição entre
- * posições pequenas e próximas. Os ângulos seguem a orientação padrão do Pie.
- */
-const getOutsideLabelPositions = (
-  data: AllocationChartItem[],
-  cy: number,
-  outerRadius: number,
-): OutsideLabelPosition[] => {
-  const total = data.reduce((sum, item) => sum + Math.max(item.value, 0), 0);
-  if (total <= 0) return data.map(() => ({ side: 'right', y: cy }));
-
-  let currentAngle = 90;
-  const positions = data.map((item, index) => {
-    const sliceAngle = (Math.max(item.value, 0) / total) * 360;
-    const midAngle = currentAngle - sliceAngle / 2;
-    currentAngle -= sliceAngle;
-
-    const cosine = Math.cos(-midAngle * RADIAN);
-    const desiredY = cy + (outerRadius + 34) * Math.sin(-midAngle * RADIAN);
-
-    return {
-      index,
-      side: cosine >= 0 ? 'right' as const : 'left' as const,
-      desiredY,
-      y: desiredY,
-    };
-  });
-
-  const top = 22;
-  const bottom = cy * 2 - 22;
-
-  (['left', 'right'] as const).forEach((side) => {
-    const sidePositions = positions
-      .filter((position) => position.side === side)
-      .sort((a, b) => a.desiredY - b.desiredY);
-
-    if (sidePositions.length === 0) return;
-
-    const availableHeight = Math.max(0, bottom - top);
-    const gap = sidePositions.length > 1
-      ? Math.min(38, availableHeight / (sidePositions.length - 1))
-      : 0;
-
-    sidePositions.forEach((position, index) => {
-      const previousY = index === 0 ? top - gap : sidePositions[index - 1].y;
-      position.y = Math.max(position.desiredY, previousY + gap, top);
-    });
-
-    const overflow = sidePositions[sidePositions.length - 1].y - bottom;
-    if (overflow > 0) {
-      sidePositions.forEach((position) => {
-        position.y -= overflow;
-      });
-    }
-
-    const topOverflow = top - sidePositions[0].y;
-    if (topOverflow > 0) {
-      sidePositions.forEach((position) => {
-        position.y += topOverflow;
-      });
-    }
-  });
-
-  return positions
-    .sort((a, b) => a.index - b.index)
-    .map(({ side, y }) => ({ side, y }));
-};
 
 export const DashboardTab: React.FC<DashboardTabProps> = ({
   resumo,
@@ -188,29 +114,62 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
     const item = dataAtivos[index];
     if (!item) return null;
 
-    const positions = getOutsideLabelPositions(dataAtivos, Number(cy), Number(outerRadius));
-    const position = positions[index];
-    const isRight = position.side === 'right';
-    const direction = isRight ? 1 : -1;
+    const centerX = Number(cx);
+    const centerY = Number(cy);
+    const radius = Number(outerRadius);
     const angle = -Number(midAngle) * RADIAN;
-    const startX = Number(cx) + (Number(outerRadius) + 7) * Math.cos(angle);
-    const startY = Number(cy) + (Number(outerRadius) + 7) * Math.sin(angle);
-    const radialExitX = Number(cx) + (Number(outerRadius) + 16) * Math.cos(angle);
-    const radialExitY = Number(cy) + (Number(outerRadius) + 16) * Math.sin(angle);
-    const railX = Number(cx) + direction * (Number(outerRadius) + 21);
-    const isCompact = Number(cx) < 210;
-    const estimatedLabelWidth = isCompact ? 58 : 88;
-    const horizontalRoom = Number(cx) - Number(outerRadius);
-    const connectorLength = Math.max(28, Math.min(48, horizontalRoom - estimatedLabelWidth - 8));
-    const lineEndX = Number(cx) + direction * (Number(outerRadius) + connectorLength);
-    const textX = lineEndX + direction * 7;
-    const textAnchor = isRight ? 'start' : 'end';
+    const cosine = Math.cos(angle);
+    const sine = Math.sin(angle);
+    const isCompact = centerX < 210;
+    const chartWidth = centerX * 2;
+    const chartHeight = centerY * 2;
+    const isVertical = Math.abs(sine) > Math.abs(cosine) * 0.85;
+    const side = isVertical
+      ? (sine < 0 ? 'top' : 'bottom')
+      : (cosine >= 0 ? 'right' : 'left');
+
+    const startX = centerX + (radius + 7) * cosine;
+    const startY = centerY + (radius + 7) * sine;
+    const radialExitX = centerX + (radius + 16) * cosine;
+    const radialExitY = centerY + (radius + 16) * sine;
+
+    let points: string;
+    let textX: number;
+    let tickerY: number;
+    let textAnchor: 'start' | 'middle' | 'end';
+
+    if (side === 'left' || side === 'right') {
+      const direction = side === 'right' ? 1 : -1;
+      const railX = centerX + direction * (radius + 21);
+      const estimatedLabelWidth = isCompact ? 58 : 88;
+      const horizontalRoom = centerX - radius;
+      const connectorLength = Math.max(28, Math.min(48, horizontalRoom - estimatedLabelWidth - 8));
+      const lineEndX = centerX + direction * (radius + connectorLength);
+      const labelY = Math.max(28, Math.min(chartHeight - 28, centerY + sine * (radius + 52)));
+
+      points = `${startX},${startY} ${radialExitX},${radialExitY} ${railX},${radialExitY} ${railX},${labelY} ${lineEndX},${labelY}`;
+      textX = lineEndX + direction * 7;
+      tickerY = labelY + 4;
+      textAnchor = side === 'right' ? 'start' : 'end';
+    } else {
+      const direction = side === 'bottom' ? 1 : -1;
+      const railY = centerY + direction * (radius + 21);
+      const lineEndY = centerY + direction * (radius + 48);
+      const horizontalPadding = isCompact ? 52 : 72;
+      const projectedX = centerX + cosine * (radius + 72);
+      const labelX = Math.max(horizontalPadding, Math.min(chartWidth - horizontalPadding, projectedX));
+
+      points = `${startX},${startY} ${radialExitX},${radialExitY} ${radialExitX},${railY} ${labelX},${railY} ${labelX},${lineEndY}`;
+      textX = labelX;
+      tickerY = lineEndY + (side === 'top' ? -9 : 19);
+      textAnchor = 'middle';
+    }
 
     return (
       <g className="pointer-events-none">
         <title>{`${item.name} — ${item.nome}: ${item.percentual.toFixed(1)}%, ${formatarValor(item.value)}`}</title>
         <polyline
-          points={`${startX},${startY} ${radialExitX},${radialExitY} ${railX},${radialExitY} ${railX},${position.y} ${lineEndX},${position.y}`}
+          points={points}
           fill="none"
           stroke={item.color}
           strokeWidth={1.25}
@@ -221,24 +180,15 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
         />
         <text
           x={textX}
-          y={position.y - 4}
+          y={tickerY}
           textAnchor={textAnchor}
           fill="#f8fafc"
           className="font-mono font-bold"
-          fontSize={isCompact ? 9 : 11}
+          fontSize={isCompact ? 11 : 14}
+          fontWeight={800}
+          letterSpacing={0.35}
         >
           {item.name}
-          <tspan fill={item.color} dx={5}>{item.percentual.toFixed(1)}%</tspan>
-        </text>
-        <text
-          x={textX}
-          y={position.y + 11}
-          textAnchor={textAnchor}
-          fill="#94a3b8"
-          className="font-mono tabular-nums"
-          fontSize={isCompact ? 8 : 9}
-        >
-          {formatarValor(item.value)}
         </text>
       </g>
     );

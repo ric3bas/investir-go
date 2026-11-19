@@ -209,7 +209,7 @@ export const AtivoCombobox: React.FC<AtivoComboboxProps> = ({
             <div className="p-4 text-xs text-slate-400 text-center space-y-1">
               <p className="font-semibold text-slate-300">Nenhum ativo encontrado para "{query}"</p>
               <p className="text-[11px] text-slate-500">
-                Pressione Enter para usar "{query.toUpperCase()}" como ativo customizado.
+                Cadastre o ativo e escolha sua classe fiscal antes de lançar uma operação.
               </p>
             </div>
           ) : (

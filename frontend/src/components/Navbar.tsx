@@ -22,7 +22,8 @@ import {
   Eye,
   EyeOff,
   DollarSign,
-  RefreshCw
+  RefreshCw,
+  ReceiptText
 } from 'lucide-react';
 import { ResumoCarteira } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -56,6 +57,12 @@ const navigationGroups = [
     items: [
       { id: 'noticias', label: 'Notícias & Favoritos', icon: Newspaper },
       { id: 'proventos', label: 'Fluxo de Proventos', icon: Coins },
+    ]
+  },
+  {
+    group: 'Fiscal & Obrigações',
+    items: [
+      { id: 'fiscal', label: 'Apuração Mensal & DARF', icon: ReceiptText },
     ]
   },
 ];

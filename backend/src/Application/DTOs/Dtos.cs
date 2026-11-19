@@ -26,7 +26,7 @@ public record CriarProventoDto(
 public record CriarAtivoDto(
     string Ticker,
     string Nome,
-    string Tipo, // 'Acao', 'FII', 'BDR', 'ETF'
+    string Tipo, // Acao/BR_STOCK_SPOT, ETF, BDR, FII, FIAGRO, OPTION, FUTURE, GOLD ou OTHER
     string? Setor,
     decimal PrecoAtual,
     decimal VariacaoDia = 0,
@@ -38,6 +38,8 @@ public record AtualizarCotacaoDto(
     decimal? VariacaoDia,
     decimal? DividendYield
 );
+
+public record AtualizarClasseFiscalDto(string ClasseFiscal);
 
 // DTOs para Histórico (até 5 anos com gráfico)
 public record HistoricoPontoDto(

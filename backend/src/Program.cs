@@ -104,6 +104,7 @@ builder.Services.AddScoped<IAtivoRepository, AtivoRepository>();
 builder.Services.AddScoped<IOperacaoRepository, OperacaoRepository>();
 builder.Services.AddScoped<IProventoRepository, ProventoRepository>();
 builder.Services.AddScoped<ICarteiraService, CarteiraService>();
+builder.Services.AddScoped<IApuracaoFiscalService, ApuracaoFiscalService>();
 
 // Serviços de Mercado Real
 builder.Services.AddHttpClient<MarketDataService>();
