@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import {
   TrendingUp,
@@ -32,13 +32,6 @@ export const LoginScreen: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const loginCardRef = useRef<HTMLDivElement>(null);
-  const emailInputRef = useRef<HTMLInputElement>(null);
-
-  const irParaLogin = () => {
-    loginCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    window.setTimeout(() => emailInputRef.current?.focus(), 350);
-  };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +56,7 @@ export const LoginScreen: React.FC = () => {
 
       {/* Top Bar */}
       <header className="border-b border-white/[0.06] bg-[#05070d]/80 backdrop-blur-xl sticky top-0 z-30">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-[0_1px_0_0_rgba(255,255,255,0.2)_inset,0_4px_12px_rgba(16,185,129,0.25)]">
               <TrendingUp className="w-5 h-5 text-slate-950 stroke-[2.5]" />
@@ -79,22 +72,6 @@ export const LoginScreen: React.FC = () => {
             </div>
           </div>
 
-          <nav aria-label="Ações de acesso" className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-            <button
-              onClick={() => setRegisterModalOpen(true)}
-              className="whitespace-nowrap rounded-xl border border-emerald-500/25 px-2.5 py-2 text-[11px] font-semibold text-emerald-400 shadow-sm transition hover:bg-emerald-500/10 hover:text-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 sm:px-4 sm:text-xs"
-            >
-              <span className="sm:hidden">Criar conta</span>
-              <span className="hidden sm:inline">Criar Conta Grátis</span>
-            </button>
-            <button
-              type="button"
-              onClick={irParaLogin}
-              className="whitespace-nowrap rounded-xl bg-emerald-600 px-3 py-2 text-[11px] font-bold text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset] transition hover:bg-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 sm:px-4 sm:text-xs"
-            >
-              Entrar
-            </button>
-          </nav>
         </div>
       </header>
 
@@ -135,7 +112,7 @@ export const LoginScreen: React.FC = () => {
           </div>
 
           {/* Lado Direito: Formulário de Login (Glass Vault Card) */}
-          <div ref={loginCardRef} id="login" className="mx-auto w-full max-w-md scroll-mt-20 lg:col-span-5">
+          <div id="login" className="mx-auto w-full max-w-md lg:col-span-5">
             <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0e1a]/95 p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset,0_25px_50px_-12px_rgba(0,0,0,0.8)] backdrop-blur-2xl sm:rounded-3xl sm:p-9">
               
               {/* Glow decorativo interno */}
@@ -148,8 +125,8 @@ export const LoginScreen: React.FC = () => {
                     <Lock className="w-4 h-4" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-white tracking-tight">
-                      Entrar na Carteira
+                    <h2 id="login-title" className="text-xl font-bold text-white tracking-tight">
+                      Entrar na sua conta
                     </h2>
                   </div>
                 </div>
@@ -160,14 +137,14 @@ export const LoginScreen: React.FC = () => {
 
               {/* Mensagem de Erro */}
               {error && (
-                <div className="mb-5 p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs flex items-start gap-2.5">
+                <div role="alert" aria-live="polite" className="mb-5 p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs flex items-start gap-2.5">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
                   <span className="font-medium">{error}</span>
                 </div>
               )}
 
               {/* Formulário de Login */}
-              <form onSubmit={handleLoginSubmit} className="space-y-4">
+              <form onSubmit={handleLoginSubmit} className="space-y-4" aria-labelledby="login-title">
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5" htmlFor="screen-email">
                     E-mail de Acesso
@@ -175,7 +152,6 @@ export const LoginScreen: React.FC = () => {
                   <div className="relative">
                     <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
-                      ref={emailInputRef}
                       id="screen-email"
                       type="email"
                       autoComplete="username"
@@ -250,14 +226,14 @@ export const LoginScreen: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      <span>Acessar Painel</span>
+                      <span>Entrar</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}
                 </button>
 
-                <div className="hidden border-t border-white/[0.04] pt-3 text-center sm:block">
-                  <span className="text-xs text-slate-500">Novo investidor? </span>
+                <div className="border-t border-white/[0.04] pt-3 text-center">
+                  <span className="text-xs text-slate-500">Ainda não tem uma conta? </span>
                   <button
                     type="button"
                     onClick={() => setRegisterModalOpen(true)}
