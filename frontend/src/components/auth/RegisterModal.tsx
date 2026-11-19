@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { X, UserPlus, Mail, User, KeyRound, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export const RegisterModal: React.FC = () => {
-  const { isRegisterModalOpen, setRegisterModalOpen, setLoginModalOpen, register } = useAuth();
+  const { isRegisterModalOpen, setRegisterModalOpen, register } = useAuth();
 
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
@@ -23,6 +23,11 @@ export const RegisterModal: React.FC = () => {
     setConfirmPassword('');
     setError(null);
     setSuccessMessage(null);
+  };
+
+  const handleGoToLogin = () => {
+    handleClose();
+    window.setTimeout(() => document.getElementById('screen-email')?.focus(), 100);
   };
 
   const calculateStrength = (pwd: string) => {
@@ -64,12 +69,12 @@ export const RegisterModal: React.FC = () => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:items-center"
       role="dialog"
       aria-modal="true"
       aria-labelledby="register-title"
     >
-      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div className="relative max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
         {/* Cabeçalho */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center space-x-2">
@@ -106,10 +111,7 @@ export const RegisterModal: React.FC = () => {
             <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">Conta criada com sucesso!</h3>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{successMessage}</p>
             <button
-              onClick={() => {
-                handleClose();
-                setLoginModalOpen(true);
-              }}
+              onClick={handleGoToLogin}
               className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-sm transition-all"
             >
               Ir para o Login
@@ -225,10 +227,7 @@ export const RegisterModal: React.FC = () => {
               <span className="text-xs text-slate-500 dark:text-slate-400">Já tem uma conta? </span>
               <button
                 type="button"
-                onClick={() => {
-                  handleClose();
-                  setLoginModalOpen(true);
-                }}
+                onClick={handleGoToLogin}
                 className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
               >
                 Faça login
