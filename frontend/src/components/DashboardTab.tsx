@@ -193,14 +193,15 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
     const isRight = position.side === 'right';
     const direction = isRight ? 1 : -1;
     const angle = -Number(midAngle) * RADIAN;
-    const startX = Number(cx) + (Number(outerRadius) + 3) * Math.cos(angle);
-    const startY = Number(cy) + (Number(outerRadius) + 3) * Math.sin(angle);
-    const elbowX = Number(cx) + (Number(outerRadius) + 17) * Math.cos(angle);
-    const elbowY = Number(cy) + (Number(outerRadius) + 17) * Math.sin(angle);
+    const startX = Number(cx) + (Number(outerRadius) + 7) * Math.cos(angle);
+    const startY = Number(cy) + (Number(outerRadius) + 7) * Math.sin(angle);
+    const radialExitX = Number(cx) + (Number(outerRadius) + 16) * Math.cos(angle);
+    const radialExitY = Number(cy) + (Number(outerRadius) + 16) * Math.sin(angle);
+    const railX = Number(cx) + direction * (Number(outerRadius) + 21);
     const isCompact = Number(cx) < 210;
     const estimatedLabelWidth = isCompact ? 58 : 88;
     const horizontalRoom = Number(cx) - Number(outerRadius);
-    const connectorLength = Math.max(10, Math.min(44, horizontalRoom - estimatedLabelWidth - 8));
+    const connectorLength = Math.max(28, Math.min(48, horizontalRoom - estimatedLabelWidth - 8));
     const lineEndX = Number(cx) + direction * (Number(outerRadius) + connectorLength);
     const textX = lineEndX + direction * 7;
     const textAnchor = isRight ? 'start' : 'end';
@@ -208,15 +209,15 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
     return (
       <g className="pointer-events-none">
         <title>{`${item.name} — ${item.nome}: ${item.percentual.toFixed(1)}%, ${formatarValor(item.value)}`}</title>
-        <circle cx={startX} cy={startY} r={2.5} fill={item.color} />
         <polyline
-          points={`${startX},${startY} ${elbowX},${elbowY} ${lineEndX},${position.y}`}
+          points={`${startX},${startY} ${radialExitX},${radialExitY} ${railX},${radialExitY} ${railX},${position.y} ${lineEndX},${position.y}`}
           fill="none"
           stroke={item.color}
-          strokeWidth={1.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity={0.9}
+          strokeWidth={1.25}
+          strokeLinecap="butt"
+          strokeLinejoin="miter"
+          opacity={0.82}
+          shapeRendering="geometricPrecision"
         />
         <text
           x={textX}
@@ -393,7 +394,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
           </div>
 
           <div className="space-y-5">
-            {/* Gráfico Donut com rótulos externos e linhas-guia por ativo */}
+            {/* Donut livre, com rótulos ligados apenas por segmentos retos externos */}
             <div
               className="h-[340px] sm:h-[390px] relative flex items-center justify-center"
               role="img"
