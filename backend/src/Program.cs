@@ -10,6 +10,7 @@ using InvestirGo.API.Infrastructure.BackgroundJobs;
 using InvestirGo.API.Infrastructure.Data;
 using InvestirGo.API.Infrastructure.Repositories;
 using InvestirGo.API.Infrastructure.Services;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
@@ -60,11 +61,20 @@ if (builder.Environment.IsProduction())
 // ----------------------------------------------------------------------------
 // 3. CORS Resiliente para SPA e API (Sem Wildcard com Credenciais)
 // ----------------------------------------------------------------------------
+var allowedOrigins = securityOptions.AllowedOrigins
+    .Append(securityOptions.AppUrl)
+    .Where(origin => !string.IsNullOrWhiteSpace(origin))
+    .Select(origin => origin.Trim().TrimEnd('/'))
+    .Where(origin => Uri.TryCreate(origin, UriKind.Absolute, out var uri) &&
+                     (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("StrictCorsPolicy", policy =>
     {
-        policy.SetIsOriginAllowed(origin => true) // Suporta localhost, domínios easypanel.host e domínios de produção
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials(); // Necessário para cookies HttpOnly entre SPA e API
@@ -189,6 +199,27 @@ var app = builder.Build();
 // CORS resiliente deve ser o primeiro middleware para garantir que todas as respostas
 // (incluindo preflights OPTIONS, rejeições de CSRF e erros de autenticação) contenham os cabeçalhos de CORS
 app.UseCors("StrictCorsPolicy");
+
+// Converte exceções não tratadas em uma resposta JSON segura. Como este
+// middleware está depois do CORS, até falhas internas mantêm os cabeçalhos
+// Access-Control-Allow-Origin/Allow-Credentials esperados pelo navegador.
+app.UseExceptionHandler(exceptionHandler =>
+{
+    exceptionHandler.Run(async context =>
+    {
+        var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+        Log.Error(exception, "Falha não tratada em {Method} {Path}", context.Request.Method, context.Request.Path);
+
+        context.Response.Clear();
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/problem+json";
+        await Results.Problem(
+            statusCode: StatusCodes.Status500InternalServerError,
+            title: "Serviço temporariamente indisponível",
+            detail: "Não foi possível concluir a solicitação. Verifique a conexão do servidor com o PostgreSQL.")
+            .ExecuteAsync(context);
+    });
+});
 
 // Cabeçalhos de Segurança (CSP, HSTS, X-Frame-Options, No-Cache em auth)
 app.UseMiddleware<SecurityHeadersMiddleware>();

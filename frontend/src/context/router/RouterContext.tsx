@@ -1,10 +1,10 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useState, ReactNode, useEffect } from 'react';
 
 export type Route = 'dashboard' | 'carteira' | 'performance' | 'proventos' | 'noticias' | 'admin' | 'login';
 
 interface RouterContextType {
   currentRoute: Route;
-  navigate: (route: Route) => void;
+  navigate: (route: Route, options?: { replace?: boolean }) => void;
 }
 
 const RouterContext = createContext<RouterContextType | undefined>(undefined);
@@ -24,10 +24,15 @@ export const RouterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const navigate = (route: Route) => {
-    window.history.pushState({}, '', `/${route === 'dashboard' ? '' : route}`);
+  const navigate = useCallback((route: Route, options?: { replace?: boolean }) => {
+    const path = `/${route === 'dashboard' ? '' : route}`;
+    if (options?.replace) {
+      window.history.replaceState({}, '', path);
+    } else {
+      window.history.pushState({}, '', path);
+    }
     setCurrentRoute(route);
-  };
+  }, []);
 
   return (
     <RouterContext.Provider value={{ currentRoute, navigate }}>

@@ -56,6 +56,19 @@ export const AppWrapper: React.FC = () => {
     setFavoritos(getFavoritos());
   }, []);
 
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!isAuthenticated && currentRoute !== 'login') {
+      navigate('login', { replace: true });
+      return;
+    }
+
+    if (isAuthenticated && currentRoute === 'login') {
+      navigate('dashboard', { replace: true });
+    }
+  }, [authLoading, currentRoute, isAuthenticated, navigate]);
+
   const carregarDados = async () => {
     try {
       setLoading(true);
