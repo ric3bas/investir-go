@@ -31,6 +31,7 @@ import { usePrivacy } from '../context/PrivacyContext';
 import { useCotacaoDolar } from '../hooks/useCotacaoDolar';
 
 import { Route } from '../context/router/RouterContext';
+import { ThemeToggle } from './ThemeToggle';
 
 export interface NavigationProps {
   activeTab: Route;
@@ -149,7 +150,7 @@ export const Sidebar: React.FC<NavigationProps> = ({
           </div>
           <div className="flex items-center gap-1.5 font-bold">
             <span className="text-white font-extrabold font-mono">
-              R$ {dolar.cotacao.toFixed(2)}
+              {dolar.cotacao > 0 ? `R$ ${dolar.cotacao.toFixed(2)}` : '—'}
             </span>
             <span
               className={`text-[10px] ${dolar.variacao >= 0 ? 'text-emerald-400' : 'text-rose-400'
@@ -384,6 +385,8 @@ export const TopHeader: React.FC<NavigationProps> = ({
 
         {/* Lado Direito: Live B3 Status, Cotação Dólar Sempre Visível & Ações */}
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
+          <ThemeToggle className="shrink-0" />
+
           {/* Cotação do Dólar Comercial Sempre Visível */}
           <div
             className="hidden items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 font-mono text-xs shadow-sm transition xl:flex"
@@ -396,7 +399,7 @@ export const TopHeader: React.FC<NavigationProps> = ({
               title={`Dólar Comercial (USD/BRL): R$ ${dolar.cotacao.toFixed(2)} (${dolar.variacao >= 0 ? '+' : ''}${dolar.variacao.toFixed(2)}%) • Mín: R$ ${dolar.minima.toFixed(2)} | Máx: R$ ${dolar.maxima.toFixed(2)} • Atualizado às ${dolar.dataHora}`}
             >
               <span className="font-extrabold text-white font-mono text-sm">
-                {dolar.cotacao.toFixed(2)}
+                {dolar.cotacao > 0 ? dolar.cotacao.toFixed(2) : '—'}
               </span>
               <span
                 className={`font-bold text-sm ${dolar.variacao >= 0 ? 'text-emerald-400' : 'text-rose-400'

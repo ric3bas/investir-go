@@ -19,6 +19,10 @@ public interface IOperacaoRepository
     Task<int> CriarAsync(Operacao operacao);
     Task<bool> AtualizarAsync(Operacao operacao);
     Task<bool> ExcluirAsync(int id);
+    Task<int> ContarPorUsuarioAsync(Guid userId);
+    Task<ResultadoSubstituicaoOperacoes> SubstituirPorImportacaoB3Async(
+        Guid userId,
+        IReadOnlyCollection<OperacaoImportacaoB3> operacoes);
 }
 
 public interface IProventoRepository

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Ativo, PerformanceAtivo, PeriodoPerformance, TipoAtivo } from '../types';
+import { Ativo, AtualizacaoCotacoes, PerformanceAtivo, PeriodoPerformance, TipoAtivo } from '../types';
 import { buscarAtivosMercado, AtivoPesquisaResultado } from '../utils/marketData';
 import { InvestirApi } from '../services/api';
 import {
@@ -25,8 +25,8 @@ interface PerformanceTabProps {
   favoritos: string[];
   onToggleFavorito: (ticker: string) => void;
   onSelectAtivo: (ativo: Ativo) => void;
-  onAtualizarPrecos?: () => void; // Adicionado
-  carregandoPrecos?: boolean; // Adicionado
+  onAtualizarPrecos?: () => Promise<AtualizacaoCotacoes>;
+  carregandoPrecos?: boolean;
   onCadastrarAtivo?: (dados?: {
     ticker?: string;
     nome?: string;
@@ -50,8 +50,8 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
   favoritos,
   onToggleFavorito,
   onSelectAtivo,
-  onAtualizarPrecos, // Adicionado
-  carregandoPrecos, // Adicionado
+  onAtualizarPrecos,
+  carregandoPrecos,
   onCadastrarAtivo,
   onSalvarAtivoRapido,
 }) => {
@@ -174,10 +174,12 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
             {onAtualizarPrecos && (
               <button
                 onClick={onAtualizarPrecos}
-                className={`p-2 rounded-xl text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 transition ${carregandoPrecos ? 'animate-spin' : ''}`}
+                disabled={carregandoPrecos}
+                aria-busy={carregandoPrecos}
+                className="rounded-xl p-2 text-slate-400 transition hover:bg-emerald-500/10 hover:text-emerald-400 disabled:cursor-wait disabled:opacity-70"
                 title="Atualizar cotações em tempo real"
               >
-                <RefreshCw className="w-5 h-5" />
+                <RefreshCw className={`h-5 w-5 ${carregandoPrecos ? 'animate-spin text-emerald-300' : ''}`} />
               </button>
             )}
           </div>

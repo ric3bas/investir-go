@@ -25,6 +25,25 @@ public static class ApiEndpoints
             return Results.Ok(resumo);
         }).WithTags("Carteira").RequireAuthorization();
 
+        group.MapGet("/mercado/painel", async (
+            bool? forcar,
+            MercadoPainelService mercadoService,
+            CancellationToken cancellationToken) =>
+        {
+            try
+            {
+                var painel = await mercadoService.ObterAsync(forcar == true, cancellationToken);
+                return Results.Ok(painel);
+            }
+            catch (MarketDataException ex)
+            {
+                return Results.Problem(
+                    detail: ex.Message,
+                    statusCode: StatusCodes.Status502BadGateway,
+                    title: "Indicadores de mercado indisponíveis");
+            }
+        }).WithTags("Mercado").RequireAuthorization();
+
         // ----------------- APURACAO FISCAL / DARF -----------------
         group.MapGet("/fiscal/apuracao", async (int? ano, IApuracaoFiscalService fiscalService, ICurrentUserService currentUser) =>
         {
@@ -121,6 +140,54 @@ public static class ApiEndpoints
             var deletado = await operacaoRepo.ExcluirAsync(id);
             return deletado ? Results.NoContent() : Results.NotFound(new { message = "Operação não encontrada" });
         }).WithTags("Operacoes").RequireAuthorization();
+
+        group.MapPost("/carteira/importacao-b3/previa", async (
+            IFormFile arquivo,
+            ImportacaoB3Service importacaoService,
+            ICurrentUserService currentUser,
+            CancellationToken cancellationToken) =>
+        {
+            if (!currentUser.UserId.HasValue) return Results.Unauthorized();
+            try
+            {
+                var previa = await importacaoService.GerarPreviaAsync(
+                    arquivo,
+                    currentUser.UserId.Value,
+                    cancellationToken);
+                return Results.Ok(previa);
+            }
+            catch (ImportacaoB3Exception ex)
+            {
+                return Results.BadRequest(new { message = ex.Message });
+            }
+        })
+        .WithTags("Carteira")
+        .RequireAuthorization()
+        .DisableAntiforgery();
+
+        group.MapPost("/carteira/importacao-b3/confirmar", async (
+            IFormFile arquivo,
+            ImportacaoB3Service importacaoService,
+            ICurrentUserService currentUser,
+            CancellationToken cancellationToken) =>
+        {
+            if (!currentUser.UserId.HasValue) return Results.Unauthorized();
+            try
+            {
+                var resultado = await importacaoService.ImportarAsync(
+                    arquivo,
+                    currentUser.UserId.Value,
+                    cancellationToken);
+                return Results.Ok(resultado);
+            }
+            catch (ImportacaoB3Exception ex)
+            {
+                return Results.BadRequest(new { message = ex.Message });
+            }
+        })
+        .WithTags("Carteira")
+        .RequireAuthorization()
+        .DisableAntiforgery();
 
         // ----------------- PROVENTOS -----------------
         group.MapGet("/proventos", async (string? ticker, int? ano, IProventoRepository proventoRepo, ICurrentUserService currentUser) =>
@@ -251,6 +318,22 @@ public static class ApiEndpoints
 
             await ativoRepo.AtualizarTipoAsync(id, classe);
             return Results.Ok(new { id, classeFiscal = classe });
+        }).WithTags("Ativos").RequireAuthorization();
+
+        group.MapPost("/ativos/atualizar-cotacoes", async (
+            CotacaoAtualizacaoService cotacaoService,
+            CancellationToken cancellationToken) =>
+        {
+            var resultado = await cotacaoService.AtualizarAsync(cancellationToken: cancellationToken);
+            if (resultado.TotalConsultados > 0 && resultado.Atualizados == 0)
+            {
+                return Results.Problem(
+                    detail: "A fonte de mercado não atualizou nenhum ativo. Os valores anteriores foram preservados.",
+                    statusCode: StatusCodes.Status502BadGateway,
+                    title: "Cotações indisponíveis");
+            }
+
+            return Results.Ok(resultado);
         }).WithTags("Ativos").RequireAuthorization();
 
         // ----------------- HISTÓRICO REAL DE MERCADO -----------------

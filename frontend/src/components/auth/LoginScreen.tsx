@@ -71,41 +71,43 @@ export const LoginScreen: React.FC = () => {
               </span>
             </div>
           </div>
-
         </div>
       </header>
 
       {/* Main Container */}
-      <main className="z-10 mx-auto flex w-full max-w-7xl flex-1 items-start px-4 py-5 sm:px-6 sm:py-8 lg:items-center lg:px-8 lg:py-16">
-        <div className="grid w-full grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-16">
+      <main className="z-10 mx-auto flex w-full max-w-7xl flex-1 items-start px-4 py-6 sm:px-6 sm:py-10 lg:items-center lg:px-8 lg:py-12 xl:py-16">
+        <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-12 xl:gap-20">
           
           {/* Lado Esquerdo: Hero & Demonstração da Plataforma */}
-          <div className="hidden space-y-8 lg:col-span-7 lg:block">
-            <div className="space-y-4">
+          <div className="hidden lg:col-span-7 lg:block lg:pr-3 xl:pr-8">
+            <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-xs font-medium text-emerald-400">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Gestão Institucional de Portfólio</span>
               </div>
-              
-              <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-[1.15]">
-                Acompanhe seu patrimônio na B3 com precisão de <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">alta performance</span>.
-              </h1>
 
-              <p className="text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl">
-                Cálculo de Preço Médio ponderado, acompanhamento de proventos e dividendos, cotações em tempo real e visualização consolidada de Ações e FIIs.
-              </p>
+              <div className="mt-7 space-y-5">
+                <h1 className="max-w-3xl text-4xl font-black leading-[1.08] tracking-[-0.035em] text-white xl:text-5xl">
+                  Acompanhe seu patrimônio na B3 com precisão de <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">alta performance</span>.
+                </h1>
+
+                <p className="max-w-2xl text-sm leading-7 text-slate-400 xl:text-base">
+                  Cálculo de Preço Médio ponderado, acompanhamento de proventos e dividendos, cotações em tempo real e visualização consolidada de Ações e FIIs.
+                </p>
+              </div>
             </div>
 
-            {/* Mock do Terminal de Investimentos */}
-            {/* Removido a pedido do usuário */}
-            
-            <div className="flex items-center gap-6 text-xs text-slate-500 pt-2 border-t border-white/[0.04]">
-              <span className="flex items-center gap-1.5 font-medium">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-white/[0.06] pt-5 text-xs text-slate-400 xl:mt-10">
+              <span className="flex items-center gap-2 font-medium">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                </span>
                 Segurança HttpOnly & 2FA TOTP
               </span>
-              <span className="flex items-center gap-1.5 font-medium">
-                <Layers className="w-4 h-4 text-teal-400" />
+              <span className="flex items-center gap-2 font-medium">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-500/10 text-teal-400">
+                  <Layers className="h-3.5 w-3.5" />
+                </span>
                 Isolamento Total por Usuário
               </span>
             </div>
@@ -113,14 +115,14 @@ export const LoginScreen: React.FC = () => {
 
           {/* Lado Direito: Formulário de Login (Glass Vault Card) */}
           <div id="login" className="mx-auto w-full max-w-md lg:col-span-5">
-            <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0e1a]/95 p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset,0_25px_50px_-12px_rgba(0,0,0,0.8)] backdrop-blur-2xl sm:rounded-3xl sm:p-9">
+            <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0e1a]/95 p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset,0_25px_50px_-12px_rgba(0,0,0,0.8)] backdrop-blur-2xl sm:rounded-3xl sm:p-8 lg:p-9">
               
               {/* Glow decorativo interno */}
               <div className="absolute -top-20 -right-20 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
 
               {/* Cabeçalho do Card */}
-              <div className="mb-5 sm:mb-6">
-                <div className="flex items-center gap-2.5 mb-2">
+              <div className="mb-6 sm:mb-7">
+                <div className="mb-3 flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
                     <Lock className="w-4 h-4" />
                   </div>
@@ -130,7 +132,7 @@ export const LoginScreen: React.FC = () => {
                     </h2>
                   </div>
                 </div>
-                <p className="hidden text-xs text-slate-400 sm:block">
+                <p className="hidden max-w-sm text-xs leading-5 text-slate-400 sm:block">
                   Informe suas credenciais para acessar seus investimentos com segurança.
                 </p>
               </div>
@@ -144,7 +146,7 @@ export const LoginScreen: React.FC = () => {
               )}
 
               {/* Formulário de Login */}
-              <form onSubmit={handleLoginSubmit} className="space-y-4" aria-labelledby="login-title">
+              <form onSubmit={handleLoginSubmit} className="space-y-5" aria-labelledby="login-title">
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5" htmlFor="screen-email">
                     E-mail de Acesso
@@ -201,7 +203,7 @@ export const LoginScreen: React.FC = () => {
                 </div>
 
                 {/* Manter Conectado */}
-                <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center justify-between pt-0.5">
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input
                       type="checkbox"
@@ -217,7 +219,7 @@ export const LoginScreen: React.FC = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold rounded-xl text-sm shadow-[0_1px_0_0_rgba(255,255,255,0.2)_inset,0_4px_16px_rgba(16,185,129,0.3)] disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 mt-3"
+                  className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-[0_1px_0_0_rgba(255,255,255,0.2)_inset,0_4px_16px_rgba(16,185,129,0.3)] transition hover:bg-emerald-500 active:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {loading ? (
                     <>
@@ -232,7 +234,7 @@ export const LoginScreen: React.FC = () => {
                   )}
                 </button>
 
-                <div className="border-t border-white/[0.04] pt-3 text-center">
+                <div className="border-t border-white/[0.06] pt-5 text-center">
                   <span className="text-xs text-slate-500">Ainda não tem uma conta? </span>
                   <button
                     type="button"

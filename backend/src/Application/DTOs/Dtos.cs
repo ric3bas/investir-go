@@ -41,6 +41,63 @@ public record AtualizarCotacaoDto(
 
 public record AtualizarClasseFiscalDto(string ClasseFiscal);
 
+public record AtualizacaoCotacoesDto(
+    int TotalConsultados,
+    int Atualizados,
+    IReadOnlyList<string> Falhas,
+    DateTimeOffset ConsultadoEm);
+
+public record OperacaoB3PreviaItemDto(
+    int Linha,
+    DateTime DataOperacao,
+    string TipoOperacao,
+    string Ticker,
+    decimal Quantidade,
+    decimal PrecoUnitario,
+    decimal ValorTotal,
+    string? Mercado,
+    string? Instituicao);
+
+public record ImportacaoB3PreviaDto(
+    string NomeArquivo,
+    int TotalOperacoes,
+    int TotalCompras,
+    int TotalVendas,
+    decimal ValorTotal,
+    DateTime DataInicial,
+    DateTime DataFinal,
+    int OperacoesExistentes,
+    IReadOnlyList<string> AtivosNovos,
+    IReadOnlyList<OperacaoB3PreviaItemDto> Operacoes,
+    int LinhasOmitidas);
+
+public record ImportacaoB3ResultadoDto(
+    int OperacoesRemovidas,
+    int OperacoesImportadas,
+    int AtivosCriados);
+
+public record MercadoPontoDto(
+    DateTimeOffset Data,
+    decimal Valor);
+
+public record MercadoIndicadorDto(
+    string Codigo,
+    string Nome,
+    string Unidade,
+    decimal Valor,
+    decimal VariacaoPercentual,
+    decimal Minima,
+    decimal Maxima,
+    DateTimeOffset AtualizadoEm,
+    string Fonte,
+    IReadOnlyList<MercadoPontoDto> Historico);
+
+public record MercadoPainelDto(
+    MercadoIndicadorDto? Ibovespa,
+    MercadoIndicadorDto? Dolar,
+    DateTimeOffset ConsultadoEm,
+    IReadOnlyList<string> Avisos);
+
 // DTOs para Histórico (até 5 anos com gráfico)
 public record HistoricoPontoDto(
     string Data,

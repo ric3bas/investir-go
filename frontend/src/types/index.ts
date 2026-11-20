@@ -12,6 +12,70 @@ export interface Ativo {
   dataAtualizacao: string;
 }
 
+export interface AtualizacaoCotacoes {
+  totalConsultados: number;
+  atualizados: number;
+  falhas: string[];
+  consultadoEm: string;
+}
+
+export interface OperacaoB3PreviaItem {
+  linha: number;
+  dataOperacao: string;
+  tipoOperacao: 'COMPRA' | 'VENDA';
+  ticker: string;
+  quantidade: number;
+  precoUnitario: number;
+  valorTotal: number;
+  mercado?: string;
+  instituicao?: string;
+}
+
+export interface ImportacaoB3Previa {
+  nomeArquivo: string;
+  totalOperacoes: number;
+  totalCompras: number;
+  totalVendas: number;
+  valorTotal: number;
+  dataInicial: string;
+  dataFinal: string;
+  operacoesExistentes: number;
+  ativosNovos: string[];
+  operacoes: OperacaoB3PreviaItem[];
+  linhasOmitidas: number;
+}
+
+export interface ImportacaoB3Resultado {
+  operacoesRemovidas: number;
+  operacoesImportadas: number;
+  ativosCriados: number;
+}
+
+export interface MercadoPonto {
+  data: string;
+  valor: number;
+}
+
+export interface MercadoIndicador {
+  codigo: string;
+  nome: string;
+  unidade: string;
+  valor: number;
+  variacaoPercentual: number;
+  minima: number;
+  maxima: number;
+  atualizadoEm: string;
+  fonte: string;
+  historico: MercadoPonto[];
+}
+
+export interface MercadoPainel {
+  ibovespa: MercadoIndicador | null;
+  dolar: MercadoIndicador | null;
+  consultadoEm: string;
+  avisos: string[];
+}
+
 export interface Operacao {
   id: number;
   ativoId: number;

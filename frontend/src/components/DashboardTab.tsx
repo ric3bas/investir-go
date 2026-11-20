@@ -20,6 +20,7 @@ import {
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { PosicaoCarteira, ResumoCarteira } from '../types';
 import { usePrivacy } from '../context/PrivacyContext';
+import { MercadoPainelCard } from './MercadoPainelCard';
 
 interface DashboardTabProps {
   resumo: ResumoCarteira | null;
@@ -319,6 +320,8 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
           </div>
         </div>
       </div>
+
+      <MercadoPainelCard />
 
       {/* ===================================================================== */}
       {/* 2. BENTO GRID DE INTELIGÊNCIA E ALOCAÇÃO                             */}

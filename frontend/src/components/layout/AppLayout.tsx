@@ -24,7 +24,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const { currentRoute, navigate } = useRouter();
 
   return (
-    <div className="min-h-screen bg-[#05070d] text-slate-100 flex font-sans selection:bg-emerald-500/20 selection:text-emerald-300">
+    <div className="theme-shell app-canvas min-h-screen bg-[#05070d] text-slate-100 flex font-sans selection:bg-emerald-500/20 selection:text-emerald-300">
       <Sidebar
         activeTab={currentRoute}
         setActiveTab={navigate}

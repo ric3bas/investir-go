@@ -19,3 +19,20 @@ public class Operacao
     public Guid? UserId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
+
+public sealed record OperacaoImportacaoB3(
+    int Linha,
+    DateTime DataOperacao,
+    string TipoOperacao,
+    string Ticker,
+    decimal Quantidade,
+    decimal PrecoUnitario,
+    decimal ValorTotal,
+    string? Mercado,
+    string? PrazoVencimento,
+    string? Instituicao);
+
+public sealed record ResultadoSubstituicaoOperacoes(
+    int OperacoesRemovidas,
+    int OperacoesImportadas,
+    int AtivosCriados);

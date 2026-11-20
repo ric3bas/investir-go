@@ -10,7 +10,11 @@ import {
   PeriodoHistorico,
   PeriodoPerformance,
   NoticiaAtivo,
-  ApuracaoFiscal
+  ApuracaoFiscal,
+  AtualizacaoCotacoes,
+  MercadoPainel,
+  ImportacaoB3Previa,
+  ImportacaoB3Resultado
 } from '../types';
 import { NOTICIAS_MERCADO } from '../utils/marketData';
 
@@ -40,6 +44,14 @@ export const InvestirApi = {
     return data;
   },
 
+  getPainelMercado: async (forcar = false): Promise<MercadoPainel> => {
+    const { data } = await authClient.get('/mercado/painel', {
+      params: { forcar },
+      timeout: 20_000,
+    });
+    return data;
+  },
+
   // ----------------- OPERAÇÕES (PROTEGIDA) -----------------
   getOperacoes: async (ticker?: string, tipo?: string): Promise<Operacao[]> => {
     const { data } = await authClient.get('/operacoes', { params: { ticker, tipo } });
@@ -62,6 +74,24 @@ export const InvestirApi = {
 
   excluirOperacao: async (id: number): Promise<void> => {
     await authClient.delete(`/operacoes/${id}`);
+  },
+
+  gerarPreviaImportacaoB3: async (arquivo: File): Promise<ImportacaoB3Previa> => {
+    const formData = new FormData();
+    formData.append('arquivo', arquivo);
+    const { data } = await authClient.post('/carteira/importacao-b3/previa', formData, {
+      timeout: 60_000,
+    });
+    return data;
+  },
+
+  confirmarImportacaoB3: async (arquivo: File): Promise<ImportacaoB3Resultado> => {
+    const formData = new FormData();
+    formData.append('arquivo', arquivo);
+    const { data } = await authClient.post('/carteira/importacao-b3/confirmar', formData, {
+      timeout: 120_000,
+    });
+    return data;
   },
 
   // ----------------- PROVENTOS (PROTEGIDA) -----------------
@@ -93,6 +123,11 @@ export const InvestirApi = {
   getAtivos: async (): Promise<Ativo[]> => {
     const { data } = await authClient.get('/ativos');
     return Array.isArray(data) ? data : [];
+  },
+
+  atualizarCotacoes: async (): Promise<AtualizacaoCotacoes> => {
+    const { data } = await authClient.post('/ativos/atualizar-cotacoes', undefined, { timeout: 60_000 });
+    return data;
   },
 
   criarAtivo: async (ativo: {

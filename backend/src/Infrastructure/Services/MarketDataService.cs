@@ -24,6 +24,13 @@ public sealed class MarketDataService
             ?? throw new MarketDataException($"A fonte de mercado não retornou dados para {ticker.ToUpperInvariant()}.");
     }
 
+    public async Task<BrapiResult> ObterIbovespaComHistoricoAsync(CancellationToken cancellationToken = default)
+    {
+        var resposta = await ConsultarAsync("^BVSP", "range=1mo&interval=1d", cancellationToken);
+        return resposta.Results?.FirstOrDefault()
+            ?? throw new MarketDataException("A fonte de mercado não retornou o Ibovespa.");
+    }
+
     public async Task<HistoricoAtivoDto> ObterHistoricoAsync(string ticker, string periodo, string nome, CancellationToken cancellationToken = default)
     {
         var p = string.IsNullOrWhiteSpace(periodo) ? "1D" : periodo.Trim().ToUpperInvariant();
@@ -65,6 +72,11 @@ public sealed class MarketDataService
         if (!string.IsNullOrWhiteSpace(query)) caminho += $"?{query}";
         using var request = new HttpRequestMessage(HttpMethod.Get, caminho);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+        request.Headers.CacheControl = new CacheControlHeaderValue
+        {
+            NoCache = true,
+            NoStore = true
+        };
         using var response = await _httpClient.SendAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {

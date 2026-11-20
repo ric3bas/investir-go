@@ -37,4 +37,36 @@ internal sealed class TestOperacaoRepository : IOperacaoRepository
     }
 
     public Task<bool> ExcluirAsync(int id) => Task.FromResult(_items.TryRemove(id, out _));
+
+    public Task<int> ContarPorUsuarioAsync(Guid userId) =>
+        Task.FromResult(_items.Values.Count(item => item.UserId == userId));
+
+    public Task<ResultadoSubstituicaoOperacoes> SubstituirPorImportacaoB3Async(
+        Guid userId,
+        IReadOnlyCollection<OperacaoImportacaoB3> operacoes)
+    {
+        var ids = _items.Values
+            .Where(item => item.UserId == userId)
+            .Select(item => item.Id)
+            .ToArray();
+        foreach (var id in ids) _items.TryRemove(id, out _);
+
+        foreach (var item in operacoes)
+        {
+            var id = Interlocked.Increment(ref _nextId);
+            _items[id] = new Operacao
+            {
+                Id = id,
+                UserId = userId,
+                Ticker = item.Ticker,
+                TipoOperacao = item.TipoOperacao,
+                DataOperacao = item.DataOperacao,
+                Quantidade = item.Quantidade,
+                PrecoUnitario = item.PrecoUnitario,
+                ValorTotal = item.ValorTotal
+            };
+        }
+
+        return Task.FromResult(new ResultadoSubstituicaoOperacoes(ids.Length, operacoes.Count, 0));
+    }
 }

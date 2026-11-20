@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { PosicaoCarteira } from '../types';
-import { Plus, Minus, Coins, Search, LineChart, ArrowDownUp, TrendingUp, TrendingDown, DollarSign, Eye, EyeOff, RefreshCw } from 'lucide-react';
+import { AtualizacaoCotacoes, PosicaoCarteira } from '../types';
+import { Plus, Minus, Coins, Search, LineChart, ArrowDownUp, Eye, EyeOff, RefreshCw, FileSpreadsheet, SlidersHorizontal, ArrowDownWideNarrow } from 'lucide-react';
 import { usePrivacy } from '../context/PrivacyContext';
 import { formatarDinheiro } from '../utils/formatters';
 
@@ -10,9 +10,10 @@ interface CarteiraTabProps {
   onOpenNovaOperacao: (defaultTicker?: string, defaultTipo?: 'COMPRA' | 'VENDA') => void;
   onOpenNovoProvento: (defaultTicker?: string) => void;
   onOpenLancamentos: () => void;
+  onOpenImportacaoB3: () => void;
   onSelectTicker?: (ticker: string) => void;
-  onAtualizarPrecos?: () => void; // Adicionado
-  carregandoPrecos?: boolean; // Adicionado
+  onAtualizarPrecos?: () => Promise<AtualizacaoCotacoes>;
+  carregandoPrecos?: boolean;
 }
 
 export const CarteiraTab: React.FC<CarteiraTabProps> = ({
@@ -20,14 +21,33 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
   onOpenNovaOperacao,
   onOpenNovoProvento,
   onOpenLancamentos,
+  onOpenImportacaoB3,
   onSelectTicker,
-  onAtualizarPrecos, // Adicionado
-  carregandoPrecos, // Adicionado
+  onAtualizarPrecos,
+  carregandoPrecos,
 }) => {
   const { esconderValores, toggleEsconderValores, formatarValor } = usePrivacy();
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroTipo, setFiltroTipo] = useState<'TODOS' | 'Acao' | 'FII'>('TODOS');
   const [ordenacao, setOrdenacao] = useState<'saldo' | 'rentabilidade' | 'ticker'>('saldo');
+  const [retornoAtualizacao, setRetornoAtualizacao] = useState<{ erro: boolean; mensagem: string } | null>(null);
+
+  const atualizarCotacoes = async () => {
+    if (!onAtualizarPrecos || carregandoPrecos) return;
+    setRetornoAtualizacao(null);
+    try {
+      const resultado = await onAtualizarPrecos();
+      const mensagem = resultado.falhas.length > 0
+        ? `${resultado.atualizados} de ${resultado.totalConsultados} cotações atualizadas. Falha em: ${resultado.falhas.join(', ')}.`
+        : `${resultado.atualizados} cotações atualizadas com sucesso.`;
+      setRetornoAtualizacao({ erro: resultado.falhas.length > 0, mensagem });
+    } catch {
+      setRetornoAtualizacao({
+        erro: true,
+        mensagem: 'Não foi possível consultar o mercado agora. Os preços anteriores foram preservados.'
+      });
+    }
+  };
 
   const filtered = posicoes
     .filter((p) => {
@@ -52,9 +72,9 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
   return (
     <div className="space-y-6">
 
-      {/* Header & Controles de Filtro */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+      {/* Cabeçalho e ações da carteira */}
+      <header className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">Custódia & Preço Médio</h2>
             <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -66,18 +86,17 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Botões Novos (Realocados) */}
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center xl:justify-end" aria-label="Ações da carteira">
           <button
             onClick={() => onOpenNovaOperacao()}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20 transition"
+            className="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-md shadow-emerald-600/20 transition hover:-translate-y-0.5 hover:bg-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 sm:w-auto"
           >
             <Plus className="w-3.5 h-3.5" />
             Nova Operação
           </button>
           <button
             onClick={() => onOpenNovoProvento()}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white shadow-md shadow-amber-600/20 transition"
+            className="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-xs font-bold text-amber-800 transition hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:border-amber-400/40 dark:hover:bg-amber-500/15 sm:w-auto"
           >
             <Coins className="w-3.5 h-3.5" />
             Declarar Provento
@@ -85,45 +104,57 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
           {onOpenLancamentos && (
             <button
               onClick={onOpenLancamentos}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-700 hover:bg-slate-600 text-white shadow-md transition"
+              className="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/40 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-slate-200 dark:hover:border-white/[0.14] dark:hover:bg-white/[0.06] sm:w-auto"
             >
               <ArrowDownUp className="w-3.5 h-3.5" />
               Ver Lançamentos
             </button>
           )}
 
-          {/* Refresh */}
-          {onAtualizarPrecos && (
-            <button
-              onClick={onAtualizarPrecos}
-              className={`p-1.5 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 transition ${carregandoPrecos ? 'animate-spin' : ''}`}
-              title="Atualizar cotações em tempo real"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={onOpenImportacaoB3}
+            className="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs font-bold text-emerald-700 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:border-emerald-400/20 dark:bg-emerald-500/[0.07] dark:text-emerald-200 dark:hover:border-emerald-400/40 dark:hover:bg-emerald-500/12 sm:w-auto"
+          >
+            <FileSpreadsheet className="h-3.5 w-3.5" />
+            Importar B3
+          </button>
+        </div>
+      </header>
 
-          {/* Busca */}
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+      {/* Barra de busca, filtros e atualização */}
+      <section
+        aria-label="Filtros e ordenação da carteira"
+        className="flex flex-col gap-2.5 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm dark:border-white/[0.07] dark:bg-white/[0.025] lg:flex-row lg:items-center"
+      >
+        <div className="hidden shrink-0 items-center gap-2 px-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500 lg:flex">
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          Exibição
+        </div>
+
+        <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-[minmax(180px,1fr)_auto_minmax(155px,auto)]">
+          <label className="relative min-w-0">
+            <span className="sr-only">Buscar ativo na carteira</span>
+            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
             <input
-              type="text"
-              placeholder="Buscar ticker..."
+              type="search"
+              placeholder="Buscar ticker ou empresa..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 pr-3 py-1.5 text-xs rounded-xl bg-white/[0.03] border border-white/[0.08] text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition w-32 sm:w-40"
+              className="min-h-10 w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-xs text-slate-800 placeholder-slate-500 transition focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-slate-100"
             />
-          </div>
+          </label>
 
-          {/* Filtro de Tipo Segmentado */}
-          <div className="flex rounded-xl bg-white/[0.03] border border-white/[0.08] p-0.5 text-xs">
+          <div className="flex min-h-10 w-full rounded-xl border border-slate-200 bg-slate-50 p-0.5 text-xs dark:border-white/[0.08] dark:bg-white/[0.03] sm:w-auto" role="group" aria-label="Filtrar por tipo de ativo">
             {(['TODOS', 'Acao', 'FII'] as const).map((tipo) => (
               <button
                 key={tipo}
+                type="button"
+                aria-pressed={filtroTipo === tipo}
                 onClick={() => setFiltroTipo(tipo)}
-                className={`px-3 py-1 rounded-lg transition font-semibold text-xs ${filtroTipo === tipo
-                    ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
-                    : 'text-slate-400 hover:text-slate-200'
+                className={`flex-1 rounded-lg px-3 py-1 text-xs font-semibold transition sm:flex-none ${filtroTipo === tipo
+                    ? 'border border-emerald-200 bg-white text-emerald-700 shadow-sm dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300'
+                    : 'border border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
                   }`}
               >
                 {tipo === 'TODOS' ? 'Todos' : tipo === 'Acao' ? 'Ações' : 'FIIs'}
@@ -131,18 +162,45 @@ export const CarteiraTab: React.FC<CarteiraTabProps> = ({
             ))}
           </div>
 
-          {/* Ordenação */}
-          <select
-            value={ordenacao}
-            onChange={(e) => setOrdenacao(e.target.value as any)}
-            className="px-3 py-1.5 text-xs rounded-xl bg-white/[0.03] border border-white/[0.08] text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition font-medium"
-          >
-            <option value="saldo" className="bg-[#0b0f1a] text-slate-200">Maior Saldo</option>
-            <option value="rentabilidade" className="bg-[#0b0f1a] text-slate-200">Rentabilidade</option>
-            <option value="ticker" className="bg-[#0b0f1a] text-slate-200">Ticker</option>
-          </select>
+          <label className="relative min-w-0">
+            <span className="sr-only">Ordenar carteira</span>
+            <ArrowDownWideNarrow className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <select
+              value={ordenacao}
+              onChange={(e) => setOrdenacao(e.target.value as 'saldo' | 'rentabilidade' | 'ticker')}
+              className="min-h-10 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-8 text-xs font-semibold text-slate-700 transition focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-slate-300"
+            >
+              <option value="saldo">Maior saldo</option>
+              <option value="rentabilidade">Rentabilidade</option>
+              <option value="ticker">Ordem alfabética</option>
+            </select>
+          </label>
         </div>
-      </div>
+
+        {onAtualizarPrecos && (
+          <div className="lg:border-l lg:border-slate-200 lg:pl-2.5 dark:lg:border-white/[0.07]">
+            <button
+              type="button"
+              onClick={atualizarCotacoes}
+              disabled={carregandoPrecos}
+              aria-busy={carregandoPrecos}
+              className="flex min-h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-wait disabled:opacity-60 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-slate-300 dark:hover:border-emerald-400/30 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-300 lg:w-auto"
+              title="Consultar o mercado e atualizar os preços"
+            >
+              <RefreshCw className={`h-4 w-4 ${carregandoPrecos ? 'animate-spin text-emerald-500' : ''}`} />
+              <span>{carregandoPrecos ? 'Consultando...' : 'Atualizar preços'}</span>
+            </button>
+          </div>
+        )}
+      </section>
+
+      {retornoAtualizacao && (
+        <div aria-live="polite" className="rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-white/[0.07] dark:bg-white/[0.025]">
+          <p className={`text-xs font-medium ${retornoAtualizacao.erro ? 'text-amber-300' : 'text-emerald-300'}`}>
+            {retornoAtualizacao.mensagem}
+          </p>
+        </div>
+      )}
 
       {/* Resumo da Tabela Filtrada */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">

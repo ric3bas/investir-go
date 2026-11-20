@@ -5,7 +5,7 @@ import { DashboardPage } from './pages/DashboardPage';
 
 import { useAuth } from './context/AuthContext';
 import { InvestirApi } from './services/api';
-import { Ativo, Operacao, Provento, PosicaoCarteira, ResumoCarteira } from './types';
+import { Ativo, AtualizacaoCotacoes, Operacao, Provento, PosicaoCarteira, ResumoCarteira } from './types';
 import { getFavoritos, toggleFavorito, isFavorito } from './utils/marketData';
 import { RefreshCw } from 'lucide-react';
 import { LoginScreen } from './components/auth/LoginScreen';
@@ -25,6 +25,7 @@ import { LancamentosModal } from './components/LancamentosModal';
 import { NovaOperacaoModal } from './components/NovaOperacaoModal';
 import { NovoProventoModal } from './components/NovoProventoModal';
 import { NovoAtivoModal } from './components/NovoAtivoModal';
+import { ImportacaoB3Modal } from './components/ImportacaoB3Modal';
 
 export const AppWrapper: React.FC = () => {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -50,6 +51,7 @@ export const AppWrapper: React.FC = () => {
   const [modalTicker, setModalTicker] = useState<string | undefined>();
   const [modalTipoOperacao, setModalTipoOperacao] = useState<'COMPRA' | 'VENDA'>('COMPRA');
   const [modalDetalhesOpen, setModalDetalhesOpen] = useState(false);
+  const [modalImportacaoB3Open, setModalImportacaoB3Open] = useState(false);
   const [selectedAtivo, setSelectedAtivo] = useState<Ativo | null>(null);
   const [noticiasTickerFiltro, setNoticiasTickerFiltro] = useState<string | undefined>();
 
@@ -86,7 +88,6 @@ export const AppWrapper: React.FC = () => {
       setOperacoes(operacoesData);
       setProventos(proventosData);
       setAtivos(ativosData);
-      await handleAtualizarPrecos();
     } catch (err: any) {
       console.error('Erro ao carregar dados:', err);
       setError('Houve uma falha de conexão com a API. Dados em modo de contingência local.');
@@ -148,17 +149,22 @@ export const AppWrapper: React.FC = () => {
     await carregarDados();
   };
 
-  const handleAtualizarPrecos = async () => {
+  const handleAtualizarPrecos = async (): Promise<AtualizacaoCotacoes> => {
     setCarregandoPrecos(true);
     try {
-      const [posicoesData, ativosData] = await Promise.all([
+      const resultado = await InvestirApi.atualizarCotacoes();
+      const [resumoData, posicoesData, ativosData] = await Promise.all([
+        InvestirApi.getResumo(),
         InvestirApi.getPosicoes(),
         InvestirApi.getAtivos(),
       ]);
+      setResumo(resumoData);
       setPosicoes(posicoesData);
       setAtivos(ativosData);
+      return resultado;
     } catch (err) {
       console.error('Erro ao atualizar preços:', err);
+      throw err;
     } finally {
       setCarregandoPrecos(false);
     }
@@ -179,8 +185,14 @@ export const AppWrapper: React.FC = () => {
     navigate('noticias');
   };
 
-  if (authLoading) return <div>Carregando...</div>;
-  if (!isAuthenticated) return <><LoginScreen /><RegisterModal /><ForgotPasswordModal /></>;
+  if (authLoading) return <div className="flex min-h-screen items-center justify-center bg-[#05070d] text-sm text-slate-400">Carregando...</div>;
+  if (!isAuthenticated) return (
+    <div className="dark min-h-screen bg-[#05070d]">
+      <LoginScreen />
+      <RegisterModal />
+      <ForgotPasswordModal />
+    </div>
+  );
 
   return (
     <AppLayout
@@ -196,7 +208,7 @@ export const AppWrapper: React.FC = () => {
         ) : (
           <>
             {currentRoute === 'dashboard' && <DashboardPage resumo={resumo} posicoes={posicoes} onNavigateTab={navigate} onOpenNovaOperacao={handleOpenNovaOperacao} />}
-            {currentRoute === 'carteira' && <CarteiraTab posicoes={posicoes} onOpenNovaOperacao={handleOpenNovaOperacao} onOpenNovoProvento={handleOpenNovoProvento} onOpenLancamentos={() => setModalLancamentosOpen(true)} onSelectTicker={(ticker) => { const at = ativos.find((a) => a.ticker.toUpperCase() === ticker.toUpperCase()); if (at) handleSelectAtivo(at); }} onAtualizarPrecos={handleAtualizarPrecos} carregandoPrecos={carregandoPrecos} />}
+            {currentRoute === 'carteira' && <CarteiraTab posicoes={posicoes} onOpenNovaOperacao={handleOpenNovaOperacao} onOpenNovoProvento={handleOpenNovoProvento} onOpenLancamentos={() => setModalLancamentosOpen(true)} onOpenImportacaoB3={() => setModalImportacaoB3Open(true)} onSelectTicker={(ticker) => { const at = ativos.find((a) => a.ticker.toUpperCase() === ticker.toUpperCase()); if (at) handleSelectAtivo(at); }} onAtualizarPrecos={handleAtualizarPrecos} carregandoPrecos={carregandoPrecos} />}
             {currentRoute === 'performance' && <PerformanceTab ativos={ativos} favoritos={favoritos} onToggleFavorito={handleToggleFavorito} onSelectAtivo={handleSelectAtivo} onCadastrarAtivo={handleOpenCadastrarAtivo} onSalvarAtivoRapido={handleCadastrarAtivo} onAtualizarPrecos={handleAtualizarPrecos} carregandoPrecos={carregandoPrecos} />}
             {currentRoute === 'noticias' && <NoticiasFavoritosTab key={noticiasTickerFiltro || 'noticias-geral'} ativos={ativos} favoritos={favoritos} initialTickerFiltro={noticiasTickerFiltro} onToggleFavorito={handleToggleFavorito} onSelectAtivo={handleSelectAtivo} />}
             {currentRoute === 'proventos' && <ProventosTab proventos={proventos} onOpenNovoProvento={handleOpenNovoProvento} onExcluirProvento={handleExcluirProvento} />}
@@ -211,6 +223,7 @@ export const AppWrapper: React.FC = () => {
       <NovaOperacaoModal isOpen={modalOperacaoOpen} onClose={() => setModalOperacaoOpen(false)} ativos={ativos} posicoes={posicoes} defaultTicker={modalTicker} defaultTipo={modalTipoOperacao} onSubmit={handleCriarOperacao} />
       <NovoProventoModal isOpen={modalProventoOpen} onClose={() => setModalProventoOpen(false)} ativos={ativos} defaultTicker={modalTicker} onSubmit={handleCriarProvento} />
       <NovoAtivoModal isOpen={modalAtivoOpen} onClose={() => { setModalAtivoOpen(false); setModalAtivoDados(undefined); }} defaultTicker={modalAtivoDados?.ticker} defaultNome={modalAtivoDados?.nome} defaultTipo={modalAtivoDados?.tipo} defaultSetor={modalAtivoDados?.setor} defaultPreco={modalAtivoDados?.precoAtual} defaultDividendYield={modalAtivoDados?.dividendYield} onSubmit={handleCadastrarAtivo} />
+      <ImportacaoB3Modal isOpen={modalImportacaoB3Open} onClose={() => setModalImportacaoB3Open(false)} onImportacaoConcluida={carregarDados} />
       <LoginModal />
       <RegisterModal />
       <ForgotPasswordModal />

@@ -1,4 +1,3 @@
-using InvestirGo.API.Application.Interfaces;
 using InvestirGo.API.Infrastructure.Services;
 
 namespace InvestirGo.API.Infrastructure.BackgroundJobs;
@@ -25,7 +24,9 @@ public sealed class CotacaoBackgroundService : BackgroundService
             primeiraExecucao = false;
             try
             {
-                await AtualizarTodosAsync(stoppingToken);
+                using var scope = _serviceProvider.CreateScope();
+                var cotacaoService = scope.ServiceProvider.GetRequiredService<CotacaoAtualizacaoService>();
+                await cotacaoService.AtualizarAsync(cancellationToken: stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -39,32 +40,6 @@ public sealed class CotacaoBackgroundService : BackgroundService
             }
             await Task.Delay(TimeSpan.FromMinutes(30), stoppingToken);
         }
-    }
-
-    private async Task AtualizarTodosAsync(CancellationToken cancellationToken)
-    {
-        using var scope = _serviceProvider.CreateScope();
-        var ativoRepo = scope.ServiceProvider.GetRequiredService<IAtivoRepository>();
-        var marketData = scope.ServiceProvider.GetRequiredService<MarketDataService>();
-        var ativos = (await ativoRepo.ObterTodosAsync()).ToList();
-        var atualizados = 0;
-        foreach (var ativo in ativos)
-        {
-            try
-            {
-                var cotacao = await marketData.ObterDadosCompletosAsync(ativo.Ticker, cancellationToken);
-                if (cotacao.RegularMarketPrice <= 0) continue;
-                var variacao = cotacao.RegularMarketChangePercent;
-                if (variacao == 0 && cotacao.RegularMarketOpen > 0)
-                    variacao = (cotacao.RegularMarketPrice - cotacao.RegularMarketOpen) / cotacao.RegularMarketOpen * 100m;
-                if (await ativoRepo.AtualizarCotacaoAsync(ativo.Id, cotacao.RegularMarketPrice, Math.Round(variacao, 4), ativo.DividendYield))
-                    atualizados++;
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
-            catch (Exception ex)
-            { _logger.LogWarning(ex, "Falha ao atualizar {Ticker}; valor anterior preservado.", ativo.Ticker); }
-        }
-        _logger.LogInformation("Cotações atualizadas: {Atualizados}/{Total} ativos.", atualizados, ativos.Count);
     }
 
     private static bool MercadoEmHorarioDeAtualizacao(DateTimeOffset agora) =>

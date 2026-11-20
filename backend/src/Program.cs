@@ -105,9 +105,18 @@ builder.Services.AddScoped<IOperacaoRepository, OperacaoRepository>();
 builder.Services.AddScoped<IProventoRepository, ProventoRepository>();
 builder.Services.AddScoped<ICarteiraService, CarteiraService>();
 builder.Services.AddScoped<IApuracaoFiscalService, ApuracaoFiscalService>();
+builder.Services.AddScoped<ImportacaoB3Service>();
 
 // Serviços de Mercado Real
 builder.Services.AddHttpClient<MarketDataService>();
+builder.Services.AddHttpClient("AwesomeApi", client =>
+{
+    client.BaseAddress = new Uri("https://economia.awesomeapi.com.br/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<CotacaoAtualizacaoService>();
+builder.Services.AddScoped<MercadoPainelService>();
 builder.Services.AddHostedService<CotacaoBackgroundService>();
 
 // ----------------------------------------------------------------------------
